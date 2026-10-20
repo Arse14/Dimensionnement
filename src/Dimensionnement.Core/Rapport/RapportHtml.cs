@@ -99,6 +99,25 @@ public static class RapportHtml
             """);
         Note(sb, r.NoteArrivee);
 
+        if (r.Securite is { Fonctions.Count: > 0 } sec)
+        {
+            sb.Append("<h2>Sécurité machine</h2><table><tr><th>Fonction</th><th>PLr</th><th>Catégorie conseillée</th>" +
+                      "<th>Architecture</th><th>Départs coupés</th></tr>");
+            foreach (var f in sec.Fonctions)
+                sb.Append($"<tr><td>{E(f.Fonction.Nom)}</td><td>{f.Fonction.PLr}</td><td>{f.Categorie}</td>" +
+                          $"<td>{E(f.Architecture)}</td><td>{E(f.Fonction.DepartsTexte)}</td></tr>");
+            sb.Append("</table>");
+            Note(sb, sec.Note);
+        }
+
+        if (r.Consommateurs24V.Count > 0)
+        {
+            sb.Append("<h3>Bilan 24 V DC</h3><table><tr><th>Consommateur</th><th>Courant</th></tr>");
+            foreach (var c in r.Consommateurs24V)
+                sb.Append($"<tr><td>{E(c.Designation)}</td><td>{A(c.Courant)}</td></tr>");
+            sb.Append($"<tr><th>Total</th><th>{A(r.Consommation24V)}</th></tr></table>");
+        }
+
         sb.Append("<h2>7. Directives CEM et basse tension</h2><table><tr><th>Point de contrôle</th><th>Référence</th></tr>");
         foreach (var (point, reference) in ListeControle(r))
             sb.Append($"<tr><td>{E(point)}</td><td>{E(reference)}</td></tr>");

@@ -30,12 +30,16 @@ public class ResultatProjet
     /// <summary>Arbre du matériel, de l'arrivée réseau jusqu'à chaque récepteur.</summary>
     public required ElementMateriel Arbre { get; init; }
 
-    public StatutCalcul StatutGlobal =>
-        Departs.Select(d => d.Note.StatutGlobal).Append(NoteArrivee.StatutGlobal).Max();
+    public ResultatSecurite? Securite { get; init; }
 
-    public int NombreAlertes =>
-        Departs.SelectMany(d => d.Note.Lignes).Concat(NoteArrivee.Lignes)
-            .Count(l => l.Statut is StatutCalcul.Alerte or StatutCalcul.NonConforme);
+    /// <summary>Toutes les notes de calcul du projet : départs, arrivée, sécurité.</summary>
+    public IEnumerable<NoteDeCalcul> Notes => Departs.Select(d => d.Note).Append(NoteArrivee)
+        .Concat(Securite is null ? Enumerable.Empty<NoteDeCalcul>() : new[] { Securite.Note });
+
+    public StatutCalcul StatutGlobal => Notes.Select(n => n.StatutGlobal).Max();
+
+    public int NombreAlertes => Notes.SelectMany(n => n.Lignes)
+        .Count(l => l.Statut is StatutCalcul.Alerte or StatutCalcul.NonConforme);
 
     /// <summary>Nomenclature : appareils de l'arbre regroupés par désignation et calibre.</summary>
     public IReadOnlyList<ElementMateriel> Nomenclature => Arbre.Parcourir()
@@ -117,6 +121,8 @@ public static class CalculProjet
                 "NF C 15-100, 535", StatutCalcul.Alerte);
         }
 
+        var securite = CalculSecurite.Calculer(projet, departs);
+
         var arbre = new ElementMateriel { Repere = "Réseau", Famille = "Réseau",
             Designation = $"Arrivée {Libelle(reseau.Alimentation)}, {reseau.Slt}", Calibre = $"Icc {N(reseau.IccKiloAmperes)} kA" };
         var conducteurs = reseau.Alimentation switch { TypeAlimentation.Mono230 => 3, TypeAlimentation.Tri400 => 4, _ => 5 };
@@ -130,13 +136,22 @@ public static class CalculProjet
         foreach (var e in arbre.Parcourir()) e.Statut = note.StatutGlobal;
         foreach (var d in departs) tete.Ajouter(d.Materiel);
 
+        // Les appareils de commande sont rattachés à l'alimentation 24 V qui les alimente.
+        var alimentation24V = departs.Where(d => d.Depart is DepartAlimentation24V)
+            .SelectMany(d => d.Materiel.Parcourir()).FirstOrDefault(e => e.Famille == "Alimentation") ?? tete;
+        foreach (var appareil in securite.Appareils)
+        {
+            appareil.Statut = securite.Note.StatutGlobal;
+            alimentation24V.Ajouter(appareil);
+        }
+
         return new ResultatProjet
         {
             Projet = projet, Departs = departs, NoteArrivee = note,
             PuissanceActive = ks * p, PuissanceReactive = ks * q, PuissanceApparente = s, CosPhiGlobal = cosPhi,
             CoefficientSimultaneite = ks, CourantEmploi = ib, CalibreGeneral = qg,
             SectionArrivee = cable.Section, ChuteTensionArrivee = cable.ChuteTension, Arbre = arbre,
-            Consommateurs24V = consommateurs24V,
+            Consommateurs24V = consommateurs24V, Securite = securite,
         };
     }
 
@@ -146,6 +161,7 @@ public static class CalculProjet
             .Where(c => c.CourantMa > 0 && c.Quantite > 0)
             .Select(c => new ConsommationCommande(c.Quantite > 1 ? $"{c.Designation} × {c.Quantite}" : c.Designation,
                 c.CourantMa * c.Quantite / 1000))
+            .Concat(CalculSecurite.Consommations(projet.Securite))
             .ToList();
 
     /// <summary>Coefficient de simultanéité d'une armoire de distribution selon son nombre de circuits.</summary>
