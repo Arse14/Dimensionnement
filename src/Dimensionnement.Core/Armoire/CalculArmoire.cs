@@ -14,6 +14,9 @@ public class AppareilImplante
     public required string Famille { get; init; }
     public required ZoneCem Zone { get; init; }
     public ElementMateriel? Element { get; init; }
+
+    /// <summary>Clé stable des positions manuelles : le repère calculé, même si l'utilisateur l'a renommé.</summary>
+    public string Cle => Element?.RepereOrigine ?? Repere;
     public double X { get; set; }
     public double Y { get; set; }
     public double Largeur { get; init; }
@@ -504,7 +507,7 @@ public static class CalculArmoire
     {
         foreach (var a in appareils)
         {
-            if (!config.Positions.TryGetValue(a.Repere, out var p)) continue;
+            if (!config.Positions.TryGetValue(a.Cle, out var p)) continue;
             a.X = Math.Clamp(p.X, 0, Math.Max(0, largeur - a.Largeur));
             a.Y = Math.Clamp(p.Y, 0, Math.Max(0, hauteur - a.Hauteur));
             a.Manuel = true;

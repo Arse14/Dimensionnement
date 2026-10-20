@@ -40,6 +40,11 @@ public class VueArmoire : Border
         typeof(ICommand), typeof(VueArmoire));
     public static readonly DependencyProperty ActionCommandeProperty = DependencyProperty.Register(nameof(ActionCommande),
         typeof(ICommand), typeof(VueArmoire));
+    public static readonly DependencyProperty RenommerCommandeProperty = DependencyProperty.Register(nameof(RenommerCommande),
+        typeof(ICommand), typeof(VueArmoire), new PropertyMetadata(null, Redessiner));
+
+    /// <summary>Reçoit l'appareil à renommer (clic droit sur un appareil de la plaque).</summary>
+    public ICommand? RenommerCommande { get => (ICommand?)GetValue(RenommerCommandeProperty); set => SetValue(RenommerCommandeProperty, value); }
 
     public ResultatArmoire? Armoire { get => (ResultatArmoire?)GetValue(ArmoireProperty); set => SetValue(ArmoireProperty, value); }
     public bool AfficherChamps { get => (bool)GetValue(AfficherChampsProperty); set => SetValue(AfficherChampsProperty, value); }
@@ -171,6 +176,12 @@ public class VueArmoire : Border
             {
                 bloc.Cursor = Cursors.SizeAll;
                 bloc.MouseLeftButtonDown += Saisir;
+                if (x.Element is { } element && RenommerCommande is { } renommer)
+                {
+                    var item = new MenuItem { Header = $"Renommer {x.Repere}…" };
+                    item.Click += (_, _) => renommer.Execute(element);
+                    bloc.ContextMenu = new ContextMenu { Items = { item } };
+                }
             }
             Placer(bloc, x.X, x.Y);
         }
@@ -330,7 +341,7 @@ public class VueArmoire : Border
         }
         if (bloc.Tag is not AppareilImplante appareil) return;
         if (Math.Abs(x - appareil.X) < 1 && Math.Abs(y - appareil.Y) < 1) return;
-        var deplacement = new DeplacementAppareil(appareil.Repere, x, y);
+        var deplacement = new DeplacementAppareil(appareil.Cle, x, y);
         if (DeplacerCommande?.CanExecute(deplacement) == true) DeplacerCommande.Execute(deplacement);
     }
 

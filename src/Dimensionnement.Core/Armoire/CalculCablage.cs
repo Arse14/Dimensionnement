@@ -146,7 +146,7 @@ public static class CalculCablage
                 Ajouter(SectionCommande, VoiesCarte(e.Calibre, r), "Commande");
                 break;
             case "Sécurité":
-                var capacite = r.Securite?.Capacites.FirstOrDefault(c => c.Repere == e.Repere);
+                var capacite = r.Securite?.Capacites.FirstOrDefault(c => c.Repere == e.RepereOrigine);
                 Ajouter(1, 2, "Commande");
                 Ajouter(SectionCommande, capacite is null ? 4 : 2 * capacite.EntreesUtilisees + 2 * capacite.SortiesUtilisees, "Commande");
                 break;

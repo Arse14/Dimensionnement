@@ -5,7 +5,14 @@ namespace Dimensionnement.Core.Materiel;
 /// <summary>Un appareil de l'armoire, placé dans l'arbre d'alimentation et repris dans la nomenclature.</summary>
 public class ElementMateriel
 {
-    public string Repere { get; init; } = "";
+    public string Repere { get; set; } = "";
+
+    /// <summary>Repère calculé avant un renommage par l'utilisateur ; sert de clé stable (positions, forçages).</summary>
+    public string RepereOrigine { get => _repereOrigine ?? Repere; set => _repereOrigine = value; }
+    string? _repereOrigine;
+
+    /// <summary>Clé du renommage dans le projet : départ d'appartenance et repère calculé.</summary>
+    public string CleRenommage => $"{DepartId?.ToString() ?? "projet"}|{RepereOrigine}";
     public string Famille { get; init; } = "";
     public string Designation { get; set; } = "";
 
@@ -60,7 +67,7 @@ public class ElementMateriel
     public ZoneCem Zone => Famille switch
     {
         "Variateur" or "Démarreur progressif" or "Contacteur" or "Relais thermique" => ZoneCem.Sale,
-        "Câble" or "Moteur" or "Récepteur" or "Prise de courant" or "Réseau" or "Capteur de sécurité" => ZoneCem.HorsArmoire,
+        "Câble" or "Moteur" or "Récepteur" or "Prise de courant" or "Réseau" or "Capteur de sécurité" or "Périphérique machine" => ZoneCem.HorsArmoire,
         "Automate" or "Entrées/sorties" or "Accessoire automate" or "Sécurité" => ZoneCem.Propre,
         _ => ZoneCem.Intermediaire,
     };

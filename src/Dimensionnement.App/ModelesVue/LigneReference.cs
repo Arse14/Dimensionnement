@@ -7,12 +7,14 @@ namespace Dimensionnement.App.ModelesVue;
 public class LigneReference
 {
     readonly ConfigurationReferences _config;
+    readonly string _cle;
     string _reference;
 
     public LigneReference(ElementMateriel e, ConfigurationReferences config)
     {
         _config = config;
         Repere = e.Repere;
+        _cle = e.RepereOrigine;
         Designation = e.Designation;
         Calibre = e.Calibre;
         Fabricant = e.Fabricant;
@@ -25,7 +27,7 @@ public class LigneReference
     public string Fabricant { get; }
 
     /// <summary>Vrai si la référence a été saisie à la main.</summary>
-    public bool Forcee => _config.Forcees.ContainsKey(Repere);
+    public bool Forcee => _config.Forcees.ContainsKey(_cle);
 
     public string Reference
     {
@@ -35,8 +37,8 @@ public class LigneReference
             var saisie = value?.Trim() ?? "";
             if (saisie == _reference) return;
             // Vider la case rend la main au catalogue.
-            if (saisie.Length == 0) _config.Forcees.Remove(Repere);
-            else _config.Forcees[Repere] = saisie;
+            if (saisie.Length == 0) _config.Forcees.Remove(_cle);
+            else _config.Forcees[_cle] = saisie;
             _reference = saisie;
         }
     }

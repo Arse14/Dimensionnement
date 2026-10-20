@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using Dimensionnement.App.Infrastructure;
 using Dimensionnement.App.ModelesVue;
 
 namespace Dimensionnement.App.Vues;
@@ -21,6 +22,44 @@ public partial class FenetrePrincipale : Window
     void ModificationSaisie(object? sender, DataTransferEventArgs e) =>
         // Le recalcul est différé pour laisser la liaison terminer sa mise à jour.
         Dispatcher.BeginInvoke(new Action(_modele.Recalculer));
+
+    BindingExpression? _saisieEnErreur;
+
+    /// <summary>Une case passe en rouge : la raison s'affiche en bas à droite, avec « Forcer » quand la valeur est seulement inhabituelle.</summary>
+    void ErreurDeSaisie(object? sender, ValidationErrorEventArgs e)
+    {
+        if (e.Action == ValidationErrorEventAction.Removed)
+        {
+            if (ReferenceEquals(e.Error.BindingInError, _saisieEnErreur)) MasquerErreur();
+            return;
+        }
+        _saisieEnErreur = e.Error.BindingInError as BindingExpression;
+        var forcable = e.Error.ErrorContent is ErreurSaisie { Forcable: true };
+        TexteErreur.Text = e.Error.ErrorContent switch
+        {
+            ErreurSaisie erreur => erreur.Message,
+            string texte => texte,
+            _ => e.Error.Exception?.Message ?? "Valeur refusée.",
+        };
+        BoutonForcer.Visibility = forcable ? Visibility.Visible : Visibility.Collapsed;
+        BandeauErreur.Visibility = Visibility.Visible;
+        MentionAide.Visibility = Visibility.Collapsed;
+    }
+
+    void MasquerErreur()
+    {
+        _saisieEnErreur = null;
+        BandeauErreur.Visibility = Visibility.Collapsed;
+        MentionAide.Visibility = Visibility.Visible;
+    }
+
+    void ForcerSaisie(object sender, RoutedEventArgs e)
+    {
+        if (_saisieEnErreur is not { } liaison) return;
+        foreach (var erreur in Validation.GetErrors(liaison.Target).Select(v => v.ErrorContent).OfType<ErreurSaisie>())
+            RegleVraisemblance.Forcees.Add((erreur.Chemin, erreur.Valeur));
+        liaison.UpdateSource();
+    }
 
     /// <summary>Le menu « Ajouter » s'ouvre sous le bouton au clic gauche.</summary>
     void AfficherAjouts(object sender, RoutedEventArgs e)

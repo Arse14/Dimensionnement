@@ -17,6 +17,12 @@ public class Reseau
     /// <summary>Câble entre la source et l'armoire.</summary>
     public CaracteristiquesCable CableArrivee { get; set; } = new() { Longueur = 20 };
 
+    /// <summary>Parafoudre de type 2 en tête d'armoire, avec sa protection.</summary>
+    public bool Parafoudre { get; set; }
+
+    /// <summary>Relais de contrôle de phases (ordre, absence, déséquilibre) en tête d'armoire.</summary>
+    public bool ControlePhases { get; set; }
+
     public double TensionComposee => 400;
     public double TensionSimple => 230;
 }

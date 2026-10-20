@@ -20,7 +20,7 @@ public static class ExportSistema
         var i = 0;
         foreach (var f in r.Securite.Fonctions)
         {
-            var appareil = r.Securite.Appareils.FirstOrDefault()?.Repere == "KA-SEC" ? logique.FirstOrDefault() : logique.ElementAtOrDefault(i);
+            var appareil = r.Securite.Appareils.FirstOrDefault()?.RepereOrigine == "KA-SEC" ? logique.FirstOrDefault() : logique.ElementAtOrDefault(i);
             i++;
             var actionneurs = f.Fonction.Departs
                 .Select(n => r.Departs.FirstOrDefault(d => d.Depart.Numero == n))
@@ -35,7 +35,7 @@ public static class ExportSistema
 
     static string Actionneurs(ResultatDepart d)
     {
-        if (d.Depart is DepartMoteur { Demarrage: ModeDemarrage.Variateur })
+        if (d.Depart is DepartMoteur { SurVariateur: true })
             return $"D{d.Depart.Numero:00} STO variateur U{d.Depart.Numero}";
         var contacteurs = d.Materiel.Parcourir().Where(e => e.Famille == "Contacteur").Select(e => e.Repere);
         return $"D{d.Depart.Numero:00} {string.Join(" + ", contacteurs)}";

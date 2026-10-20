@@ -53,6 +53,16 @@ public class LibelleEnum : IValueConverter
         ModeDemarrage.Inverseur => "Inverseur de sens",
         ModeDemarrage.EtoileTriangle => "Étoile-triangle",
         ModeDemarrage.Variateur => "Variateur de fréquence",
+        ModeDemarrage.Servomoteur => "Servomoteur (servovariateur)",
+        ModeDemarrage.DeuxVitesses => "Deux vitesses",
+        TypeDeuxVitesses.Dahlander => "Dahlander (un enroulement)",
+        TypeDeuxVitesses.DeuxEnroulements => "Deux enroulements séparés",
+        AlimentationFrein.BoiteABornes => "Par la boîte à bornes du moteur",
+        AlimentationFrein.Separee230 => "Séparée 230 V AC (redresseur du moteur)",
+        AlimentationFrein.Continu24 => "24 V DC",
+        TypePeripherique.IlotElectrovannes => "Îlot d'électrovannes",
+        TypePeripherique.ColonneLumineuse => "Colonne lumineuse",
+        TypePeripherique.Eclairage24V => "Éclairage machine 24 V",
         ModeDemarrage.DemarreurProgressif => "Démarreur progressif",
         TypeProtection.Disjoncteur => "Disjoncteur",
         TypeProtection.Fusibles => "Sectionneur porte-fusibles",
@@ -148,6 +158,9 @@ public static class Listes
     public static SchemaLiaisonTerre[] Slt { get; } = Enum.GetValues<SchemaLiaisonTerre>();
     public static OrigineAlimentation[] Origines { get; } = Enum.GetValues<OrigineAlimentation>();
     public static ModeDemarrage[] Demarrages { get; } = Enum.GetValues<ModeDemarrage>();
+    public static TypeDeuxVitesses[] TypesDeuxVitesses { get; } = Enum.GetValues<TypeDeuxVitesses>();
+    public static AlimentationFrein[] AlimentationsFrein { get; } = Enum.GetValues<AlimentationFrein>();
+    public static TypePeripherique[] TypesPeripherique { get; } = Enum.GetValues<TypePeripherique>();
     public static MethodePose[] Poses { get; } = Enum.GetValues<MethodePose>();
     public static Isolant[] Isolants { get; } = Enum.GetValues<Isolant>();
     public static CourbeDisjoncteur[] Courbes { get; } = Enum.GetValues<CourbeDisjoncteur>();

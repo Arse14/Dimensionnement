@@ -98,7 +98,7 @@ public static class BibliothequeCatalogues
         new FamilleCatalogue("variateurs", "Variateurs", CatalogueVariateurs.NomFichier, CatalogueVariateurs.TexteEmbarque,
             new[] { T("fabricant", "Fabricant"), T("gamme", "Gamme", true), T("reference", "Référence"), T("taille", "Taille", true),
                     N("kw", "Puissance moteur", "kW", true, true), N("courant", "Courant de sortie", "A", true, true), N("pertes", "Pertes", "W", false, true),
-                    N("rang", "Rang", ""), B("filtreCemIntegre", "Filtre CEM intégré"), B("blindageFourni", "Reprise de blindage fournie") }
+                    N("rang", "Rang", ""), B("servo", "Servovariateur"), B("filtreCemIntegre", "Filtre CEM intégré"), B("blindageFourni", "Reprise de blindage fournie") }
                 .Concat(Cotes(true)).ToArray())
             { LireType = t => CatalogueVariateurs.Lire(t), ChampPrincipal = "kw", Designation = "Variateur" },
         new FamilleCatalogue("securite", "Sécurité machine", CatalogueSecurite.NomFichier, CatalogueSecurite.TexteEmbarque,

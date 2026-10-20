@@ -55,7 +55,8 @@ public static class CalculAutomate
     const double ConsommationCpu = 0.5;
     const double ConsommationCarte = 0.05;
 
-    public static int Peripheriques(ConfigurationAutomate c) => c.PeripheriquesReseau + c.VariateursBus + c.Stations.Count;
+    public static int Peripheriques(ConfigurationAutomate c, int ilotsReseau = 0) =>
+        c.PeripheriquesReseau + c.VariateursBus + c.Stations.Count + ilotsReseau;
     public static int Connexions(ConfigurationAutomate c) => NombreIhm(c) + c.ClientsOpcUa + c.EchangesAutomates + ConnexionsReservees;
 
     /// <summary>Pupitres IHM : ceux choisis au catalogue et ceux déclarés sans modèle.</summary>
@@ -182,20 +183,20 @@ public static class CalculAutomate
     }
 
     public static ResultatAutomate Calculer(ConfigurationAutomate c, IReadOnlyList<CpuAutomate> catalogue, IReadOnlyList<CarteEs>? cartes = null,
-        IReadOnlyList<ModeleIhm>? ihm = null)
+        IReadOnlyList<ModeleIhm>? ihm = null, int ilotsReseau = 0)
     {
         var note = new NoteDeCalcul("API");
         if (!c.Actif) return new ResultatAutomate { Note = note, Appareils = Array.Empty<ElementMateriel>() };
         cartes ??= CatalogueCartesEs.Charger();
 
         var reserve = 1 + c.ReservePourcent / 100;
-        var peripheriques = Peripheriques(c);
+        var peripheriques = Peripheriques(c, ilotsReseau);
         var connexions = Connexions(c);
         var peripheriquesRequis = (int)Math.Ceiling(peripheriques * reserve);
         var connexionsRequises = (int)Math.Ceiling(connexions * reserve);
         note.Info("Charge de communication",
             $"{peripheriques} périphérique(s) réseau ({c.Stations.Count} station(s) déportée(s) + {c.PeripheriquesReseau} autre(s) esclave(s) " +
-            $"+ {c.VariateursBus} variateur(s)) ; " +
+            $"+ {c.VariateursBus} variateur(s)" + (ilotsReseau > 0 ? $" + {ilotsReseau} îlot(s) d'électrovannes" : "") + ") ; " +
             $"{connexions} connexion(s) ({NombreIhm(c)} IHM + {c.ClientsOpcUa} OPC UA / supervision + {c.EchangesAutomates} échange(s) " +
             $"entre automates + {ConnexionsReservees} programmation et diagnostic).");
         note.Info("Besoin avec réserve", $"Réserve {N(c.ReservePourcent)} % : ≥ {peripheriquesRequis} périphérique(s) et ≥ {connexionsRequises} connexion(s).");

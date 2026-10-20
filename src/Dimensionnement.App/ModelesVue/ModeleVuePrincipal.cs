@@ -81,6 +81,21 @@ public class ModeleVuePrincipal : Observable
         AjouterPrise = new Commande(() => AjouterDepart(new DepartPrise { Designation = "Prise de courant", Rubrique = "Auxiliaires" }));
         AjouterGenerique = new Commande(() => AjouterDepart(new DepartGenerique
             { Designation = "Charge", PuissanceKw = 1, Rubrique = "Auxiliaires", Alimentation = TypeAlimentation.Mono230 }));
+        AjouterMoteurFrein = new Commande(() =>
+        {
+            var m = NouveauMoteur(ModeDemarrage.Direct);
+            m.Designation = "Moteur-frein";
+            m.Frein = true;
+            AjouterDepart(m);
+        });
+        AjouterCoffret = new Commande(() => AjouterDepart(new DepartCoffret
+            { Designation = "Coffret déporté", PuissanceKw = 10, CosPhi = 0.85, Rubrique = "Puissance", Alimentation = TypeAlimentation.Tetra400 }));
+        AjouterEclairage = new Commande(() => AjouterDepart(new DepartGenerique
+            { Designation = "Éclairage machine", PuissanceKw = 0.2, CosPhi = 0.95, Rubrique = "Auxiliaires", Alimentation = TypeAlimentation.Mono230 }));
+        AjouterPeripherique = new Commande(() => Modifier(() => _projet.PeripheriquesMachine.Add(
+            new PeripheriqueMachine { Nom = $"Îlot {_projet.PeripheriquesMachine.Count + 1}" })));
+        SupprimerPeripherique = new Commande(p => Modifier(() => _projet.PeripheriquesMachine.Remove((PeripheriqueMachine)p!)), p => p is PeripheriqueMachine);
+        RenommerElement = new Commande(p => Renommer((ElementMateriel)p!), p => p is ElementMateriel);
         AjouterAlimentation = new Commande(() => AjouterDepart(new DepartAlimentation24V()));
         AjouterTransformateur = new Commande(p => AjouterDepart(NouveauTransformateur(p is TensionCommande t ? t : TensionCommande.Alternatif24)));
         BasculerNote = new Commande(() => NoteVisible = !NoteVisible);
@@ -166,6 +181,12 @@ public class ModeleVuePrincipal : Observable
     public Commande AjouterResistif { get; }
     public Commande AjouterPrise { get; }
     public Commande AjouterGenerique { get; }
+    public Commande AjouterMoteurFrein { get; }
+    public Commande RenommerElement { get; }
+    public Commande AjouterCoffret { get; }
+    public Commande AjouterEclairage { get; }
+    public Commande AjouterPeripherique { get; }
+    public Commande SupprimerPeripherique { get; }
     public Commande AjouterAlimentation { get; }
     public Commande AjouterTransformateur { get; }
     public Commande BasculerNote { get; }
@@ -399,6 +420,20 @@ public class ModeleVuePrincipal : Observable
         };
         t.Designation = DepartAlimentation24V.Libelle(sortie, true, t.Alimentation);
         return t;
+    }
+
+    /// <summary>Repère et désignation choisis par l'utilisateur pour un appareil, gardés dans le projet.</summary>
+    void Renommer(ElementMateriel e)
+    {
+        var fenetre = new FenetreRenommage(e) { Owner = Application.Current.MainWindow };
+        if (fenetre.ShowDialog() != true) return;
+        var nom = fenetre.Resultat;
+        Modifier(() =>
+        {
+            if (nom is null) _projet.Renommages.Remove(e.CleRenommage);
+            else _projet.Renommages[e.CleRenommage] = new Renommage
+                { Repere = nom.Repere == e.RepereOrigine ? "" : nom.Repere, Designation = nom.Designation };
+        });
     }
 
     void Modifier(Action action)
@@ -674,6 +709,8 @@ public class ModeleVuePrincipal : Observable
             ModeDemarrage.DemarreurProgressif => "Moteur sur démarreur progressif",
             ModeDemarrage.Inverseur => "Moteur deux sens",
             ModeDemarrage.EtoileTriangle => "Moteur étoile-triangle",
+            ModeDemarrage.DeuxVitesses => "Moteur deux vitesses",
+            ModeDemarrage.Servomoteur => "Servomoteur",
             _ => "Moteur",
         },
         PuissanceKw = 5.5, CosPhi = 0.84, Rendement = 0.88, Demarrage = demarrage,

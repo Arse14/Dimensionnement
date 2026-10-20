@@ -125,6 +125,17 @@
                     <TextBox Text="{inf:Lien Reseau.TemperatureAmbiante}"/>
                 </DockPanel>
 
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Parafoudre en tête d'armoire" Style="{StaticResource Etiquette}"/>
+                    <CheckBox IsChecked="{inf:Lien Reseau.Parafoudre}"
+                              ToolTip="Parafoudre de type 2 avec son disjoncteur de déconnexion, en aval du sectionneur général."/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Relais de contrôle de phases" Style="{StaticResource Etiquette}"/>
+                    <CheckBox IsChecked="{inf:Lien Reseau.ControlePhases}"
+                              ToolTip="Contrôle de l'ordre des phases, d'une phase absente et du déséquilibre, avec sa protection."/>
+                </DockPanel>
+
                 <TextBlock Text="Câble d'arrivée" Style="{StaticResource Section}"/>
                 <ContentControl Content="{Binding Reseau.CableArrivee}" ContentTemplate="{StaticResource ChampsCable}"/>
 
@@ -205,6 +216,9 @@
                                 <DataTrigger Binding="{Binding Demarrage}" Value="{x:Static mod:ModeDemarrage.Variateur}">
                                     <Setter Property="Visibility" Value="Visible"/>
                                 </DataTrigger>
+                                <DataTrigger Binding="{Binding Demarrage}" Value="{x:Static mod:ModeDemarrage.Servomoteur}">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </DockPanel.Style>
@@ -212,6 +226,72 @@
                     <ComboBox ItemsSource="{x:Static inf:Listes.MarquesVariateur}" SelectedItem="{inf:Lien MarqueVariateur}"
                               ItemTemplate="{StaticResource ModeleEnum}"
                               ToolTip="Le modèle, sa taille et son encombrement sont donnés dans la note de calcul (ligne « Variateur retenu »)."/>
+                </DockPanel>
+                <DockPanel>
+                    <DockPanel.Style>
+                        <Style TargetType="DockPanel" BasedOn="{StaticResource Ligne}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Demarrage}" Value="{x:Static mod:ModeDemarrage.DeuxVitesses}">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DockPanel.Style>
+                    <TextBlock Text="Type de moteur deux vitesses" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.TypesDeuxVitesses}" SelectedItem="{inf:Lien TypeDeuxVitesses}"
+                              ItemTemplate="{StaticResource ModeleEnum}"
+                              ToolTip="Dahlander : trois contacteurs (petite vitesse, grande vitesse, étoile). Deux enroulements : deux contacteurs et deux protections."/>
+                </DockPanel>
+                <DockPanel>
+                    <DockPanel.Style>
+                        <Style TargetType="DockPanel" BasedOn="{StaticResource Ligne}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Demarrage}" Value="{x:Static mod:ModeDemarrage.DeuxVitesses}">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DockPanel.Style>
+                    <TextBlock Text="Puissance en petite vitesse (kW, 0 = 60 %)" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien PuissancePetiteVitesseKw}"/>
+                </DockPanel>
+                <TextBlock Text="Frein" Style="{StaticResource Section}"/>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Moteur-frein" Style="{StaticResource Etiquette}"/>
+                    <CheckBox IsChecked="{inf:Lien Frein}"
+                              ToolTip="Ajoute la commande du frein : protection et contacteur en 230 V, ou relais en 24 V DC."/>
+                </DockPanel>
+                <DockPanel>
+                    <DockPanel.Style>
+                        <Style TargetType="DockPanel" BasedOn="{StaticResource Ligne}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Frein}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DockPanel.Style>
+                    <TextBlock Text="Alimentation du frein" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.AlimentationsFrein}" SelectedItem="{inf:Lien AlimentationFrein}"
+                              ItemTemplate="{StaticResource ModeleEnum}"
+                              ToolTip="Par la boîte à bornes : seulement en démarrage direct. Sur variateur, le frein doit être alimenté séparément."/>
+                </DockPanel>
+                <DockPanel>
+                    <DockPanel.Style>
+                        <Style TargetType="DockPanel" BasedOn="{StaticResource Ligne}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Frein}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DockPanel.Style>
+                    <TextBlock Text="Puissance du frein (W)" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien PuissanceFreinW}"/>
                 </DockPanel>
                 <TextBlock Text="Départ" Style="{StaticResource Section}"/>
                 <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ChampsDepart}"/>
@@ -262,6 +342,33 @@
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Puissance absorbée (kW)" Style="{StaticResource Etiquette}"/>
                     <TextBox Text="{inf:Lien PuissanceKw}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="cos φ" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien CosPhi}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Courbe du disjoncteur" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.Courbes}" SelectedItem="{inf:Lien Courbe}"/>
+                </DockPanel>
+                <TextBlock Text="Départ" Style="{StaticResource Section}"/>
+                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ChampsDepart}"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type mod:DepartCoffret}">
+            <StackPanel>
+                <TextBlock Style="{StaticResource TitrePanneau}">
+                    <Run Text="COFFRET DÉPORTÉ D"/><Run Text="{Binding Numero, Mode=OneWay, StringFormat={}{0:00}}"/>
+                </TextBlock>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Puissance installée du coffret (kW)" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien PuissanceKw}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Simultanéité dans le coffret" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien Simultaneite}"
+                             ToolTip="Part de la puissance installée appelée en même temps (0,8 par défaut)."/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="cos φ" Style="{StaticResource Etiquette}"/>
@@ -391,6 +498,54 @@
                 </ItemsControl>
                 <Button Content="Ajouter un consommateur" HorizontalAlignment="Left" Margin="0,8,0,0"
                         Command="{Binding DataContext.AjouterConsommateur, RelativeSource={RelativeSource AncestorType=Window}}"/>
+
+                <TextBlock Text="Périphériques de la machine" Style="{StaticResource Section}"/>
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,6"
+                           Text="Îlots d'électrovannes, colonnes lumineuses et éclairages 24 V montés sur la machine : comptés au bilan 24 V et au devis, hors de la plaque de fond. Un îlot sur bus de terrain compte comme un esclave réseau de l'automate."/>
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/><ColumnDefinition Width="150"/><ColumnDefinition Width="90"/><ColumnDefinition Width="60"/>
+                        <ColumnDefinition Width="70"/><ColumnDefinition Width="70"/><ColumnDefinition Width="60"/><ColumnDefinition Width="60"/><ColumnDefinition Width="34"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Nom" Foreground="{StaticResource TexteSecondaire}"/>
+                    <TextBlock Grid.Column="1" Text="Type" Foreground="{StaticResource TexteSecondaire}" Margin="6,0,0,0"/>
+                    <TextBlock Grid.Column="2" Text="Marque" Foreground="{StaticResource TexteSecondaire}" Margin="6,0,0,0"/>
+                    <TextBlock Grid.Column="3" Text="Qté" Foreground="{StaticResource TexteSecondaire}" Margin="6,0,0,0"/>
+                    <TextBlock Grid.Column="4" Text="Éléments" Foreground="{StaticResource TexteSecondaire}" Margin="6,0,0,0"
+                               ToolTip="Électrovannes de l'îlot, étages de la colonne ou réglettes d'éclairage."/>
+                    <TextBlock Grid.Column="5" Text="mA / élt" Foreground="{StaticResource TexteSecondaire}" Margin="6,0,0,0"/>
+                    <TextBlock Grid.Column="6" Text="Simult." Foreground="{StaticResource TexteSecondaire}" Margin="6,0,0,0"/>
+                    <TextBlock Grid.Column="7" Text="Bus" Foreground="{StaticResource TexteSecondaire}" Margin="6,0,0,0"/>
+                </Grid>
+                <ItemsControl ItemsSource="{Binding Projet.PeripheriquesMachine}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type mod:PeripheriqueMachine}">
+                            <Grid Margin="0,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/><ColumnDefinition Width="150"/><ColumnDefinition Width="90"/><ColumnDefinition Width="60"/>
+                                    <ColumnDefinition Width="70"/><ColumnDefinition Width="70"/><ColumnDefinition Width="60"/><ColumnDefinition Width="60"/><ColumnDefinition Width="34"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{inf:Lien Nom}"/>
+                                <ComboBox Grid.Column="1" Margin="6,0,0,0" ItemsSource="{x:Static inf:Listes.TypesPeripherique}" SelectedItem="{inf:Lien Type}"
+                                          ItemTemplate="{StaticResource ModeleEnum}"/>
+                                <TextBox Grid.Column="2" Margin="6,0,0,0" Text="{inf:Lien Marque}" ToolTip="Festo, SMC, Werma, Siemens…"/>
+                                <TextBox Grid.Column="3" Margin="6,0,0,0" Text="{inf:Lien Quantite}"/>
+                                <TextBox Grid.Column="4" Margin="6,0,0,0" Text="{inf:Lien Elements}"/>
+                                <TextBox Grid.Column="5" Margin="6,0,0,0" Text="{inf:Lien CourantMa}"/>
+                                <TextBox Grid.Column="6" Margin="6,0,0,0" Text="{inf:Lien Simultaneite}" ToolTip="Part des éléments alimentés en même temps (0 à 1)."/>
+                                <CheckBox Grid.Column="7" Margin="6,0,0,0" IsChecked="{inf:Lien SurReseau}" VerticalAlignment="Center"
+                                          ToolTip="Îlot piloté par le bus de terrain de l'automate (PROFINET, EtherNet/IP) plutôt que par des sorties TOR."/>
+                                <Button Grid.Column="8" Margin="6,0,0,0" Style="{StaticResource BoutonPetit}" ToolTip="Retirer"
+                                        Command="{Binding DataContext.SupprimerPeripherique, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}">
+                                    <TextBlock FontFamily="{StaticResource Icones}" Text="&#xE711;"/>
+                                </Button>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button Content="Ajouter un périphérique" HorizontalAlignment="Left" Margin="0,8,0,0"
+                        Command="{Binding DataContext.AjouterPeripherique, RelativeSource={RelativeSource AncestorType=Window}}"/>
 
                 <TextBlock Text="Bilan retenu" Style="{StaticResource Section}"/>
                 <ItemsControl ItemsSource="{Binding DataContext.Resultat.Consommateurs24V, RelativeSource={RelativeSource AncestorType=Window}}">
@@ -1057,7 +1212,13 @@
             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                 <TextBlock x:Name="Lien" Text="→" Foreground="{StaticResource TexteSecondaire}" Margin="3,0" VerticalAlignment="Center"/>
                 <Border Background="{StaticResource Champ}" CornerRadius="3" Padding="6,2"
-                        ToolTip="{Binding Element.Designation}">
+                        ToolTip="{Binding Element.Designation}" Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <Border.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Renommer…" CommandParameter="{Binding Element}"
+                                      Command="{Binding PlacementTarget.Tag.RenommerElement, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                        </ContextMenu>
+                    </Border.ContextMenu>
                     <StackPanel Orientation="Horizontal">
                         <Ellipse Width="7" Height="7" Margin="0,0,5,0" VerticalAlignment="Center"
                                  Fill="{Binding Element.Statut, Converter={StaticResource StatutCouleur}}"/>
@@ -1167,7 +1328,7 @@
         </Style>
     </Window.Resources>
 
-    <DockPanel>
+    <DockPanel Validation.Error="ErreurDeSaisie">
         <!-- Barre d'outils -->
         <Border DockPanel.Dock="Top" Background="{StaticResource Panneau}" BorderBrush="{StaticResource Bordure}"
                 BorderThickness="0,0,0,1" Padding="10,6">
@@ -1202,9 +1363,14 @@
                                 <MenuItem Header="Moteur étoile-triangle" Command="{Binding AjouterMoteur}" CommandParameter="{x:Static mod:ModeDemarrage.EtoileTriangle}"/>
                                 <MenuItem Header="Moteur sur variateur de fréquence" Command="{Binding AjouterMoteur}" CommandParameter="{x:Static mod:ModeDemarrage.Variateur}"/>
                                 <MenuItem Header="Moteur sur démarreur progressif" Command="{Binding AjouterMoteur}" CommandParameter="{x:Static mod:ModeDemarrage.DemarreurProgressif}"/>
+                                <MenuItem Header="Moteur deux vitesses" Command="{Binding AjouterMoteur}" CommandParameter="{x:Static mod:ModeDemarrage.DeuxVitesses}"/>
+                                <MenuItem Header="Moteur-frein" Command="{Binding AjouterMoteurFrein}"/>
+                                <MenuItem Header="Servomoteur" Command="{Binding AjouterMoteur}" CommandParameter="{x:Static mod:ModeDemarrage.Servomoteur}"/>
                                 <Separator/>
                                 <MenuItem Header="Résistance (chauffage)" Command="{Binding AjouterResistif}"/>
                                 <MenuItem Header="Prise de courant" Command="{Binding AjouterPrise}"/>
+                                <MenuItem Header="Éclairage de la machine (230 V)" Command="{Binding AjouterEclairage}"/>
+                                <MenuItem Header="Coffret déporté" Command="{Binding AjouterCoffret}"/>
                                 <MenuItem Header="Autre charge" Command="{Binding AjouterGenerique}"/>
                                 <Separator/>
                                 <MenuItem Header="Alimentation 24 V DC" Command="{Binding AjouterAlimentation}"/>
@@ -1250,8 +1416,17 @@
         <Border DockPanel.Dock="Bottom" Background="{StaticResource Panneau}" BorderBrush="{StaticResource Bordure}"
                 BorderThickness="0,1,0,0" Padding="12,4">
             <DockPanel>
-                <TextBlock DockPanel.Dock="Right" Foreground="{StaticResource TexteSecondaire}"
+                <TextBlock x:Name="MentionAide" DockPanel.Dock="Right" Foreground="{StaticResource TexteSecondaire}"
                            Text="Aide au dimensionnement : résultats à valider par le bureau d'étude"/>
+                <Border x:Name="BandeauErreur" DockPanel.Dock="Right" Visibility="Collapsed" Background="#3A1D1F"
+                        BorderBrush="#F85149" BorderThickness="1" CornerRadius="3" Padding="8,3" Margin="12,0,0,0" MaxWidth="760">
+                    <DockPanel>
+                        <Button x:Name="BoutonForcer" DockPanel.Dock="Right" Content="Forcer cette valeur" Margin="10,0,0,0" Padding="8,1"
+                                Click="ForcerSaisie" ToolTip="Garder la valeur saisie malgré l'avertissement."/>
+                        <TextBlock FontFamily="{StaticResource Icones}" Text="&#xE783;" Foreground="#F85149" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TexteErreur" Foreground="{StaticResource Texte}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </DockPanel>
+                </Border>
                 <TextBlock Text="{Binding Chemin}" Foreground="{StaticResource TexteSecondaire}"/>
             </DockPanel>
         </Border>

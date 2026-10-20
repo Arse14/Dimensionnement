@@ -168,16 +168,19 @@ public static class CalculProjet
         foreach (var b in manquantes)
             note.Verifier($"Source {SourcesCommande.Libelle(b.Tension)}", false, b.Raison, "NF EN 60204-1, 7.2.7 et 9.1.1", StatutCalcul.Alerte);
         var securite = CalculSecurite.Calculer(projet, departs, catalogueSecurite, capteursSecurite);
-        var automate = CalculAutomate.Calculer(projet.Automate, catalogue, cartes, ihm);
+        var automate = CalculAutomate.Calculer(projet.Automate, catalogue, cartes, ihm,
+            projet.PeripheriquesMachine.Where(p => p.Type == TypePeripherique.IlotElectrovannes && p.SurReseau).Sum(p => Math.Max(0, p.Quantite)));
 
         var arbre = new ElementMateriel { Repere = "Réseau", Famille = "Réseau",
             Designation = $"Arrivée {Libelle(reseau.Alimentation)}, {reseau.Slt}", Calibre = $"Icc {N(reseau.IccKiloAmperes)} kA" };
         var conducteurs = reseau.Alimentation switch { TypeAlimentation.Mono230 => 3, TypeAlimentation.Tri400 => 4, _ => 5 };
-        var tete = arbre
+        var sectionneur = arbre
             .Ajouter(new ElementMateriel { Repere = "W0", Famille = "Câble", Designation = $"Câble d'arrivée cuivre {reseau.CableArrivee.Isolant}",
                 Calibre = $"{conducteurs}G{N(cable.Section)} mm², {N(reseau.CableArrivee.Longueur)} m" })
             .Ajouter(new ElementMateriel { Repere = "QS0", Famille = "Interrupteur-sectionneur", Designation = "Interrupteur-sectionneur général",
-                Calibre = A(qs) }.Avec(qs, CalculDepart.NombrePoles(reseau.Alimentation, reseau.Slt)))
+                Calibre = A(qs) }.Avec(qs, CalculDepart.NombrePoles(reseau.Alimentation, reseau.Slt)));
+        AjouterProtectionsDeTete(sectionneur, reseau, note);
+        var tete = sectionneur
             .Ajouter(new ElementMateriel { Repere = "QG", Famille = "Disjoncteur", Designation = "Disjoncteur général",
                 Calibre = $"{A(qg)}, {CalculDepart.Poles(reseau.Alimentation, reseau.Slt)}" }
                 .Avec(qg, CalculDepart.NombrePoles(reseau.Alimentation, reseau.Slt), courbe: "C"));
@@ -203,6 +206,9 @@ public static class CalculProjet
         foreach (var appareil in automate.Appareils)
             Alimentation(ConsommationCommande.Automate).Ajouter(appareil);
 
+        foreach (var appareil in PeripheriquesMachine(projet))
+            Alimentation(ConsommationCommande.Actionneurs).Ajouter(appareil);
+
         var resultatReferences = CatalogueReferences.Appliquer(arbre, projet.References, references ?? CatalogueReferences.Charger());
         foreach (var km in arbre.Parcourir().Where(e => e.Famille == "Contacteur"))
         {
@@ -211,6 +217,8 @@ public static class CalculProjet
             if (projet.TensionBobines == TensionCommande.Alternatif230)
                 km.Fabricant = km.Fabricant.Replace("24-60 V AC/DC", "100-250 V AC/DC");
         }
+
+        AppliquerRenommages(arbre, projet);
 
         var resultat = new ResultatProjet
         {
@@ -227,6 +235,53 @@ public static class CalculProjet
         return resultat;
     }
 
+    /// <summary>Remplace repères et désignations par les noms choisis par l'utilisateur ; le repère calculé reste la clé.</summary>
+    public static void AppliquerRenommages(ElementMateriel arbre, Projet projet)
+    {
+        if (projet.Renommages.Count == 0) return;
+        foreach (var e in arbre.Parcourir())
+        {
+            if (!projet.Renommages.TryGetValue(e.CleRenommage, out var r)) continue;
+            e.RepereOrigine = e.RepereOrigine;
+            if (r.Repere.Trim() is { Length: > 0 } repere) e.Repere = repere;
+            if (r.Designation.Trim() is { Length: > 0 } designation) e.Designation = designation;
+        }
+    }
+
+    /// <summary>Calibre du disjoncteur de déconnexion d'un parafoudre de type 2 (In 20 kA), en A.</summary>
+    public const double ProtectionParafoudre = 25;
+
+    /// <summary>Parafoudre de type 2 et relais de contrôle de phases branchés en aval du sectionneur général.</summary>
+    static void AjouterProtectionsDeTete(ElementMateriel sectionneur, Reseau reseau, NoteDeCalcul note)
+    {
+        var poles = CalculDepart.NombrePoles(reseau.Alimentation, reseau.Slt);
+        if (reseau.Parafoudre)
+        {
+            var polesParafoudre = reseau.Alimentation == TypeAlimentation.Mono230 ? 2 : reseau.Slt == SchemaLiaisonTerre.TT ? 4 : 3;
+            sectionneur
+                .Ajouter(new ElementMateriel { Repere = "Q-PF", Famille = "Disjoncteur", Designation = "Disjoncteur de déconnexion du parafoudre",
+                    Calibre = $"{A(ProtectionParafoudre)}, courbe C" }.Avec(ProtectionParafoudre, poles, courbe: "C"))
+                .Ajouter(new ElementMateriel { Repere = "F-PF", Famille = "Parafoudre",
+                    Designation = $"Parafoudre type 2, In 20 kA, Up ≤ 1,5 kV, {polesParafoudre} pôles" +
+                        (reseau.Slt == SchemaLiaisonTerre.TT ? " (3P+N, montage « 3+1 » en TT)" : ""),
+                    Calibre = "In 20 kA, Imax 40 kA" }.Avec(poles: polesParafoudre));
+            note.Info("Parafoudre", "Parafoudre de type 2 en tête d'armoire, protégé par un disjoncteur de déconnexion " +
+                $"{A(ProtectionParafoudre)} courbe C ; câblage le plus court possible (L ≤ 0,5 m au total) vers la barre de terre.",
+                "NF C 15-100, 534 ; guide UTE C 15-443");
+        }
+        if (reseau.ControlePhases && reseau.Alimentation != TypeAlimentation.Mono230)
+        {
+            sectionneur
+                .Ajouter(new ElementMateriel { Repere = "Q-KCP", Famille = "Disjoncteur", Designation = "Protection du relais de contrôle de phases",
+                    Calibre = "2 A, courbe C" }.Avec(2, 3, courbe: "C"))
+                .Ajouter(new ElementMateriel { Repere = "KCP", Famille = "Relais de contrôle",
+                    Designation = "Relais de contrôle de phases (ordre, absence, déséquilibre)", Calibre = "3 × 400 V" });
+            note.Info("Contrôle de phases", "Le contact du relais de contrôle de phases est câblé dans la chaîne de mise sous tension " +
+                "(ou en entrée de l'automate) pour interdire le démarrage sur un ordre de phases inversé ou une phase manquante.",
+                "NF EN 60204-1, 7.5");
+        }
+    }
+
     /// <summary>Consommateurs 24 V DC du projet : ceux déclarés à la main et ceux déduits du matériel.</summary>
     public static IReadOnlyList<ConsommationCommande> Consommateurs24V(Projet projet, IReadOnlyList<ModeleSecurite>? securite = null,
         IReadOnlyList<CpuAutomate>? cpus = null, IReadOnlyList<CarteEs>? cartes = null, IReadOnlyList<ModeleIhm>? ihm = null,
@@ -237,8 +292,47 @@ public static class CalculProjet
                 c.CourantMa * c.Quantite / 1000, Tension: c.Tension))
             .Concat(CalculSecurite.Consommations(projet, securite, capteurs).Select(c => c with { Poste = ConsommationCommande.Securite }))
             .Concat(CalculAutomate.Consommations(projet.Automate, cpus, cartes, ihm).Select(c => c with { Poste = ConsommationCommande.Automate }))
+            .Concat(projet.PeripheriquesMachine.Where(p => p.Quantite > 0 && p.Elements > 0 && p.CourantMa > 0)
+                .Select(p => new ConsommationCommande(
+                    $"{LibellePeripherique(p)} × {p.Quantite} ({p.Elements} × {p.CourantMa:0} mA, {p.Simultaneite * 100:0} % simultanés)",
+                    CourantPeripherique(p), ConsommationCommande.Actionneurs)))
             .Concat(projet.EstimerPeripherie24V ? Peripherie24V(projet) : Enumerable.Empty<ConsommationCommande>())
             .ToList();
+
+    public static string LibellePeripherique(PeripheriqueMachine p) =>
+        p.Nom is { Length: > 0 } n ? n : p.Type switch
+        {
+            TypePeripherique.IlotElectrovannes => "Îlot d'électrovannes",
+            TypePeripherique.ColonneLumineuse => "Colonne lumineuse",
+            _ => "Éclairage machine 24 V",
+        };
+
+    /// <summary>Courant appelé sur le 24 V DC par un périphérique (toutes quantités), en A.</summary>
+    public static double CourantPeripherique(PeripheriqueMachine p) =>
+        Math.Max(0, p.Quantite) * Math.Max(0, p.Elements) * p.CourantMa / 1000 * Math.Clamp(p.Simultaneite, 0, 1);
+
+    /// <summary>Périphériques de la machine : montés hors armoire, repris au devis et rattachés à leur alimentation 24 V.</summary>
+    public static IEnumerable<ElementMateriel> PeripheriquesMachine(Projet projet)
+    {
+        var numeros = new Dictionary<string, int>();
+        foreach (var p in projet.PeripheriquesMachine.Where(p => p.Quantite > 0))
+        {
+            var prefixe = p.Type switch { TypePeripherique.IlotElectrovannes => "YV", TypePeripherique.ColonneLumineuse => "HL", _ => "EL" };
+            var n = numeros[prefixe] = numeros.GetValueOrDefault(prefixe) + 1;
+            var detail = p.Type switch
+            {
+                TypePeripherique.IlotElectrovannes => $"{p.Elements} électrovanne(s), {(p.SurReseau ? "bus de terrain" : "sorties TOR")}",
+                TypePeripherique.ColonneLumineuse => $"{p.Elements} étage(s)",
+                _ => $"{p.Elements} réglette(s)",
+            };
+            yield return new ElementMateriel
+            {
+                Repere = $"{prefixe}{n}", Famille = "Périphérique machine", Quantite = p.Quantite, HorsArmoire = true,
+                Designation = LibellePeripherique(p) + (p.Marque.Length > 0 ? $" {p.Marque}" : ""),
+                Calibre = $"{detail}, 24 V DC, {A(CourantPeripherique(p))}",
+            };
+        }
+    }
 
     /// <summary>Courant d'une bobine de contacteur 24 V DC basse consommation (2,4 W), en A.</summary>
     public const double BobineContacteur = 0.1;
@@ -270,14 +364,15 @@ public static class CalculProjet
     public static int Contacteurs(Projet projet)
     {
         var redondants = projet.Securite.Fonctions.Where(f => CalculSecurite.Redondant(f.PLr)).SelectMany(f => f.Departs).Distinct()
-            .Count(n => projet.Departs.Any(d => d.Numero == n && d is DepartMoteur { Demarrage: not ModeDemarrage.Variateur }));
+            .Count(n => projet.Departs.Any(d => d.Numero == n && d is DepartMoteur { SurVariateur: false }));
         return redondants + projet.Departs.OfType<DepartMoteur>().Sum(m => m.Demarrage switch
         {
             ModeDemarrage.Inverseur => 2,
             ModeDemarrage.EtoileTriangle => 3,
-            ModeDemarrage.Variateur or ModeDemarrage.DemarreurProgressif => 0,
+            ModeDemarrage.Variateur or ModeDemarrage.Servomoteur or ModeDemarrage.DemarreurProgressif => 0,
+            ModeDemarrage.DeuxVitesses => m.TypeDeuxVitesses == TypeDeuxVitesses.Dahlander ? 3 : 2,
             _ => 1,
-        });
+        } + (m.Frein && m.AlimentationFrein == AlimentationFrein.Separee230 ? 1 : 0));
     }
 
     /// <summary>Périphérie 24 V estimée : bobines de contacteurs, capteurs et actionneurs des E/S de l'automate et des stations de l'armoire.</summary>
@@ -291,6 +386,8 @@ public static class CalculProjet
             yield return new($"Bobines de contacteurs × {contacteurs} ({SourcesCommande.Libelle(t)}, {puissance}, estimation)",
                 contacteurs * CourantBobine(t), ConsommationCommande.Actionneurs, t);
         }
+        foreach (var m in projet.Departs.OfType<DepartMoteur>().Where(m => m.Frein && m.AlimentationFrein == AlimentationFrein.Continu24))
+            yield return new($"Frein du moteur D{m.Numero:00} ({m.PuissanceFreinW:0} W)", m.PuissanceFreinW / 24, ConsommationCommande.Actionneurs);
         var a = projet.Automate;
         if (!a.Actif) yield break;
         var stations = a.Stations.Where(s => s.DansArmoire).ToList();

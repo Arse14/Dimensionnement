@@ -8,6 +8,7 @@ namespace Dimensionnement.Core.Modele;
 [JsonDerivedType(typeof(DepartResistif), "resistif")]
 [JsonDerivedType(typeof(DepartPrise), "prise")]
 [JsonDerivedType(typeof(DepartGenerique), "generique")]
+[JsonDerivedType(typeof(DepartCoffret), "coffret")]
 [JsonDerivedType(typeof(DepartAlimentation24V), "alimentation24v")]
 public abstract class Depart
 {
@@ -54,12 +55,26 @@ public class DepartMoteur : Depart
     /// <summary>Marque du variateur (démarrage par variateur seulement).</summary>
     public MarqueVariateur MarqueVariateur { get; set; } = MarqueVariateur.Projet;
 
+    /// <summary>Moteur deux vitesses : couplage et puissance en petite vitesse (0 = moitié de la grande vitesse).</summary>
+    public TypeDeuxVitesses TypeDeuxVitesses { get; set; } = TypeDeuxVitesses.Dahlander;
+    public double PuissancePetiteVitesseKw { get; set; }
+
+    /// <summary>Moteur-frein : alimentation et puissance du frein.</summary>
+    public bool Frein { get; set; }
+    public AlimentationFrein AlimentationFrein { get; set; } = AlimentationFrein.Separee230;
+    public double PuissanceFreinW { get; set; } = 25;
+
+    /// <summary>Moteur commandé par un variateur ou un servovariateur (électronique de puissance, câble blindé).</summary>
+    [JsonIgnore] public bool SurVariateur => Demarrage is ModeDemarrage.Variateur or ModeDemarrage.Servomoteur;
+
     public override string TypeLibelle => Demarrage switch
     {
         ModeDemarrage.Direct => "Moteur, démarrage direct",
         ModeDemarrage.Inverseur => "Moteur, inverseur de sens",
         ModeDemarrage.EtoileTriangle => "Moteur, étoile-triangle",
         ModeDemarrage.DemarreurProgressif => "Moteur, démarreur progressif",
+        ModeDemarrage.Servomoteur => "Servomoteur",
+        ModeDemarrage.DeuxVitesses => "Moteur deux vitesses",
         _ => "Moteur sur variateur",
     };
     public override string PrefixeRecepteur => "M";
@@ -100,6 +115,19 @@ public class DepartGenerique : Depart
 
     public override string TypeLibelle => "Charge générique";
     public override string PrefixeRecepteur => "E";
+}
+
+/// <summary>
+/// Départ vers un coffret déporté (coffret de machine, sous-armoire) : la puissance installée du coffret,
+/// réduite par sa propre simultanéité, dimensionne la protection et le câble de liaison.
+/// </summary>
+public class DepartCoffret : DepartGenerique
+{
+    /// <summary>Coefficient de simultanéité interne au coffret.</summary>
+    public double Simultaneite { get; set; } = 0.8;
+
+    public override string TypeLibelle => "Coffret déporté";
+    public override string PrefixeRecepteur => "AC";
 }
 
 /// <summary>
@@ -226,4 +254,35 @@ public class Consommateur24V
     /// <summary>Courant unitaire, en mA.</summary>
     public double CourantMa { get; set; }
     public int Quantite { get; set; } = 1;
+}
+
+/// <summary>
+/// Périphérique monté sur la machine et alimenté par l'armoire (îlot d'électrovannes, colonne lumineuse, éclairage 24 V) :
+/// repris au bilan 24 V et au devis, hors de la plaque de fond.
+/// </summary>
+public class PeripheriqueMachine
+{
+    public string Nom { get; set; } = "";
+    public TypePeripherique Type { get; set; } = TypePeripherique.IlotElectrovannes;
+    public string Marque { get; set; } = "";
+    public int Quantite { get; set; } = 1;
+
+    /// <summary>Nombre d'électrovannes de l'îlot ou d'étages de la colonne.</summary>
+    public int Elements { get; set; } = 8;
+
+    /// <summary>Consommation d'un élément (bobine, étage, réglette) en mA.</summary>
+    public double CourantMa { get; set; } = 40;
+
+    /// <summary>Îlot raccordé au bus de terrain de l'automate (PROFINET, EtherNet/IP…) plutôt qu'aux sorties TOR.</summary>
+    public bool SurReseau { get; set; } = true;
+
+    /// <summary>Part des éléments alimentés en même temps.</summary>
+    public double Simultaneite { get; set; } = 0.5;
+
+    public static double CourantParDefaut(TypePeripherique t) => t switch
+    {
+        TypePeripherique.IlotElectrovannes => 40,
+        TypePeripherique.ColonneLumineuse => 60,
+        _ => 400,
+    };
 }

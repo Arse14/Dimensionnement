@@ -22,6 +22,9 @@ public record ModeleVariateur
     public double Pertes { get; init; }
     public string Reference { get; init; } = "";
 
+    /// <summary>Servovariateur (servomoteur et codeur), à part des variateurs de fréquence.</summary>
+    public bool Servo { get; init; }
+
     /// <summary>Filtre CEM réseau (catégorie C2) intégré au variateur : pas de filtre à ajouter au devis.</summary>
     public bool FiltreCemIntegre { get; init; }
 
@@ -73,9 +76,10 @@ public static class CatalogueVariateurs
     /// Plus petit calibre de la marque couvrant la puissance et le courant du moteur, la gamme machine compacte
     /// d'abord, puis la gamme usage général.
     /// </summary>
-    public static ModeleVariateur? Choisir(FabricantMateriel fabricant, double kw, double courant, IReadOnlyList<ModeleVariateur> catalogue) =>
+    public static ModeleVariateur? Choisir(FabricantMateriel fabricant, double kw, double courant, IReadOnlyList<ModeleVariateur> catalogue,
+        bool servo = false) =>
         catalogue
-            .Where(v => v.Fabricant.Equals(fabricant.ToString(), StringComparison.OrdinalIgnoreCase)
+            .Where(v => v.Servo == servo && v.Fabricant.Equals(fabricant.ToString(), StringComparison.OrdinalIgnoreCase)
                         && v.Kw >= kw - 1e-6 && v.Courant >= courant - 1e-6)
             .OrderBy(v => v.Rang).ThenBy(v => v.Kw).ThenBy(v => v.Largeur * v.Hauteur)
             .FirstOrDefault();

@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:inf="clr-namespace:Dimensionnement.App.Infrastructure"
         xmlns:calc="clr-namespace:Dimensionnement.Core.Calculs;assembly=Dimensionnement.Core"
+        xmlns:arm="clr-namespace:Dimensionnement.Core.Armoire;assembly=Dimensionnement.Core"
         Title="Vue d'armoire" Width="1200" Height="900" MinWidth="800" MinHeight="600"
         Icon="/Ressources/icone.ico"
         WindowStartupLocation="CenterOwner" Background="{StaticResource Fond}"
@@ -49,14 +50,36 @@
             </DockPanel>
         </Border>
 
-        <Border DockPanel.Dock="Right" Width="360" Style="{StaticResource CadrePanneau}" Margin="8,0,0,0">
+        <Border DockPanel.Dock="Right" Width="380" Style="{StaticResource CadrePanneau}" Margin="8,0,0,0">
             <DockPanel>
-                <TextBlock DockPanel.Dock="Top" Text="CONTRÔLES DE L'IMPLANTATION" Style="{StaticResource TitrePanneau}"/>
+                <DockPanel DockPanel.Dock="Top">
+                    <CheckBox x:Name="CaseExplications" DockPanel.Dock="Right" Content="Comment c'est calculé ?" VerticalAlignment="Center"
+                              ToolTip="Explique comment sont obtenus l'encombrement, les zones, les rangées, les borniers, l'enveloppe, les goulottes et le champ magnétique."/>
+                    <TextBlock Text="CONTRÔLES DE L'IMPLANTATION" Style="{StaticResource TitrePanneau}"/>
+                </DockPanel>
                 <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
-                           Text="Glissez un appareil, un rail ou une goulotte ajoutés pour les déplacer (pas de 5 mm) ; clic droit sur un rail ou une goulotte ajoutés pour sa longueur, son modèle ou sa suppression. Chaque rangée prend la zone de l'appareil le plus émissif qu'elle porte : propre en vert, intermédiaire en bleu, sale en rouge hachuré. Goulottes dimensionnées d'après les fils estimés (remplissage ≤ 50 %). Courbes du champ magnétique calculé selon le courant de chaque source : 10 A/m en orange, 30 A/m en framboise (immunité industrielle NF EN 61000-6-2), 100 A/m en violet. Survolez un appareil pour le champ qu'il reçoit ou émet."/>
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding Resultat.Armoire.Note.Lignes}" ItemTemplate="{StaticResource LigneControle}"/>
-                </ScrollViewer>
+                           Text="Glissez un appareil, un rail ou une goulotte ajoutés pour les déplacer (pas de 5 mm) ; clic droit sur un appareil pour le renommer, sur un rail ou une goulotte ajoutés pour sa longueur, son modèle ou sa suppression. Survolez un appareil pour ses cotes et le champ qu'il reçoit ou émet."/>
+                <Grid>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  Visibility="{Binding IsChecked, ElementName=CaseExplications, Converter={StaticResource FauxVisible}}">
+                        <ItemsControl ItemsSource="{Binding Resultat.Armoire.Note.Lignes}" ItemTemplate="{StaticResource LigneControle}"/>
+                    </ScrollViewer>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  Visibility="{Binding IsChecked, ElementName=CaseExplications, Converter={StaticResource VraiVisible}}">
+                        <ItemsControl ItemsSource="{x:Static arm:ExplicationsArmoire.Rubriques}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type arm:Explication}">
+                                    <Border BorderBrush="{StaticResource Bordure}" BorderThickness="0,0,0,1" Padding="0,6">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Titre}" FontWeight="SemiBold" Foreground="{StaticResource Accent}"/>
+                                            <TextBlock Text="{Binding Texte}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
             </DockPanel>
         </Border>
 
@@ -66,7 +89,8 @@
                             AfficherZones="{Binding IsChecked, ElementName=CaseZones}"
                             AfficherChamps="{Binding IsChecked, ElementName=CaseChamps}"
                             DeplacerCommande="{Binding DeplacerAppareil}"
-                            ActionCommande="{Binding ModifierArmoire}"/>
+                            ActionCommande="{Binding ModifierArmoire}"
+                            RenommerCommande="{Binding RenommerElement}"/>
         </Border>
     </DockPanel>
 </Window>

@@ -12,7 +12,8 @@
   "pertes": 40,
   "reference": "ACS380-040S-01A8-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -27,7 +28,8 @@
   "pertes": 46,
   "reference": "ACS380-040S-02A6-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -42,7 +44,8 @@
   "pertes": 56,
   "reference": "ACS380-040S-03A3-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -57,7 +60,8 @@
   "pertes": 67,
   "reference": "ACS380-040S-04A0-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -72,7 +76,8 @@
   "pertes": 87,
   "reference": "ACS380-040S-05A6-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -87,7 +92,8 @@
   "pertes": 109,
   "reference": "ACS380-040S-07A2-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -102,7 +108,8 @@
   "pertes": 137,
   "reference": "ACS380-040S-09A4-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -117,7 +124,8 @@
   "pertes": 179,
   "reference": "ACS380-040S-12A6-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -132,7 +140,8 @@
   "pertes": 235,
   "reference": "ACS380-040S-17A0-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -147,7 +156,8 @@
   "pertes": 333,
   "reference": "ACS380-040S-25A0-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -162,7 +172,8 @@
   "pertes": 445,
   "reference": "ACS380-040S-032A-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -177,7 +188,8 @@
   "pertes": 543,
   "reference": "ACS380-040S-038A-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -192,7 +204,8 @@
   "pertes": 641,
   "reference": "ACS380-040S-045A-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -207,7 +220,8 @@
   "pertes": 46,
   "reference": "ACS580-01-02A6-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -222,7 +236,8 @@
   "pertes": 56,
   "reference": "ACS580-01-03A3-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -237,7 +252,8 @@
   "pertes": 67,
   "reference": "ACS580-01-04A0-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -252,7 +268,8 @@
   "pertes": 87,
   "reference": "ACS580-01-05A6-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -267,7 +284,8 @@
   "pertes": 109,
   "reference": "ACS580-01-07A2-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -282,7 +300,8 @@
   "pertes": 137,
   "reference": "ACS580-01-09A4-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -297,7 +316,8 @@
   "pertes": 179,
   "reference": "ACS580-01-12A7-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -312,7 +332,8 @@
   "pertes": 235,
   "reference": "ACS580-01-017A-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -327,7 +348,8 @@
   "pertes": 333,
   "reference": "ACS580-01-025A-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -342,7 +364,8 @@
   "pertes": 445,
   "reference": "ACS580-01-032A-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -357,7 +380,8 @@
   "pertes": 543,
   "reference": "ACS580-01-038A-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -372,7 +396,8 @@
   "pertes": 641,
   "reference": "ACS580-01-045A-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -387,7 +412,8 @@
   "pertes": 865,
   "reference": "ACS580-01-061A-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -402,7 +428,8 @@
   "pertes": 1061,
   "reference": "ACS580-01-073A-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -417,7 +444,8 @@
   "pertes": 1285,
   "reference": "ACS580-01-088A-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -432,7 +460,8 @@
   "pertes": 1565,
   "reference": "ACS580-01-106A-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -447,7 +476,8 @@
   "pertes": 2125,
   "reference": "ACS580-01-145A-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -462,7 +492,8 @@
   "pertes": 2545,
   "reference": "ACS580-01-169A-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -477,7 +508,8 @@
   "pertes": 3105,
   "reference": "ACS580-01-206A-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -492,7 +524,8 @@
   "pertes": 3721,
   "reference": "ACS580-01-246A-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -507,7 +540,8 @@
   "pertes": 4505,
   "reference": "ACS580-01-293A-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -522,7 +556,8 @@
   "pertes": 5625,
   "reference": "ACS580-01-363A-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "ABB",
@@ -537,7 +572,8 @@
   "pertes": 7025,
   "reference": "ACS580-01-430A-4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -552,7 +588,8 @@
   "pertes": 40,
   "reference": "6SL3210-1KE11-8AF2",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -567,7 +604,8 @@
   "pertes": 46,
   "reference": "6SL3210-1KE12-3AF2",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -582,7 +620,8 @@
   "pertes": 56,
   "reference": "6SL3210-1KE13-2AF2",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -597,7 +636,8 @@
   "pertes": 67,
   "reference": "6SL3210-1KE14-3AF2",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -612,7 +652,8 @@
   "pertes": 87,
   "reference": "6SL3210-1KE15-8AF2",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -627,7 +668,8 @@
   "pertes": 109,
   "reference": "6SL3210-1KE17-5AF1",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -642,7 +684,8 @@
   "pertes": 137,
   "reference": "6SL3210-1KE18-8AF1",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -657,7 +700,8 @@
   "pertes": 179,
   "reference": "6SL3210-1KE21-3AF1",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -672,7 +716,8 @@
   "pertes": 235,
   "reference": "6SL3210-1KE21-7AF1",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -687,7 +732,8 @@
   "pertes": 333,
   "reference": "6SL3210-1KE22-6AF1",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -702,7 +748,8 @@
   "pertes": 445,
   "reference": "6SL3210-1KE23-2AF1",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -717,7 +764,8 @@
   "pertes": 543,
   "reference": "6SL3210-1KE23-8AF1",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -732,7 +780,8 @@
   "pertes": 641,
   "reference": "6SL3210-1KE24-4AF1",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -747,7 +796,8 @@
   "pertes": 865,
   "reference": "6SL3210-1KE26-0AF1",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -762,7 +812,8 @@
   "pertes": 1061,
   "reference": "6SL3210-1KE27-0AF1",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -777,7 +828,8 @@
   "pertes": 1285,
   "reference": "6SL3210-1KE28-4AF1",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -792,7 +844,8 @@
   "pertes": 1565,
   "reference": "6SL3210-1KE31-1AF1",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -807,7 +860,8 @@
   "pertes": 2125,
   "reference": "6SL3210-1KE31-4AF1",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -822,7 +876,8 @@
   "pertes": 2545,
   "reference": "6SL3210-1KE31-7AF1",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -837,7 +892,8 @@
   "pertes": 3105,
   "reference": "6SL3210-1KE32-1AF1",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Siemens",
@@ -852,7 +908,8 @@
   "pertes": 3721,
   "reference": "6SL3210-1KE32-4AF1",
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -867,7 +924,8 @@
   "pertes": 35,
   "reference": "ATV320U04N4C",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -882,7 +940,8 @@
   "pertes": 40,
   "reference": "ATV320U06N4C",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -897,7 +956,8 @@
   "pertes": 46,
   "reference": "ATV320U07N4C",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -912,7 +972,8 @@
   "pertes": 56,
   "reference": "ATV320U11N4C",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -927,7 +988,8 @@
   "pertes": 67,
   "reference": "ATV320U15N4C",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -942,7 +1004,8 @@
   "pertes": 87,
   "reference": "ATV320U22N4C",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -957,7 +1020,8 @@
   "pertes": 109,
   "reference": "ATV320U30N4C",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -972,7 +1036,8 @@
   "pertes": 137,
   "reference": "ATV320U40N4C",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -987,7 +1052,8 @@
   "pertes": 179,
   "reference": "ATV320U55N4C",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -1002,7 +1068,8 @@
   "pertes": 235,
   "reference": "ATV320U75N4C",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -1017,7 +1084,8 @@
   "pertes": 333,
   "reference": "ATV320D11N4C",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -1032,7 +1100,8 @@
   "pertes": 445,
   "reference": "ATV320D15N4C",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -1047,7 +1116,8 @@
   "pertes": 543,
   "reference": "ATV630D18N4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -1062,7 +1132,8 @@
   "pertes": 641,
   "reference": "ATV630D22N4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -1077,7 +1148,8 @@
   "pertes": 865,
   "reference": "ATV630D30N4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -1092,7 +1164,8 @@
   "pertes": 1061,
   "reference": "ATV630D37N4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -1107,7 +1180,8 @@
   "pertes": 1285,
   "reference": "ATV630D45N4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -1122,7 +1196,8 @@
   "pertes": 1565,
   "reference": "ATV630D55N4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -1137,7 +1212,8 @@
   "pertes": 2125,
   "reference": "ATV630D75N4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -1152,7 +1228,8 @@
   "pertes": 2545,
   "reference": "ATV630D90N4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -1167,7 +1244,8 @@
   "pertes": 3105,
   "reference": "ATV630C11N4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -1182,7 +1260,8 @@
   "pertes": 3721,
   "reference": "ATV630C13N4",
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "servo": false
  },
  {
   "fabricant": "Schneider",
@@ -1196,6 +1275,263 @@
   "profondeur": 420,
   "pertes": 4505,
   "reference": "ATV630C16N4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true,
+  "servo": false
+ },
+ {
+  "fabricant": "Siemens",
+  "gamme": "SINAMICS V90 PROFINET (servo)",
+  "rang": 1,
+  "taille": "FSAA",
+  "kw": 0.4,
+  "courant": 1.2,
+  "largeur": 60,
+  "hauteur": 180,
+  "profondeur": 200,
+  "pertes": 25,
+  "reference": "6SL3210-5FE10-4UA0",
+  "servo": true,
+  "filtreCemIntegre": true,
+  "blindageFourni": false
+ },
+ {
+  "fabricant": "Siemens",
+  "gamme": "SINAMICS V90 PROFINET (servo)",
+  "rang": 1,
+  "taille": "FSA",
+  "kw": 0.75,
+  "courant": 2.1,
+  "largeur": 80,
+  "hauteur": 180,
+  "profondeur": 200,
+  "pertes": 35,
+  "reference": "6SL3210-5FE10-8UA0",
+  "servo": true,
+  "filtreCemIntegre": true,
+  "blindageFourni": false
+ },
+ {
+  "fabricant": "Siemens",
+  "gamme": "SINAMICS V90 PROFINET (servo)",
+  "rang": 1,
+  "taille": "FSB",
+  "kw": 1.0,
+  "courant": 3.0,
+  "largeur": 100,
+  "hauteur": 180,
+  "profondeur": 220,
+  "pertes": 45,
+  "reference": "6SL3210-5FE11-0UA0",
+  "servo": true,
+  "filtreCemIntegre": true,
+  "blindageFourni": false
+ },
+ {
+  "fabricant": "Siemens",
+  "gamme": "SINAMICS V90 PROFINET (servo)",
+  "rang": 1,
+  "taille": "FSB",
+  "kw": 1.5,
+  "courant": 5.3,
+  "largeur": 100,
+  "hauteur": 180,
+  "profondeur": 220,
+  "pertes": 60,
+  "reference": "6SL3210-5FE11-5UA0",
+  "servo": true,
+  "filtreCemIntegre": true,
+  "blindageFourni": false
+ },
+ {
+  "fabricant": "Siemens",
+  "gamme": "SINAMICS V90 PROFINET (servo)",
+  "rang": 1,
+  "taille": "FSB",
+  "kw": 2.0,
+  "courant": 7.8,
+  "largeur": 100,
+  "hauteur": 180,
+  "profondeur": 220,
+  "pertes": 75,
+  "reference": "6SL3210-5FE12-0UA0",
+  "servo": true,
+  "filtreCemIntegre": true,
+  "blindageFourni": false
+ },
+ {
+  "fabricant": "Siemens",
+  "gamme": "SINAMICS V90 PROFINET (servo)",
+  "rang": 1,
+  "taille": "FSC",
+  "kw": 3.5,
+  "courant": 11,
+  "largeur": 140,
+  "hauteur": 260,
+  "profondeur": 240,
+  "pertes": 120,
+  "reference": "6SL3210-5FE13-5UA0",
+  "servo": true,
+  "filtreCemIntegre": true,
+  "blindageFourni": false
+ },
+ {
+  "fabricant": "Siemens",
+  "gamme": "SINAMICS V90 PROFINET (servo)",
+  "rang": 1,
+  "taille": "FSC",
+  "kw": 5.0,
+  "courant": 12.6,
+  "largeur": 140,
+  "hauteur": 260,
+  "profondeur": 240,
+  "pertes": 160,
+  "reference": "6SL3210-5FE15-0UA0",
+  "servo": true,
+  "filtreCemIntegre": true,
+  "blindageFourni": false
+ },
+ {
+  "fabricant": "Siemens",
+  "gamme": "SINAMICS V90 PROFINET (servo)",
+  "rang": 1,
+  "taille": "FSC",
+  "kw": 7.0,
+  "courant": 13.2,
+  "largeur": 140,
+  "hauteur": 260,
+  "profondeur": 240,
+  "pertes": 210,
+  "reference": "6SL3210-5FE17-0UA0",
+  "servo": true,
+  "filtreCemIntegre": true,
+  "blindageFourni": false
+ },
+ {
+  "fabricant": "Schneider",
+  "gamme": "Lexium 32M (servo)",
+  "rang": 1,
+  "taille": "1",
+  "kw": 0.4,
+  "courant": 1.5,
+  "largeur": 48,
+  "hauteur": 270,
+  "profondeur": 225,
+  "pertes": 25,
+  "reference": "LXM32MU60N4",
+  "servo": true,
+  "filtreCemIntegre": true,
+  "blindageFourni": true
+ },
+ {
+  "fabricant": "Schneider",
+  "gamme": "Lexium 32M (servo)",
+  "rang": 1,
+  "taille": "1",
+  "kw": 0.9,
+  "courant": 3.0,
+  "largeur": 48,
+  "hauteur": 270,
+  "profondeur": 225,
+  "pertes": 40,
+  "reference": "LXM32MD12N4",
+  "servo": true,
+  "filtreCemIntegre": true,
+  "blindageFourni": true
+ },
+ {
+  "fabricant": "Schneider",
+  "gamme": "Lexium 32M (servo)",
+  "rang": 1,
+  "taille": "2",
+  "kw": 1.8,
+  "courant": 6.0,
+  "largeur": 68,
+  "hauteur": 270,
+  "profondeur": 225,
+  "pertes": 70,
+  "reference": "LXM32MD18N4",
+  "servo": true,
+  "filtreCemIntegre": true,
+  "blindageFourni": true
+ },
+ {
+  "fabricant": "Schneider",
+  "gamme": "Lexium 32M (servo)",
+  "rang": 1,
+  "taille": "2",
+  "kw": 3.0,
+  "courant": 10,
+  "largeur": 68,
+  "hauteur": 270,
+  "profondeur": 225,
+  "pertes": 110,
+  "reference": "LXM32MD30N4",
+  "servo": true,
+  "filtreCemIntegre": true,
+  "blindageFourni": true
+ },
+ {
+  "fabricant": "Schneider",
+  "gamme": "Lexium 32M (servo)",
+  "rang": 1,
+  "taille": "3",
+  "kw": 7.0,
+  "courant": 24,
+  "largeur": 108,
+  "hauteur": 270,
+  "profondeur": 225,
+  "pertes": 250,
+  "reference": "LXM32MD72N4",
+  "servo": true,
+  "filtreCemIntegre": true,
+  "blindageFourni": true
+ },
+ {
+  "fabricant": "ABB",
+  "gamme": "MicroFlex e190 (servo)",
+  "rang": 1,
+  "taille": "A",
+  "kw": 0.75,
+  "courant": 2.0,
+  "largeur": 62,
+  "hauteur": 180,
+  "profondeur": 190,
+  "pertes": 30,
+  "reference": "",
+  "servo": true,
+  "filtreCemIntegre": true,
+  "blindageFourni": true
+ },
+ {
+  "fabricant": "ABB",
+  "gamme": "MicroFlex e190 (servo)",
+  "rang": 1,
+  "taille": "A",
+  "kw": 1.5,
+  "courant": 4.0,
+  "largeur": 62,
+  "hauteur": 180,
+  "profondeur": 190,
+  "pertes": 55,
+  "reference": "",
+  "servo": true,
+  "filtreCemIntegre": true,
+  "blindageFourni": true
+ },
+ {
+  "fabricant": "ABB",
+  "gamme": "MicroFlex e190 (servo)",
+  "rang": 1,
+  "taille": "B",
+  "kw": 3.0,
+  "courant": 9.0,
+  "largeur": 90,
+  "hauteur": 180,
+  "profondeur": 190,
+  "pertes": 110,
+  "reference": "",
+  "servo": true,
   "filtreCemIntegre": true,
   "blindageFourni": true
  }

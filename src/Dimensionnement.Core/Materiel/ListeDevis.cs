@@ -109,13 +109,13 @@ public static class ListeDevis
                 l.Add(new(Accessoires, "Bloc de liaison disjoncteur moteur / contacteur", "", fabricant, "", avecContacteur.Count, "u",
                     Reperes(avecContacteur)));
         }
-        var verrouillages = r.Departs.Count(d => d.Depart is DepartMoteur { Demarrage: ModeDemarrage.Inverseur or ModeDemarrage.EtoileTriangle });
+        var verrouillages = r.Departs.Count(d => d.Depart is DepartMoteur { Demarrage: ModeDemarrage.Inverseur or ModeDemarrage.EtoileTriangle or ModeDemarrage.DeuxVitesses });
         if (verrouillages > 0)
-            l.Add(new(Accessoires, "Verrouillage mécanique entre contacteurs", "inverseurs et étoile-triangle", fabricant, "", verrouillages, "u"));
+            l.Add(new(Accessoires, "Verrouillage mécanique entre contacteurs", "inverseurs, étoile-triangle et deux vitesses", fabricant, "", verrouillages, "u"));
         var etoileTriangle = r.Departs.Count(d => d.Depart is DepartMoteur { Demarrage: ModeDemarrage.EtoileTriangle });
         if (etoileTriangle > 0)
             l.Add(new(Accessoires, "Temporisation étoile-triangle", "bloc additif ou relais temporisé", fabricant, "", etoileTriangle, "u"));
-        if (elements.Any(e => e.Repere == "QS0"))
+        if (elements.Any(e => e.RepereOrigine == "QS0"))
             l.Add(new(Accessoires, "Commande rotative extérieure cadenassable", "poignée rouge sur fond jaune (arrêt d'urgence)", fabricant, "", 1, "u", "QS0",
                 "NF EN 60204-1, 5.3"));
         var modulaires = elements.Count(e => e.Famille == "Disjoncteur" && e.Courant is > 0 and <= 63);
@@ -134,8 +134,12 @@ public static class ListeDevis
             if (sansBlindage.Count > 0)
                 l.Add(new(Accessoires, "Collier de reprise de blindage à 360°", "pour câble moteur blindé", fabricant, "", 2 * sansBlindage.Count, "u",
                     Reperes(sansBlindage), "Kit de blindage non livré avec le variateur : barre de reprise et sortie variateur"));
+            var servos = r.Departs.Where(d => d.Depart is DepartMoteur { Demarrage: ModeDemarrage.Servomoteur }).ToList();
+            if (servos.Count > 0)
+                l.Add(new(Accessoires, "Résistance de freinage externe", "selon le cycle et l'énergie de freinage", fabricant, "", servos.Count, "u",
+                    string.Join(", ", servos.Select(d => $"U{d.Depart.Numero}")), "Si la résistance interne du servovariateur ne suffit pas"));
             // Au-delà de cette longueur, les capacités du câble blindé imposent en général une self de sortie ou un filtre dv/dt.
-            foreach (var d in r.Departs.Where(d => d.Depart is DepartMoteur { Demarrage: ModeDemarrage.Variateur } m && m.Cable.Longueur > LongueurSelfSortie))
+            foreach (var d in r.Departs.Where(d => d.Depart is DepartMoteur { SurVariateur: true } m && m.Cable.Longueur > LongueurSelfSortie))
                 l.Add(new(Accessoires, "Self de sortie moteur / filtre dv/dt", $"{N(d.CourantEmploi)} A, 400 V", fabricant, "", 1, "u", $"D{d.Depart.Numero:00}",
                     $"Câble blindé de {N(d.Depart.Cable.Longueur)} m > {N(LongueurSelfSortie)} m : à confirmer selon la notice du variateur"));
         }
@@ -204,7 +208,7 @@ public static class ListeDevis
                 Math.Ceiling(metres * 1.1 / 2), "u", Remarque: $"{N(metres, 1)} m nécessaires, 10 % de chutes"));
         }
         l.Add(new(Montage, "Barrette de terre / collecteur PE", "cuivre, avec bornes", fabricant, "", a.Cellules, "u"));
-        if (r.Departs.Any(d => d.Depart is DepartMoteur { Demarrage: ModeDemarrage.Variateur }))
+        if (r.Departs.Any(d => d.Depart is DepartMoteur { SurVariateur: true }))
             l.Add(new(Montage, "Barre de reprise de blindage", "cuivre, avec supports", fabricant, "", a.Cellules, "u"));
 
         // Filerie interne estimée par appareil implanté, à la longueur moyenne d'un fil sur la plaque.
@@ -237,12 +241,15 @@ public static class ListeDevis
         foreach (var d in r.Departs.Where(d => d.Depart is not DepartAlimentation24V))
         {
             var dep = d.Depart;
-            var blinde = dep is DepartMoteur { Demarrage: ModeDemarrage.Variateur };
-            var nombre = dep is DepartMoteur { Demarrage: ModeDemarrage.EtoileTriangle } ? 2 : 1;
+            var blinde = dep is DepartMoteur { SurVariateur: true };
+            var nombre = dep is DepartMoteur { Demarrage: ModeDemarrage.EtoileTriangle or ModeDemarrage.DeuxVitesses } ? 2 : 1;
             var conducteurs = Conducteurs(dep.Alimentation);
             var designation = blinde ? "Câble moteur blindé cuivre (CEM), tresse cuivre ≥ 85 %" : $"Câble cuivre {dep.Cable.Isolant}";
             var composition = blinde ? $"{conducteurs}G{N(d.Section)} mm² + blindage" : $"{conducteurs}G{N(d.Section)} mm²";
             cables.Add((designation, composition, nombre * dep.Cable.Longueur, d.Section, blinde, $"W{dep.Numero}"));
+            // Servomoteur : câble codeur blindé préconfectionné, de la même longueur que le câble moteur.
+            if (dep is DepartMoteur { Demarrage: ModeDemarrage.Servomoteur })
+                cables.Add(("Câble codeur blindé préconfectionné", "selon la gamme du servovariateur", dep.Cable.Longueur, 0.5, true, $"W{dep.Numero}.C"));
         }
         foreach (var g in cables.GroupBy(c => (c.Designation, c.Caracteristiques)))
         {
@@ -262,7 +269,7 @@ public static class ListeDevis
         var optiques = r.Securite?.Appareils.SelectMany(a => a.Parcourir()).Where(e => e.Famille == "Capteur de sécurité").ToList() ?? new();
         var connecteurs = new List<(string Connectique, string Repere)>();
         foreach (var e in optiques)
-            foreach (var c in e.Repere.StartsWith("BI") ? new[] { "M12 5 broches (émetteur)", "M12 8 broches (récepteur)" } : new[] { "M12 / connecteur système 12 broches" })
+            foreach (var c in e.RepereOrigine.StartsWith("BI") ? new[] { "M12 5 broches (émetteur)", "M12 8 broches (récepteur)" } : new[] { "M12 / connecteur système 12 broches" })
                 connecteurs.Add((c, e.Repere));
         foreach (var g in connecteurs.GroupBy(c => c.Connectique))
             l.Add(new(Cables, "Câble de raccordement capteur de sécurité, connecteur femelle droit", g.Key, "", "", g.Count(), "u",
@@ -274,7 +281,7 @@ public static class ListeDevis
         if (commande > 0)
         {
             // Les bornes des barrières et scrutateurs ont déjà leurs câbles M12.
-            var bornesOptiques = optiques.Sum(e => e.Repere.StartsWith("BI") ? 9 : 8);
+            var bornesOptiques = optiques.Sum(e => e.RepereOrigine.StartsWith("BI") ? 9 : 8);
             var cablesCommande = (int)Math.Ceiling(Math.Max(0, commande - bornesOptiques) / 8.0);
             l.Add(new(Cables, "Presse-étoupe polyamide (câbles de commande)", "M20, IP68", "", "", cablesCommande, "u", Remarque: Estimation));
         }

@@ -94,7 +94,8 @@ public static class CalculDepart
         ElementMateriel avalProtection;
 
         double courantCable;
-        if (m.Demarrage == ModeDemarrage.Variateur)
+        var servo = m.Demarrage == ModeDemarrage.Servomoteur;
+        if (m.SurVariateur)
         {
             if (m.Protection == TypeProtection.Fusibles)
             {
@@ -117,8 +118,11 @@ public static class CalculDepart
             note.Info("CEM", "Câble moteur blindé, blindage repris à 360° aux deux extrémités, filtre CEM côté réseau.",
                 "Directive 2014/30/UE ; NF EN 61800-3");
             var marque = CatalogueVariateurs.Marque(m.MarqueVariateur, fabricant);
-            var modele = CatalogueVariateurs.Choisir(marque, m.PuissanceKw, ib, variateurs);
-            var variateur = Element($"U{n}", "Variateur", "Variateur de fréquence",
+            var modele = CatalogueVariateurs.Choisir(marque, m.PuissanceKw, ib, variateurs, servo);
+            if (servo)
+                note.Info("Servomoteur", "Servovariateur et servomoteur de la même gamme ; câble moteur et câble codeur blindés préconfectionnés, " +
+                    "résistance de freinage selon le cycle (énergie renvoyée au freinage).", "Documentation du fabricant ; NF EN 61800-5-1");
+            var variateur = Element($"U{n}", "Variateur", servo ? "Servovariateur" : "Variateur de fréquence",
                 modele is null ? $"{N(m.PuissanceKw)} kW, sortie ≥ {A(ib)}" : $"{N(modele.Kw)} kW, {A(modele.Courant)}, {modele.Taille}")
                 .Avec(modele?.Courant ?? ib, puissanceKw: m.PuissanceKw);
             if (modele is not null)
@@ -134,7 +138,7 @@ public static class CalculDepart
             }
             note.Verifier("Variateur retenu", modele is not null,
                 modele is null
-                    ? $"Aucun variateur {marque} du catalogue ne couvre {N(m.PuissanceKw)} kW et {A(ib)} : choisir une autre marque ou compléter le catalogue."
+                    ? $"Aucun {(servo ? "servovariateur" : "variateur")} {marque} du catalogue ne couvre {N(m.PuissanceKw)} kW et {A(ib)} : choisir une autre marque ou compléter le catalogue."
                     : $"{marque} {modele.Gamme}, taille {modele.Taille} : {modele.Reference}, {N(modele.Kw)} kW, {A(modele.Courant)} ; " +
                       $"{N(modele.Largeur)} × {N(modele.Hauteur)} × {N(modele.Profondeur)} mm (L × H × P), pertes ≈ {N(modele.Pertes)} W" +
                       (modele.Verifie ? "." : " (indicatif, à vérifier sur la fiche du fabricant)."),
@@ -156,8 +160,10 @@ public static class CalculDepart
             avalProtection = progressif
                 ? DemarreurProgressif(m, note, ib, avalProtection)
                 : Contacteurs(m, note, ib, avalProtection);
-            avalProtection = avalProtection.Ajouter(Element($"F{n}", "Relais thermique", "Relais de protection thermique",
-                $"réglé à {A(reglage)}").Avec(reglage));
+            // En deux vitesses, chaque vitesse a déjà son relais thermique.
+            if (m.Demarrage != ModeDemarrage.DeuxVitesses)
+                avalProtection = avalProtection.Ajouter(Element($"F{n}", "Relais thermique", "Relais de protection thermique",
+                    $"réglé à {A(reglage)}").Avec(reglage));
         }
         else
         {
@@ -195,17 +201,19 @@ public static class CalculDepart
                 ? DemarreurProgressif(m, note, ib, avalProtection)
                 : Contacteurs(m, note, ib, avalProtection);
         }
-        Differentiel(m, note, m.Demarrage == ModeDemarrage.Variateur
+        Differentiel(m, note, m.SurVariateur
             ? (m.Alimentation is TypeAlimentation.Mono230 or TypeAlimentation.Bi400 ? "F" : "B")
             : "A");
         note.Info("Pouvoir de coupure", $"Pouvoir de coupure ≥ {N(reseau.IccKiloAmperes)} kA (Icc à l'arrivée).", RefProtection);
 
         // En étoile-triangle, deux câbles alimentent les enroulements, chacun parcouru par I / √3.
+        // En deux vitesses, un câble par vitesse (deux enroulements, ou les deux couplages Dahlander).
         var et = m.Demarrage == ModeDemarrage.EtoileTriangle;
         var cable = CalculCable.Dimensionner(note, m.Cable, m.Alimentation,
             et ? courantCable / Math.Sqrt(3) : courantCable, et ? ib / Math.Sqrt(3) : ib,
             m.CosPhi, reseau, chuteAmont);
-        var w = avalProtection.Ajouter(ElementCable(n, m, cable, et ? 2 : 1));
+        Frein(m, note, protection);
+        var w = avalProtection.Ajouter(ElementCable(n, m, cable, et || m.Demarrage == ModeDemarrage.DeuxVitesses ? 2 : 1));
         w.Ajouter(Element($"M{n}", "Moteur", m.Designation is { Length: > 0 } d ? d : "Moteur",
             $"{N(m.PuissanceKw)} kW, In {A(ib)}").Avec(ib, m.Alimentation is TypeAlimentation.Mono230 or TypeAlimentation.Bi400 ? 2 : 3, m.PuissanceKw));
 
@@ -257,9 +265,71 @@ public static class CalculDepart
         return (calibre, sectionneur, fusibles);
     }
 
+    /// <summary>
+    /// Frein d'un moteur-frein : par la boîte à bornes (démarrage direct), ou alimentation séparée 230 V protégée et commandée
+    /// par contacteur, ou frein 24 V DC commandé par relais. Un variateur ne peut pas alimenter le frein par sa sortie.
+    /// </summary>
+    static void Frein(DepartMoteur m, NoteDeCalcul note, ElementMateriel protection)
+    {
+        if (!m.Frein) return;
+        const string RefFrein = "NF EN 60204-1, 7.2.9 et 9.3.4 ; documentation du moteur-frein";
+        var n = m.Numero;
+        var alimentation = m.AlimentationFrein;
+        var direct = m.Demarrage is ModeDemarrage.Direct or ModeDemarrage.Inverseur;
+        if (alimentation == AlimentationFrein.BoiteABornes && !direct)
+        {
+            note.Verifier("Frein", false, "Le frein ne peut pas être alimenté par la boîte à bornes avec ce démarrage (tension variable ou couplage) : " +
+                "alimentation séparée 230 V retenue.", RefFrein, StatutCalcul.Alerte);
+            alimentation = AlimentationFrein.Separee230;
+        }
+        switch (alimentation)
+        {
+            case AlimentationFrein.BoiteABornes:
+                note.Info("Frein", $"Frein {N(m.PuissanceFreinW)} W alimenté par le redresseur de la boîte à bornes : il retombe à l'ouverture du contacteur.",
+                    RefFrein);
+                break;
+            case AlimentationFrein.Separee230:
+                var courant = m.PuissanceFreinW / 230;
+                note.Info("Frein", $"Frein {N(m.PuissanceFreinW)} W en 230 V séparé ({A(courant)}) : disjoncteur Q{n}.F 2 A et contacteur KM{n}.F " +
+                    "commandé avec la marche du moteur (coupure côté continu pour un serrage rapide).", RefFrein);
+                protection.Ajouter(Element($"Q{n}.F", "Disjoncteur", "Disjoncteur du frein", "2 A, 1P+N, courbe C").Avec(2, 2, courbe: "C"))
+                    .Ajouter(Element($"KM{n}.F", "Contacteur", "Contacteur de frein", "AC-3 9 A").Avec(9, 3));
+                break;
+            default:
+                note.Info("Frein", $"Frein {N(m.PuissanceFreinW)} W en 24 V DC ({A(m.PuissanceFreinW / 24)} au bilan 24 V) commandé par le relais KA{n}.F.",
+                    RefFrein);
+                protection.Ajouter(new ElementMateriel
+                {
+                    Repere = $"KA{n}.F", Famille = "Relais", Designation = "Relais de commande du frein 24 V DC",
+                    Calibre = $"1 contact 6 A, ≥ {A(m.PuissanceFreinW / 24)}", LargeurMm = 6.2, HauteurMm = 90, ProfondeurMm = 70, PertesW = 0.5,
+                });
+                break;
+        }
+    }
+
     static ElementMateriel Contacteurs(DepartMoteur m, NoteDeCalcul note, double ib, ElementMateriel protection)
     {
         var n = m.Numero;
+        if (m.Demarrage == ModeDemarrage.DeuxVitesses)
+        {
+            // Protection de court-circuit commune (réglée sur la grande vitesse), un relais thermique par vitesse.
+            var pPv = m.PuissancePetiteVitesseKw > 0 ? m.PuissancePetiteVitesseKw : 0.6 * m.PuissanceKw;
+            var ibPv = m.PuissanceKw > 0 ? ib * pPv / m.PuissanceKw : ib;
+            var kmGv = note.Valeur(CodesCalcul.CalibreContacteur, "Contacteur grande vitesse (AC-3)", ib,
+                Calibres.Superieur(Calibres.ContacteursAc3, ib) ?? ib, "A", "Ie ≥ Ib grande vitesse", $"Ib = {A(ib)}", RefContacteur);
+            var kmPv = Calibres.Superieur(Calibres.ContacteursAc3, ibPv) ?? ibPv;
+            note.Info("Petite vitesse", $"{N(pPv)} kW, Ib ≈ {A(ibPv)} : contacteur AC-3 {A(kmPv)} et relais thermique réglé à {A(ibPv)}." +
+                (m.PuissancePetiteVitesseKw > 0 ? "" : " Puissance estimée à 60 % de la grande vitesse : saisir la valeur de plaque."), RefContacteur);
+            note.Info("Deux vitesses", m.TypeDeuxVitesses == TypeDeuxVitesses.Dahlander
+                ? "Dahlander : contacteur petite vitesse, contacteur grande vitesse et contacteur étoile, verrouillés mécaniquement et électriquement."
+                : "Deux enroulements séparés : un contacteur par vitesse, verrouillés mécaniquement et électriquement.");
+            protection.Ajouter(Element($"KM{n}.1", "Contacteur", "Contacteur petite vitesse", $"AC-3 {A(kmPv)}").Avec(kmPv, 3))
+                .Ajouter(Element($"F{n}.1", "Relais thermique", "Relais thermique petite vitesse", $"réglé à {A(ibPv)}").Avec(ibPv));
+            var gv = protection.Ajouter(Element($"KM{n}.2", "Contacteur", "Contacteur grande vitesse", $"AC-3 {A(kmGv)}").Avec(kmGv, 3));
+            if (m.TypeDeuxVitesses == TypeDeuxVitesses.Dahlander)
+                gv.Ajouter(Element($"KM{n}.3", "Contacteur", "Contacteur étoile (grande vitesse)", $"AC-3 {A(kmGv)}").Avec(kmGv, 3));
+            return gv.Ajouter(Element($"F{n}.2", "Relais thermique", "Relais thermique grande vitesse", $"réglé à {A(ib)}").Avec(ib));
+        }
         if (m.Demarrage == ModeDemarrage.EtoileTriangle)
         {
             var iLigne = ib / Math.Sqrt(3);
@@ -332,16 +402,27 @@ public static class CalculDepart
     {
         var note = NouvelleNote(g);
         var u = Tension(g.Alimentation);
-        var calcule = g.PuissanceKw * 1000 / (Racine(g.Alimentation) * u * g.CosPhi);
+        var coffret = g as DepartCoffret;
+        var ks = coffret is null ? 1 : Math.Clamp(coffret.Simultaneite, 0.1, 1);
+        var puissance = g.PuissanceKw * ks;
+        if (coffret is not null)
+            note.Info("Puissance du coffret", $"P installée {N(g.PuissanceKw)} kW × ks interne {N(ks)} = {N(puissance)} kW.",
+                "Bilan de puissance du coffret");
+        var calcule = puissance * 1000 / (Racine(g.Alimentation) * u * g.CosPhi);
         var ib = note.Valeur(CodesCalcul.CourantEmploi, "Courant d'emploi", calcule, calcule, "A",
-            FormuleCourant(g.Alimentation, " × cos φ"), $"P = {N(g.PuissanceKw)} kW, U = {N(u)} V, cos φ = {N(g.CosPhi)}");
+            FormuleCourant(g.Alimentation, " × cos φ"), $"P = {N(puissance)} kW, U = {N(u)} V, cos φ = {N(g.CosPhi)}");
         var (courantCable, calibre, protection, aval) = Protection(g, note, reseau, ib, g.Courbe, "choix utilisateur");
         var cable = CalculCable.Dimensionner(note, g.Cable, g.Alimentation, courantCable, ib, g.CosPhi, reseau, chuteAmont);
+        if (coffret is not null)
+            note.Info("Coffret déporté", "Le coffret porte son propre organe de sectionnement (NF EN 60204-1, 5.3) ; " +
+                "sa sélectivité avec la protection de ce départ et la chute de tension jusqu'à ses récepteurs restent à vérifier.",
+                "NF EN 60204-1, 5.3 et 7.2");
         aval.Ajouter(ElementCable(g.Numero, g, cable, 1))
-            .Ajouter(Element($"E{g.Numero}", "Récepteur", g.Designation is { Length: > 0 } d ? d : "Charge",
-                $"{N(g.PuissanceKw)} kW").Avec(ib, puissanceKw: g.PuissanceKw));
-        var q = g.PuissanceKw * Math.Tan(Math.Acos(g.CosPhi));
-        return Resultat(g, note, ib, calibre, cable, g.PuissanceKw, q, protection);
+            .Ajouter(Element($"{g.PrefixeRecepteur}{g.Numero}", "Récepteur",
+                g.Designation is { Length: > 0 } d ? d : coffret is null ? "Charge" : "Coffret déporté",
+                $"{N(g.PuissanceKw)} kW").Avec(ib, puissanceKw: puissance));
+        var q = puissance * Math.Tan(Math.Acos(g.CosPhi));
+        return Resultat(g, note, ib, calibre, cable, puissance, q, protection);
     }
 
     /// <summary>Facteur de puissance d'une alimentation à découpage avec correction (PFC).</summary>

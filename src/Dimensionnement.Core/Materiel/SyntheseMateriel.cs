@@ -25,7 +25,7 @@ public static class SyntheseMateriel
     public static IReadOnlyList<GroupeMateriel> Grouper(ResultatProjet r)
     {
         var groupes = new List<GroupeMateriel>();
-        var arrivee = r.Arbre.Parcourir().Where(e => e.Repere is "W0" or "QS0" or "QG").Select(e => new MaillonMateriel(e, false)).ToList();
+        var arrivee = r.Arbre.Parcourir().Where(e => e.RepereOrigine is "W0" or "QS0" or "QG").Select(e => new MaillonMateriel(e, false)).ToList();
         groupes.Add(new GroupeMateriel("ARRIVÉE", new[]
         {
             new CarteMateriel(r.Arbre.Designation, r.Arbre.Calibre, r.NoteArrivee.StatutGlobal, arrivee, null),
@@ -43,7 +43,7 @@ public static class SyntheseMateriel
         }
 
         var commande = new List<CarteMateriel>();
-        foreach (var racine in r.Arbre.Parcourir().Where(e => e.Famille is "Automate" || (e.Famille == "Sécurité" && !e.Repere.StartsWith("KM"))))
+        foreach (var racine in r.Arbre.Parcourir().Where(e => e.Famille is "Automate" || (e.Famille == "Sécurité" && !e.RepereOrigine.StartsWith("KM"))))
         {
             var maillons = racine.Parcourir().Where(e => e.Famille != "Accessoire automate").Select(e => new MaillonMateriel(e, false)).ToList();
             commande.Add(new CarteMateriel($"{racine.Repere}  {racine.Designation}", racine.Calibre, racine.Statut, maillons, null));

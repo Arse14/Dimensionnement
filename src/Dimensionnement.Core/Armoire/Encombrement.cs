@@ -42,7 +42,9 @@ public static class Encombrements
                 ? new(70, 150, 150, 15)
                 : new(110, 100, 80, 10),
             "Entrées/sorties" => new(45 * q, 100, 80, 3 * q),
-            "Sécurité" => e.Repere == "KA-SEC" ? new(45, 100, 115, 5) : new(22.5, 100, 115, 2.5),
+            "Sécurité" => e.RepereOrigine == "KA-SEC" ? new(45, 100, 115, 5) : new(22.5, 100, 115, 2.5),
+            "Parafoudre" => new(18 * poles, 90, 70, 0.5),
+            "Relais de contrôle" => new(22.5, 90, 100, 2),
             "Câble" or "Moteur" or "Récepteur" or "Prise de courant" or "Réseau" => null,
             _ => new(45, 90, 80, 2),
         };

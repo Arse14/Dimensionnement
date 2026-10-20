@@ -28,6 +28,12 @@ public class Projet
     /// <summary>Consommateurs 24 V DC déclarés à la main, en plus de ceux que le projet déduit.</summary>
     public ObservableCollection<Consommateur24V> Consommateurs24V { get; set; } = new();
 
+    /// <summary>Îlots d'électrovannes, colonnes lumineuses et éclairages 24 V montés sur la machine.</summary>
+    public ObservableCollection<PeripheriqueMachine> PeripheriquesMachine { get; set; } = new();
+
+    /// <summary>Repères et désignations renommés par l'utilisateur, par clé « départ|repère calculé ».</summary>
+    public Dictionary<string, Renommage> Renommages { get; set; } = new();
+
     /// <summary>Ajoute au bilan 24 V les bobines de contacteurs, capteurs et actionneurs estimés d'après le projet.</summary>
     public bool EstimerPeripherie24V { get; set; } = true;
 
@@ -58,4 +64,11 @@ public class Revision
     public DateTime Date { get; set; }
     public string Auteur { get; set; } = "";
     public string Description { get; set; } = "";
+}
+
+/// <summary>Nom donné par l'utilisateur à un appareil ; une valeur vide garde le nom calculé.</summary>
+public class Renommage
+{
+    public string Repere { get; set; } = "";
+    public string Designation { get; set; } = "";
 }

@@ -365,7 +365,7 @@ public static class CalculSecurite
     static void PartiePuissance(FonctionSecurite f, ResultatDepart depart, NoteDeCalcul note)
     {
         var n = depart.Depart.Numero;
-        var variateur = depart.Depart is DepartMoteur { Demarrage: ModeDemarrage.Variateur };
+        var variateur = depart.Depart is DepartMoteur { SurVariateur: true };
         if (variateur)
         {
             depart.Note.Info($"Sécurité : {f.Nom}", $"Entrée STO du variateur câblée sur la logique de sécurité ; " +
