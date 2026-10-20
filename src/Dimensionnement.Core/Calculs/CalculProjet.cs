@@ -23,6 +23,10 @@ public class ResultatProjet
     public double SectionArrivee { get; init; }
     public double ChuteTensionArrivee { get; init; }
 
+    /// <summary>Consommateurs 24 V DC retenus pour dimensionner les alimentations de commande.</summary>
+    public IReadOnlyList<ConsommationCommande> Consommateurs24V { get; init; } = Array.Empty<ConsommationCommande>();
+    public double Consommation24V => Consommateurs24V.Sum(c => c.Courant);
+
     /// <summary>Arbre du matériel, de l'arrivée réseau jusqu'à chaque récepteur.</summary>
     public required ElementMateriel Arbre { get; init; }
 
@@ -46,6 +50,9 @@ public class ResultatProjet
         .ToList();
 }
 
+/// <summary>Un poste du bilan 24 V DC, en A.</summary>
+public record ConsommationCommande(string Designation, double Courant);
+
 /// <summary>Calcule tout le projet : les départs, le bilan de puissance et l'arrivée.</summary>
 public static class CalculProjet
 {
@@ -57,7 +64,9 @@ public static class CalculProjet
 
         // Le bilan ne dépend pas des câbles : un premier passage donne les puissances, le second
         // recalcule les départs avec la chute de tension consommée par le câble d'arrivée.
-        var premierPassage = projet.Departs.Select(d => CalculDepart.Calculer(d, reseau)).ToList();
+        var consommateurs24V = Consommateurs24V(projet);
+        var consommation24V = consommateurs24V.Sum(c => c.Courant);
+        var premierPassage = projet.Departs.Select(d => CalculDepart.Calculer(d, reseau, 0, consommation24V)).ToList();
 
         var note = new NoteDeCalcul("ARR", projet.ForcagesArrivee);
         var p = premierPassage.Sum(r => r.PuissanceActive * r.Depart.CoefficientUtilisation);
@@ -93,7 +102,13 @@ public static class CalculProjet
 
         var cable = CalculCable.Dimensionner(note, reseau.CableArrivee, reseau.Alimentation, qg, ib, cosPhi, reseau, 0);
 
-        var departs = projet.Departs.Select(d => CalculDepart.Calculer(d, reseau, cable.ChuteTension)).ToList();
+        var departs = projet.Departs.Select(d => CalculDepart.Calculer(d, reseau, cable.ChuteTension, consommation24V)).ToList();
+        if (consommation24V > 0)
+        {
+            note.Info("Bilan 24 V DC", $"Consommation des circuits de commande : {A(consommation24V)}.", "Bilan 24 V DC du projet");
+            note.Verifier("Alimentation 24 V", projet.Departs.OfType<DepartAlimentation24V>().Any(),
+                "Le projet consomme du 24 V DC : ajouter un départ « Alimentation 24 V DC ».", siEchec: StatutCalcul.Alerte);
+        }
         foreach (var d in departs)
         {
             var ratio = d.CalibreProtection > 0 ? qg / d.CalibreProtection : double.MaxValue;
@@ -121,8 +136,17 @@ public static class CalculProjet
             PuissanceActive = ks * p, PuissanceReactive = ks * q, PuissanceApparente = s, CosPhiGlobal = cosPhi,
             CoefficientSimultaneite = ks, CourantEmploi = ib, CalibreGeneral = qg,
             SectionArrivee = cable.Section, ChuteTensionArrivee = cable.ChuteTension, Arbre = arbre,
+            Consommateurs24V = consommateurs24V,
         };
     }
+
+    /// <summary>Consommateurs 24 V DC du projet : ceux déclarés à la main et ceux déduits du matériel.</summary>
+    public static IReadOnlyList<ConsommationCommande> Consommateurs24V(Projet projet) =>
+        projet.Consommateurs24V
+            .Where(c => c.CourantMa > 0 && c.Quantite > 0)
+            .Select(c => new ConsommationCommande(c.Quantite > 1 ? $"{c.Designation} × {c.Quantite}" : c.Designation,
+                c.CourantMa * c.Quantite / 1000))
+            .ToList();
 
     /// <summary>Coefficient de simultanéité d'une armoire de distribution selon son nombre de circuits.</summary>
     public static double Simultaneite(int departs) => departs switch

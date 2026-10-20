@@ -26,6 +26,40 @@ public static class Calibres
     public static readonly double[] Sections =
         { 1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240 };
 
+    /// <summary>Calibres des cartouches fusibles, en A.</summary>
+    public static readonly double[] Fusibles =
+        { 2, 4, 6, 8, 10, 12, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630 };
+
+    /// <summary>Courants assignés des alimentations 24 V DC à découpage, en A.</summary>
+    public static readonly double[] Alimentations24V = { 2.5, 3.8, 5, 10, 20, 40 };
+
+    /// <summary>Taille de cartouche et de porte-fusible pour un calibre et une classe donnés.</summary>
+    public static string TailleFusible(double calibre, Modele.ClasseFusible classe)
+    {
+        // Les cartouches aM et gR d'une taille montent moins haut en calibre que les gG.
+        var gG = classe == Modele.ClasseFusible.gG;
+        return calibre switch
+        {
+            _ when calibre <= (gG ? 32 : 25) => "10×38",
+            <= 50 => "14×51",
+            _ when calibre <= (gG ? 125 : 100) => "22×58",
+            <= 160 => "NH00",
+            <= 250 => "NH1",
+            <= 400 => "NH2",
+            _ => "NH3",
+        };
+    }
+
+    /// <summary>
+    /// Coefficient k3 des fusibles gG : le câble doit vérifier Iz ≥ k3 × In (NF C 15-100, 433.1).
+    /// </summary>
+    public static double CoefficientFusibleGg(double calibre) => calibre switch
+    {
+        <= 10 => 1.31,
+        <= 25 => 1.21,
+        _ => 1.10,
+    };
+
     /// <summary>Plages de réglage thermique des disjoncteurs moteurs, en A (mini, maxi).</summary>
     public static readonly (double Min, double Max)[] PlagesDisjoncteurMoteur =
     {

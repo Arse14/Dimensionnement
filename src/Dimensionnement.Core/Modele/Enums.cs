@@ -23,7 +23,21 @@ public enum OrigineAlimentation
     PostePrive,
 }
 
-public enum ModeDemarrage { Direct, Inverseur, EtoileTriangle, Variateur }
+public enum ModeDemarrage { Direct, Inverseur, EtoileTriangle, Variateur, DemarreurProgressif }
+
+/// <summary>Appareil de protection du départ contre les surintensités.</summary>
+public enum TypeProtection { Disjoncteur, Fusibles }
+
+/// <summary>Classes de fusibles (NF EN 60269).</summary>
+public enum ClasseFusible
+{
+    /// <summary>Usage général.</summary>
+    gG,
+    /// <summary>Accompagnement moteur : court-circuit seulement, surcharge par relais thermique.</summary>
+    aM,
+    /// <summary>Protection des semi-conducteurs (variateurs, démarreurs progressifs).</summary>
+    gR,
+}
 
 /// <summary>Méthodes de référence de pose (NF C 15-100 / IEC 60364-5-52).</summary>
 public enum MethodePose
