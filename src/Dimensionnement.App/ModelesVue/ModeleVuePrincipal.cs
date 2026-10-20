@@ -101,8 +101,27 @@ public class ModeleVuePrincipal : Observable
             var d = (DeplacementAppareil)p!;
             _projet.Armoire.Positions[d.Repere] = new PositionManuelle { X = d.X, Y = d.Y };
         }), p => p is DeplacementAppareil);
-        ReinitialiserImplantation = new Commande(() => Modifier(() => _projet.Armoire.Positions.Clear()),
-            () => _projet.Armoire.Positions.Count > 0);
+        ReinitialiserImplantation = new Commande(() => Modifier(() =>
+            {
+                _projet.Armoire.Positions.Clear();
+                _projet.Armoire.Rails.Clear();
+                _projet.Armoire.Goulottes.Clear();
+            }),
+            () => _projet.Armoire.Positions.Count > 0 || _projet.Armoire.Rails.Count > 0 || _projet.Armoire.Goulottes.Count > 0);
+        AjouterRail = new Commande(() => Modifier(() =>
+        {
+            var (x, y, longueur) = PositionNouvelle();
+            _projet.Armoire.Rails.Add(new RailManuel { X = x, Y = y, Longueur = longueur });
+        }));
+        AjouterGoulotte = new Commande(p => Modifier(() =>
+        {
+            var (x, y, longueur) = PositionNouvelle();
+            var verticale = p as string == "V";
+            _projet.Armoire.Goulottes.Add(verticale
+                ? new GoulotteManuelle { X = x + longueur / 2, Y = y - longueur / 2, Longueur = longueur, Verticale = true }
+                : new GoulotteManuelle { X = x, Y = y + 60, Longueur = longueur });
+        }));
+        ModifierArmoire = new Commande(p => Modifier(() => AppliquerAction((ActionArmoire)p!)), p => p is ActionArmoire);
         ExporterDevis = new Commande(EnregistrerDevis);
         ExporterUnifilaire = new Commande(() => EnregistrerSvg("unifilaire", SchemaUnifilaire.Svg(Resultat), "Impossible d'enregistrer le schéma unifilaire"));
         ExporterOrganigramme = new Commande(() => EnregistrerSvg("organigramme", SchemaOrganigramme.Svg(Resultat), "Impossible d'enregistrer l'organigramme"));
@@ -171,6 +190,38 @@ public class ModeleVuePrincipal : Observable
     public Commande OuvrirCarte { get; }
     public Commande DeplacerAppareil { get; }
     public Commande ReinitialiserImplantation { get; }
+    public Commande AjouterRail { get; }
+    public Commande AjouterGoulotte { get; }
+    public Commande ModifierArmoire { get; }
+
+    /// <summary>Position d'un rail ou d'une goulotte ajouté : au milieu de la plaque de la première cellule.</summary>
+    (double X, double Y, double Longueur) PositionNouvelle()
+    {
+        var a = Resultat.Armoire;
+        if (a is null) return (100, 300, 400);
+        var longueur = Math.Max(100, Math.Min(400, a.PlaqueLargeur - 2 * a.Laterale));
+        return (Math.Round(a.PlaqueX + a.Laterale), Math.Round(a.Hauteur / 2), longueur);
+    }
+
+    void AppliquerAction(ActionArmoire action)
+    {
+        var config = _projet.Armoire;
+        if (config.Rails.FirstOrDefault(r => r.Id == action.Id) is { } rail)
+            switch (action.Action)
+            {
+                case "Deplacer": rail.X = action.X; rail.Y = action.Y; break;
+                case "Longueur": rail.Longueur = Math.Max(50, rail.Longueur + action.X); break;
+                case "Supprimer": config.Rails.Remove(rail); break;
+            }
+        if (config.Goulottes.FirstOrDefault(g => g.Id == action.Id) is { } goulotte)
+            switch (action.Action)
+            {
+                case "Deplacer": goulotte.X = action.X; goulotte.Y = action.Y; break;
+                case "Longueur": goulotte.Longueur = Math.Max(50, goulotte.Longueur + action.X); break;
+                case "Modele": goulotte.Largeur = action.X; goulotte.Hauteur = action.Y; break;
+                case "Supprimer": config.Goulottes.Remove(goulotte); break;
+            }
+    }
     public Commande ExporterDevis { get; }
     public Commande ExporterUnifilaire { get; }
     public Commande ExporterOrganigramme { get; }

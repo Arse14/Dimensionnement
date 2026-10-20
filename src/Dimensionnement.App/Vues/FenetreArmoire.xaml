@@ -32,6 +32,9 @@
             <WrapPanel>
                 <CheckBox x:Name="CaseZones" Content="Zones CEM" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"/>
                 <CheckBox x:Name="CaseChamps" Content="Champ magnétique" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                <Button Content="Ajouter un rail DIN" Command="{Binding AjouterRail}" Margin="0,0,6,0"/>
+                <Button Content="Ajouter une goulotte horizontale" Command="{Binding AjouterGoulotte}" CommandParameter="H" Margin="0,0,6,0"/>
+                <Button Content="Ajouter une goulotte verticale" Command="{Binding AjouterGoulotte}" CommandParameter="V" Margin="0,0,16,0"/>
                 <Button Content="Réinitialiser l'implantation" Command="{Binding ReinitialiserImplantation}" Margin="0,0,16,0"/>
                 <TextBlock Text="{Binding ResumeArmoire}" FontWeight="SemiBold" VerticalAlignment="Center"/>
             </WrapPanel>
@@ -49,7 +52,7 @@
             <DockPanel>
                 <TextBlock DockPanel.Dock="Top" Text="CONTRÔLES DE L'IMPLANTATION" Style="{StaticResource TitrePanneau}"/>
                 <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
-                           Text="Glissez un appareil pour le déplacer (pas de 5 mm). Zones : propre en vert, intermédiaire en bleu, sale en rouge hachuré. Courbes du champ magnétique calculé selon le courant de chaque source : 10 A/m en orange, 30 A/m en framboise (immunité industrielle NF EN 61000-6-2), 100 A/m en violet. Survolez un appareil pour le champ qu'il reçoit ou émet."/>
+                           Text="Glissez un appareil, un rail ou une goulotte ajoutés pour les déplacer (pas de 5 mm) ; clic droit sur un rail ou une goulotte ajoutés pour sa longueur, son modèle ou sa suppression. Chaque rangée prend la zone de l'appareil le plus émissif qu'elle porte : propre en vert, intermédiaire en bleu, sale en rouge hachuré. Goulottes dimensionnées d'après les fils estimés (remplissage ≤ 50 %). Courbes du champ magnétique calculé selon le courant de chaque source : 10 A/m en orange, 30 A/m en framboise (immunité industrielle NF EN 61000-6-2), 100 A/m en violet. Survolez un appareil pour le champ qu'il reçoit ou émet."/>
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <ItemsControl ItemsSource="{Binding Resultat.Armoire.Note.Lignes}" ItemTemplate="{StaticResource LigneControle}"/>
                 </ScrollViewer>
@@ -61,7 +64,8 @@
                             Armoire="{Binding Resultat.Armoire}"
                             AfficherZones="{Binding IsChecked, ElementName=CaseZones}"
                             AfficherChamps="{Binding IsChecked, ElementName=CaseChamps}"
-                            DeplacerCommande="{Binding DeplacerAppareil}"/>
+                            DeplacerCommande="{Binding DeplacerAppareil}"
+                            ActionCommande="{Binding ModifierArmoire}"/>
         </Border>
     </DockPanel>
 </Window>

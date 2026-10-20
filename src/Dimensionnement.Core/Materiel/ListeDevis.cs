@@ -148,20 +148,33 @@ public static class ListeDevis
         if (r.Armoire is not { } a) return;
         l.Add(new(Montage, "Rail DIN symétrique 35 mm", "longueur 2 m", fabricant, "", Math.Ceiling(a.LongueurRail / 2), "u",
             Remarque: $"{N(a.LongueurRail, 1)} m nécessaires"));
-        l.Add(new(Montage, "Goulotte de câblage à couvercle", "60 × 80 mm, longueur 2 m", fabricant, "", Math.Ceiling(a.LongueurGoulotte * 1.1 / 2), "u",
-            Remarque: $"{N(a.LongueurGoulotte, 1)} m nécessaires"));
+        foreach (var g in a.Cablage.Goulottes.GroupBy(x => x.Modele).OrderBy(g => g.Key.Section))
+        {
+            var metres = g.Sum(x => x.Longueur) / 1000;
+            l.Add(new(Montage, "Goulotte de câblage à fentes avec couvercle", $"{g.Key.Libelle}, longueur 2 m", fabricant, "",
+                Math.Ceiling(metres * 1.1 / 2), "u", Remarque: $"{N(metres, 1)} m nécessaires, 10 % de chutes"));
+        }
         l.Add(new(Montage, "Barrette de terre / collecteur PE", "cuivre, avec bornes", fabricant, "", a.Cellules, "u"));
         if (r.Departs.Any(d => d.Depart is DepartMoteur { Demarrage: ModeDemarrage.Variateur }))
             l.Add(new(Montage, "Barre de reprise de blindage", "cuivre, avec supports", fabricant, "", a.Cellules, "u"));
 
-        // Filerie interne : environ 1,5 m par appareil de puissance et 0,6 m par borne de commande.
-        var puissance = a.Appareils.Count(x => x.Zone != ZoneCem.Propre);
-        var filPuissance = Math.Ceiling(1.5 * puissance * 3);
-        var filCommande = Math.Ceiling(0.6 * commande + 1.0 * a.Appareils.Count);
-        l.Add(new(Montage, "Fil de câblage H07V-K noir", "section selon les départs (1,5 à 6 mm²)", "", "", filPuissance, "m", Remarque: Estimation));
-        l.Add(new(Montage, "Fil de câblage H05V-K bleu foncé (commande 24 V)", "0,75 à 1 mm²", "", "", filCommande, "m", Remarque: Estimation));
-        l.Add(new(Montage, "Fil de câblage H07V-K vert/jaune", "PE", "", "", Math.Ceiling(filPuissance / 3), "m", Remarque: Estimation));
-        l.Add(new(Montage, "Embouts de câblage isolés", "assortiment", "", "", 1, "lot"));
+        // Filerie interne estimée par appareil implanté, à la longueur moyenne d'un fil sur la plaque.
+        var longueur = a.Cablage.LongueurMoyenne;
+        foreach (var f in a.Cablage.Fils.GroupBy(f => (f.Section, f.Usage)).OrderBy(g => g.Key.Usage).ThenByDescending(g => g.Key.Section))
+        {
+            var nombre = f.Sum(x => x.Nombre);
+            var (designation, type) = f.Key.Usage switch
+            {
+                "Terre" => ("Fil de câblage vert/jaune (PE)", "H07V-K"),
+                "Commande" => ("Fil de câblage bleu foncé (commande 24 V)", f.Key.Section < 1 ? "H05V-K" : "H07V-K"),
+                _ => ("Fil de câblage noir (puissance)", "H07V-K"),
+            };
+            l.Add(new(Montage, designation, $"{type} {N(f.Key.Section)} mm²", "", "", Math.Ceiling(nombre * longueur * 1.15), "m",
+                Remarque: $"{nombre} fils × {N(longueur, 1)} m + 15 % ; estimation"));
+        }
+        foreach (var g in a.Cablage.Fils.GroupBy(f => f.Section).OrderBy(g => g.Key))
+            l.Add(new(Montage, "Embouts de câblage isolés", $"{N(g.Key)} mm²", "", "", Math.Ceiling(2 * g.Sum(f => f.Nombre) * 1.1), "u",
+                Remarque: "2 par fil + 10 %"));
         l.Add(new(Montage, "Repères d'appareils et de fils", "étiquettes", "", "", 1, "lot"));
     }
 

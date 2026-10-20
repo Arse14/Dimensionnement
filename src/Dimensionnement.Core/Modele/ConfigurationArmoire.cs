@@ -30,6 +30,27 @@ public class PositionManuelle
     public double Y { get; set; }
 }
 
+/// <summary>Rail DIN ajouté à la main : extrémité gauche et axe, en mm dans l'enveloppe.</summary>
+public class RailManuel
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public double X { get; set; }
+    public double Y { get; set; }
+    public double Longueur { get; set; } = 400;
+}
+
+/// <summary>Goulotte ajoutée à la main : coin haut gauche en mm dans l'enveloppe, longueur et modèle (largeur × hauteur).</summary>
+public class GoulotteManuelle
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public double X { get; set; }
+    public double Y { get; set; }
+    public double Longueur { get; set; } = 400;
+    public bool Verticale { get; set; }
+    public double Largeur { get; set; } = 40;
+    public double Hauteur { get; set; } = 60;
+}
+
 /// <summary>Paramètres de l'armoire : dimensions imposées, thermique et implantation manuelle.</summary>
 public class ConfigurationArmoire
 {
@@ -61,6 +82,10 @@ public class ConfigurationArmoire
 
     /// <summary>Appareils déplacés à la main, par repère.</summary>
     public Dictionary<string, PositionManuelle> Positions { get; set; } = new();
+
+    /// <summary>Rails DIN et goulottes ajoutés par l'utilisateur, en plus de l'implantation automatique.</summary>
+    public List<RailManuel> Rails { get; set; } = new();
+    public List<GoulotteManuelle> Goulottes { get; set; } = new();
 }
 
 /// <summary>Choix des références de matériel.</summary>

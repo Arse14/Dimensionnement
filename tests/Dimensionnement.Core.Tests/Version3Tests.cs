@@ -90,7 +90,9 @@ public class Version3Tests
 
         var api = a.Appareils.Single(x => x.Repere == "API1");
         Assert.True(api.Manuel);
-        Assert.Contains(a.Note.Lignes, l => l.Libelle == "Zone de API1" && l.Statut == StatutCalcul.Alerte);
+        Assert.Contains(a.Note.Lignes, l => l.Libelle.StartsWith("Mélange de zones") && l.Libelle.Contains("API1") && l.Statut == StatutCalcul.Alerte);
+        // La rangée qui porte l'automate reste sale : le niveau suit l'appareil le plus émissif.
+        Assert.Equal(ZoneCem.Sale, a.Bandes.First(b => CalculArmoire.Dans(b, new[] { api }).Any()).Zone);
         Assert.Contains(a.Note.Lignes, l => l.Libelle == "Chevauchements" && l.Statut == StatutCalcul.Alerte);
         Assert.Contains(a.Note.Lignes, l => l.Libelle == "Champ des sources de perturbations" && l.Statut == StatutCalcul.Alerte
                                             && l.Message.Contains("API1 reçoit"));
@@ -413,5 +415,77 @@ public class ChampMagnetiqueTests
         Assert.All(cartes, x => Assert.Equal(15, x.Largeur));
         Assert.Equal(100, a.Appareils.Single(x => x.Repere == "API1").Largeur);
         Assert.DoesNotContain(a.Appareils, x => x.Repere.EndsWith("-X"));
+    }
+
+    [Fact]
+    public void Zone_recalculee_quand_les_sources_quittent_une_rangee()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        var auto = CalculProjet.Calculer(projet).Armoire!;
+        var bande = auto.Bandes.First(b => b.Rail && b.Zone == ZoneCem.Sale);
+        var sources = CalculArmoire.Dans(bande, auto.Appareils).ToList();
+        // Toutes les sources partent en haut à gauche, hors de la rangée.
+        var x = 0.0;
+        foreach (var s in sources.Where(s => s.Zone == ZoneCem.Sale))
+        {
+            projet.Armoire.Positions[s.Repere] = new PositionManuelle { X = x, Y = 0 };
+            x += s.Largeur;
+        }
+        // Un disjoncteur (intermédiaire) prend leur place.
+        var q = auto.Appareils.First(d => d.Zone == ZoneCem.Intermediaire && d.Famille != "Bornier");
+        projet.Armoire.Positions[q.Repere] = new PositionManuelle { X = bande.X + 60, Y = bande.Y + bande.Hauteur / 2 - q.Hauteur / 2 };
+
+        var a = CalculProjet.Calculer(projet).Armoire!;
+
+        var meme = a.Bandes.Single(b => Math.Abs(b.Y - bande.Y) < 0.1 && Math.Abs(b.X - bande.X) < 0.1);
+        Assert.Equal(ZoneCem.Intermediaire, meme.Zone);
+    }
+
+    [Fact]
+    public void Rail_ajoute_prend_la_couleur_de_ses_appareils_et_compte_au_devis()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        var auto = CalculProjet.Calculer(projet).Armoire!;
+        var km2 = auto.Appareils.Single(x => x.Repere == "KM2");
+        projet.Armoire.Rails.Add(new RailManuel { X = 100, Y = 200, Longueur = 300 });
+        projet.Armoire.Positions["KM2"] = new PositionManuelle { X = 150, Y = 200 - km2.Hauteur / 2 };
+        projet.Armoire.Goulottes.Add(new GoulotteManuelle { X = 100, Y = 300, Longueur = 300, Largeur = 60, Hauteur = 60 });
+
+        var r = CalculProjet.Calculer(projet);
+        var a = r.Armoire!;
+
+        var rail = a.Bandes.Single(b => b.Manuel);
+        Assert.Equal(ZoneCem.Sale, rail.Zone);
+        Assert.Equal(auto.LongueurRail + 0.3, a.LongueurRail, 3);
+        Assert.Contains(a.Cablage.Goulottes, g => g.Manuelle && g.Largeur == 300 && g.Hauteur == 60);
+        Assert.Contains(a.Note.Lignes, l => l.Libelle == "Rails ajoutés à la main");
+        Assert.DoesNotContain(a.Note.Lignes, l => l.Libelle == "Rail de KM2");
+    }
+
+    [Fact]
+    public void Fils_estimes_par_appareil_et_goulottes_dimensionnees()
+    {
+        var r = CalculProjet.Calculer(Version3Tests.ProjetMachine());
+        var a = r.Armoire!;
+
+        // Chaque départ amène ses conducteurs et son PE ; la commande est en 0,75 mm².
+        Assert.Contains(a.Cablage.Fils, f => f.Usage == "Terre" && f.Nombre >= r.Departs.Count(d => d.Depart is not DepartAlimentation24V));
+        Assert.Contains(a.Cablage.Fils, f => f.Section == CalculCablage.SectionCommande && f.Nombre > 0);
+        Assert.Contains(a.Cablage.Goulottes, g => !g.Verticale);
+        Assert.True(a.Cablage.Goulottes.Count(g => g.Verticale && g.Hauteur > a.PlaqueHauteur / 2) >= 2 * a.Cellules);
+        Assert.All(a.Cablage.Goulottes.Where(g => !g.Manuelle), g => Assert.True(g.Remplissage <= CalculCablage.RemplissageMax + 1e-6));
+        Assert.Contains(a.Note.Lignes, l => l.Libelle == "Estimation du câblage");
+        var devis = ListeDevis.Generer(r);
+        Assert.Contains(devis, l => l.Designation.StartsWith("Goulotte de câblage") && l.Caracteristiques.StartsWith(a.Cablage.Horizontale.Libelle));
+        Assert.Contains(devis, l => l.Designation.StartsWith("Fil de câblage vert/jaune"));
+    }
+
+    [Fact]
+    public void Goulotte_choisie_au_remplissage_de_50_pourcent()
+    {
+        // 60 fils de 2,5 mm² : 60 × π × 3,6² / 4 ≈ 611 mm² → 25 × 60 (1 500 mm², 41 %).
+        var surface = CalculCablage.Encombrement(new[] { new FilsSection(2.5, 60, "Puissance") });
+        Assert.Equal(new ModeleGoulotte(25, 60), CalculCablage.Choisir(surface));
+        Assert.Equal(new ModeleGoulotte(25, 40), CalculCablage.Choisir(100));
     }
 }

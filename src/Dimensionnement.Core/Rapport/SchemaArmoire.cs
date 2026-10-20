@@ -38,12 +38,17 @@ public static class SchemaArmoire
     {
         const double marge = 40;
         var largeur = a.LargeurTotale + 2 * marge;
-        var hauteur = a.Hauteur + 2 * marge + (champs && a.Sources.Count > 0 ? 300 : 150);
+        var hauteur = a.Hauteur + 2 * marge + (champs && a.Sources.Count > 0 ? 340 : 190);
         var s = new StringBuilder();
         s.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{F(largeur)}\" height=\"{F(hauteur)}\" viewBox=\"0 0 {F(largeur)} {F(hauteur)}\" " +
                  "font-family=\"Segoe UI, Arial, sans-serif\">");
         s.Append("<defs><pattern id=\"hachures\" width=\"14\" height=\"14\" patternUnits=\"userSpaceOnUse\" patternTransform=\"rotate(45)\">" +
-                 "<line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"14\" stroke=\"#c92a2a\" stroke-width=\"2.5\" stroke-opacity=\"0.28\"/></pattern></defs>");
+                 "<line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"14\" stroke=\"#c92a2a\" stroke-width=\"2.5\" stroke-opacity=\"0.28\"/></pattern>" +
+                 // Goulottes à fentes : fond gris, dents perpendiculaires à la goulotte.
+                 "<pattern id=\"fentesH\" width=\"12\" height=\"12\" patternUnits=\"userSpaceOnUse\"><rect width=\"12\" height=\"12\" fill=\"#d3d8dd\"/>" +
+                 "<line x1=\"6\" y1=\"0\" x2=\"6\" y2=\"12\" stroke=\"#a6afb8\" stroke-width=\"2\"/></pattern>" +
+                 "<pattern id=\"fentesV\" width=\"12\" height=\"12\" patternUnits=\"userSpaceOnUse\"><rect width=\"12\" height=\"12\" fill=\"#d3d8dd\"/>" +
+                 "<line x1=\"0\" y1=\"6\" x2=\"12\" y2=\"6\" stroke=\"#a6afb8\" stroke-width=\"2\"/></pattern></defs>");
         s.Append($"<rect width=\"{F(largeur)}\" height=\"{F(hauteur)}\" fill=\"#fff\"/>");
         s.Append($"<g transform=\"translate({F(marge)},{F(marge)})\">");
 
@@ -61,13 +66,18 @@ public static class SchemaArmoire
             if (b.Zone == ZoneCem.Sale)
                 s.Append($"<rect x=\"{F(b.X + 8)}\" y=\"{F(b.Y)}\" width=\"{F(b.Largeur - 16)}\" height=\"{F(b.Hauteur)}\" fill=\"url(#hachures)\" rx=\"6\"/>");
             var rail = b.Y + b.Hauteur / 2;
-            s.Append($"<line x1=\"{F(b.X + CalculArmoire.MargeLaterale)}\" y1=\"{F(rail)}\" x2=\"{F(b.X + b.Largeur - CalculArmoire.MargeLaterale)}\" y2=\"{F(rail)}\" stroke=\"#9aa5b1\" stroke-width=\"6\"/>");
-            if (!b.Rail) continue;
+            var retrait = b.Manuel ? 0 : a.Laterale;
+            s.Append($"<line x1=\"{F(b.X + retrait)}\" y1=\"{F(rail)}\" x2=\"{F(b.X + b.Largeur - retrait)}\" y2=\"{F(rail)}\" stroke=\"#9aa5b1\" stroke-width=\"6\"/>");
+            if (!b.Rail || b.Manuel) continue;
             // Nom de la zone à la verticale dans la marge gauche de la bande, hors des appareils.
-            var cx = b.X + 8 + (CalculArmoire.MargeLaterale - 8) / 2;
+            var cx = b.X + 8 + (a.Laterale - 8) / 2;
             s.Append($"<text x=\"{F(cx)}\" y=\"{F(rail)}\" transform=\"rotate(-90 {F(cx)} {F(rail)})\" font-size=\"{F(Math.Min(16, b.Hauteur / 7))}\" " +
                      $"font-weight=\"bold\" fill=\"{trait}\" text-anchor=\"middle\" dominant-baseline=\"middle\" letter-spacing=\"1\">{NomZone(b.Zone)}</text>");
         }
+        foreach (var g in a.Cablage.Goulottes)
+            s.Append($"<rect x=\"{F(g.X)}\" y=\"{F(g.Y)}\" width=\"{F(g.Largeur)}\" height=\"{F(g.Hauteur)}\" fill=\"url(#fentes{(g.Verticale ? "V" : "H")})\" " +
+                     $"stroke=\"{(g.Manuelle ? "#f5a623" : "#7d8790")}\" stroke-width=\"2\"><title>Goulotte {g.Modele.Libelle}" +
+                     (g.Manuelle ? " (ajoutée à la main)" : $", {g.Fils} fils, remplissage {F(g.Remplissage)} %") + "</title></rect>");
         var etiquettes = new StringBuilder();
         if (champs && a.Sources.Count > 0)
             CarteChamp(s, etiquettes, a);
@@ -94,6 +104,11 @@ public static class SchemaArmoire
             s.Append($"<text x=\"{F(x + 36)}\" y=\"{F(y)}\" font-size=\"20\" dominant-baseline=\"middle\" fill=\"#1d232a\">Zone {LibelleZone(zone)}</text>");
             y += 32;
         }
+        s.Append($"<rect x=\"{F(x)}\" y=\"{F(y - 14)}\" width=\"28\" height=\"28\" fill=\"url(#fentesH)\" stroke=\"#7d8790\" stroke-width=\"2\"/>");
+        s.Append($"<text x=\"{F(x + 36)}\" y=\"{F(y)}\" font-size=\"20\" dominant-baseline=\"middle\" fill=\"#1d232a\">Goulottes : " +
+                 $"{SecurityElement.Escape(a.Cablage.Horizontale.Libelle)} horizontales, {SecurityElement.Escape(a.Cablage.Verticale.Libelle)} verticales, " +
+                 $"{a.Cablage.NombreFils} fils estimés</text>");
+        y += 32;
         if (champs && a.Sources.Count > 0)
         {
             y += 12;

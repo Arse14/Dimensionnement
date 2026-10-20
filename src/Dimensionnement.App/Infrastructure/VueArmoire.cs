@@ -13,6 +13,12 @@ namespace Dimensionnement.App.Infrastructure;
 public record DeplacementAppareil(string Repere, double X, double Y);
 
 /// <summary>
+/// Action sur un rail ou une goulotte ajouté à la main : « Deplacer » (X, Y), « Longueur » (X = variation en mm),
+/// « Modele » (X = largeur, Y = hauteur de la goulotte) ou « Supprimer ».
+/// </summary>
+public record ActionArmoire(Guid Id, string Action, double X = 0, double Y = 0);
+
+/// <summary>
 /// Vue de face de l'armoire, à l'échelle du millimètre dans une Viewbox : zones CEM, rails, appareils et champs.
 /// En mode interactif, les appareils se déplacent à la souris (pas de 5 mm) et chaque dépôt est envoyé à
 /// <see cref="DeplacerCommande"/>.
@@ -32,6 +38,8 @@ public class VueArmoire : Border
         typeof(bool), typeof(VueArmoire), new PropertyMetadata(false, Redessiner));
     public static readonly DependencyProperty DeplacerCommandeProperty = DependencyProperty.Register(nameof(DeplacerCommande),
         typeof(ICommand), typeof(VueArmoire));
+    public static readonly DependencyProperty ActionCommandeProperty = DependencyProperty.Register(nameof(ActionCommande),
+        typeof(ICommand), typeof(VueArmoire));
 
     public ResultatArmoire? Armoire { get => (ResultatArmoire?)GetValue(ArmoireProperty); set => SetValue(ArmoireProperty, value); }
     public bool AfficherChamps { get => (bool)GetValue(AfficherChampsProperty); set => SetValue(AfficherChampsProperty, value); }
@@ -39,8 +47,14 @@ public class VueArmoire : Border
     public bool Interactif { get => (bool)GetValue(InteractifProperty); set => SetValue(InteractifProperty, value); }
     public ICommand? DeplacerCommande { get => (ICommand?)GetValue(DeplacerCommandeProperty); set => SetValue(DeplacerCommandeProperty, value); }
 
+    /// <summary>Reçoit les <see cref="ActionArmoire"/> sur les rails et goulottes ajoutés à la main.</summary>
+    public ICommand? ActionCommande { get => (ICommand?)GetValue(ActionCommandeProperty); set => SetValue(ActionCommandeProperty, value); }
+
+    /// <summary>Épaisseur de la poignée d'un rail ajouté, en mm.</summary>
+    const double PoigneeRail = 16;
+
     readonly Canvas _plan = new();
-    Border? _glisse;
+    FrameworkElement? _glisse;
     Point _depart;
     Point _origine;
 
@@ -93,10 +107,40 @@ public class VueArmoire : Border
                     Text = SchemaArmoire.NomZone(b.Zone), Width = b.Hauteur, TextAlignment = TextAlignment.Center,
                     FontSize = Math.Min(16, b.Hauteur / 7), FontWeight = FontWeights.Bold, Foreground = trait,
                     LayoutTransform = new RotateTransform(-90), IsHitTestVisible = false,
-                }, b.X + 8 + (CalculArmoire.MargeLaterale - 8 - 21) / 2, b.Y);
+                }, b.X + 8 + (a.Laterale - 8 - 21) / 2, b.Y);
             }
-            Placer(new Rectangle { Width = b.Largeur - 2 * CalculArmoire.MargeLaterale, Height = 8, Fill = Pinceau("#A3ACB5"), IsHitTestVisible = false },
-                b.X + CalculArmoire.MargeLaterale, b.Y + b.Hauteur / 2 - 4);
+            if (b.Manuel)
+                continue;
+            Placer(new Rectangle { Width = b.Largeur - 2 * a.Laterale, Height = 8, Fill = Pinceau("#A3ACB5"), IsHitTestVisible = false },
+                b.X + a.Laterale, b.Y + b.Hauteur / 2 - 4);
+        }
+
+        foreach (var g in a.Cablage.Goulottes)
+        {
+            var goulotte = new Border
+            {
+                Width = g.Largeur, Height = g.Hauteur, Background = g.Verticale ? FentesV : FentesH,
+                BorderBrush = Pinceau(g.Manuelle ? "#F5A623" : "#7D8790"), BorderThickness = new Thickness(g.Manuelle ? 3 : 2), Tag = g,
+                ToolTip = $"Goulotte {g.Modele.Libelle}, {g.Longueur:0} mm" +
+                          (g.Manuelle ? "\nAjoutée à la main : glisser pour déplacer, clic droit pour la modifier"
+                                      : $"\n{g.Fils} fils estimés, remplissage {g.Remplissage:0} % (≤ {CalculCablage.RemplissageMax:0} %)"),
+                IsHitTestVisible = g.Manuelle,
+            };
+            if (Interactif && g.Id is { } id) Manipulable(goulotte, id, true);
+            Placer(goulotte, g.X, g.Y);
+        }
+
+        // Rails ajoutés à la main : poignée qui se déplace à la souris, par-dessus leur bande.
+        foreach (var b in a.Bandes.Where(b => b.Manuel))
+        {
+            var rail = new Border
+            {
+                Width = b.Largeur, Height = PoigneeRail, Background = Pinceau("#A3ACB5"), BorderBrush = Pinceau("#F5A623"),
+                BorderThickness = new Thickness(2), CornerRadius = new CornerRadius(2), Tag = b,
+                ToolTip = $"Rail DIN ajouté, {b.Largeur:0} mm, {LibelleEnum.Libelle(b.Zone)}\nGlisser pour déplacer, clic droit pour le modifier",
+            };
+            if (Interactif) Manipulable(rail, b.Id!.Value, false);
+            Placer(rail, b.X, b.Y + b.Hauteur / 2 - PoigneeRail / 2);
         }
 
         if (AfficherChamps && a.Sources.Count > 0)
@@ -130,6 +174,58 @@ public class VueArmoire : Border
             }
             Placer(bloc, x.X, x.Y);
         }
+    }
+
+    /// <summary>Rend un rail ou une goulotte ajouté déplaçable, avec un menu pour sa longueur, son modèle et sa suppression.</summary>
+    void Manipulable(FrameworkElement element, Guid id, bool goulotte)
+    {
+        element.Cursor = Cursors.SizeAll;
+        element.MouseLeftButtonDown += Saisir;
+        var menu = new ContextMenu();
+        void Item(ItemsControl parent, string titre, ActionArmoire action)
+        {
+            var item = new MenuItem { Header = titre };
+            item.Click += (_, _) => Executer(action);
+            parent.Items.Add(item);
+        }
+        Item(menu, "Allonger de 100 mm", new ActionArmoire(id, "Longueur", 100));
+        Item(menu, "Raccourcir de 100 mm", new ActionArmoire(id, "Longueur", -100));
+        if (goulotte)
+        {
+            var modeles = new MenuItem { Header = "Modèle de goulotte" };
+            foreach (var m in CalculCablage.Modeles) Item(modeles, m.Libelle, new ActionArmoire(id, "Modele", m.Largeur, m.Hauteur));
+            menu.Items.Add(modeles);
+        }
+        menu.Items.Add(new Separator());
+        Item(menu, "Supprimer", new ActionArmoire(id, "Supprimer"));
+        element.ContextMenu = menu;
+    }
+
+    void Executer(ActionArmoire action)
+    {
+        if (ActionCommande?.CanExecute(action) == true) ActionCommande.Execute(action);
+    }
+
+    static readonly Brush FentesH = CreerFentes(false);
+    static readonly Brush FentesV = CreerFentes(true);
+
+    /// <summary>Fond de goulotte à fentes : gris clair, dents perpendiculaires à la goulotte.</summary>
+    static Brush CreerFentes(bool verticale)
+    {
+        var dent = Color.FromRgb(0xA6, 0xAF, 0xB8);
+        var fond = Color.FromRgb(0xD3, 0xD8, 0xDD);
+        var pinceau = new LinearGradientBrush
+        {
+            MappingMode = BrushMappingMode.Absolute, SpreadMethod = GradientSpreadMethod.Repeat,
+            StartPoint = new Point(0, 0), EndPoint = verticale ? new Point(0, 12) : new Point(12, 0),
+            GradientStops =
+            {
+                new GradientStop(fond, 0), new GradientStop(fond, 0.42), new GradientStop(dent, 0.42),
+                new GradientStop(dent, 0.58), new GradientStop(fond, 0.58), new GradientStop(fond, 1),
+            },
+        };
+        pinceau.Freeze();
+        return pinceau;
     }
 
     /// <summary>Hachures obliques de la zone sale : dégradé répété à bords francs.</summary>
@@ -197,7 +293,7 @@ public class VueArmoire : Border
 
     void Saisir(object sender, MouseButtonEventArgs e)
     {
-        _glisse = (Border)sender;
+        _glisse = (FrameworkElement)sender;
         _depart = e.GetPosition(_plan);
         _origine = new Point(Canvas.GetLeft(_glisse), Canvas.GetTop(_glisse));
         Panel.SetZIndex(_glisse, 100);
@@ -216,12 +312,23 @@ public class VueArmoire : Border
 
     void Deposer(object sender, MouseButtonEventArgs e)
     {
-        if (_glisse is not { Tag: AppareilImplante appareil } bloc) return;
+        if (_glisse is not { } bloc) return;
         _plan.ReleaseMouseCapture();
         _glisse = null;
         bloc.Opacity = 1;
         var x = Canvas.GetLeft(bloc) - Marge;
         var y = Canvas.GetTop(bloc) - Marge;
+        switch (bloc.Tag)
+        {
+            case GoulottePlacee { Id: { } goulotte } g when Math.Abs(x - g.X) >= 1 || Math.Abs(y - g.Y) >= 1:
+                Executer(new ActionArmoire(goulotte, "Deplacer", x, y));
+                return;
+            case BandeZone { Id: { } rail }:
+                // La poignée est centrée sur l'axe du rail.
+                Executer(new ActionArmoire(rail, "Deplacer", x, y + PoigneeRail / 2));
+                return;
+        }
+        if (bloc.Tag is not AppareilImplante appareil) return;
         if (Math.Abs(x - appareil.X) < 1 && Math.Abs(y - appareil.Y) < 1) return;
         var deplacement = new DeplacementAppareil(appareil.Repere, x, y);
         if (DeplacerCommande?.CanExecute(deplacement) == true) DeplacerCommande.Execute(deplacement);

@@ -32,7 +32,11 @@ public class AppareilImplante
 }
 
 /// <summary>Bande d'une zone CEM sur la plaque : une rangée de rail et ses goulottes, ou un bloc fixé sur la plaque (variateurs).</summary>
-public record BandeZone(ZoneCem Zone, double X, double Y, double Largeur, double Hauteur, bool Rail = true);
+public record BandeZone(ZoneCem Zone, double X, double Y, double Largeur, double Hauteur, bool Rail = true, Guid? Id = null)
+{
+    /// <summary>Rail ajouté par l'utilisateur ; son axe est au milieu de la bande et il en occupe toute la largeur.</summary>
+    public bool Manuel => Id is not null;
+}
 
 public class ResultatArmoire
 {
@@ -69,6 +73,12 @@ public class ResultatArmoire
     /// <summary>Longueur de rail DIN et de goulotte nécessaires, en m (pour la liste de matériel).</summary>
     public double LongueurRail { get; init; }
     public double LongueurGoulotte { get; init; }
+
+    /// <summary>Fils estimés et goulottes implantées.</summary>
+    public ResultatCablage Cablage { get; init; } = new();
+
+    /// <summary>Largeur réservée aux goulottes verticales de chaque côté de la plaque, en mm.</summary>
+    public double Laterale { get; init; } = CalculArmoire.MargeLaterale;
 
     /// <summary>Hauteur de plaque occupée, en % de la hauteur disponible de toutes les cellules.</summary>
     public double Occupation { get; init; }
@@ -115,7 +125,7 @@ public static class CalculArmoire
     /// <summary>Jeu entre deux variateurs montés côte à côte, en mm.</summary>
     const double JeuVariateurs = 10;
     /// <summary>Goulotte verticale entre le bloc des variateurs et les rails de la zone sale, en mm.</summary>
-    const double GoulotteVariateurs = 60;
+    public const double GoulotteVariateurs = 60;
 
     const int CellulesMax = 8;
 
@@ -134,7 +144,16 @@ public static class CalculArmoire
         var candidats = formats.Where(f => !f.EstArmoire).Select(f => (M: f, N: 1))
             .Concat(formats.Where(f => f.EstArmoire).SelectMany(f => Enumerable.Range(1, CellulesMax).Select(n => (M: f, N: n))))
             .OrderBy(c => c.M.Largeur * c.N * c.M.Hauteur).ThenBy(c => c.M.Hauteur).ToList();
-        var trouve = candidats.FirstOrDefault(c => Implanter(elements, c.M, c.N, reserve).Tient);
+        // Premier passage avec les goulottes par défaut : estimation des fils, puis largeur de goulotte à réserver.
+        var gabarit = Gabarit.Defaut;
+        var essai = candidats.FirstOrDefault(c => Implanter(elements, c.M, c.N, reserve, gabarit).Tient);
+        if (essai.M is not null)
+        {
+            var premier = Implanter(elements, essai.M, essai.N, reserve, gabarit);
+            gabarit = CalculCablage.Estimer(r, premier.Appareils, premier.Bandes, essai.M.Largeur, essai.M.PlaqueLargeur,
+                essai.M.PlaqueHauteur, essai.M.Hauteur, essai.N, gabarit).Gabarit;
+        }
+        var trouve = candidats.FirstOrDefault(c => Implanter(elements, c.M, c.N, reserve, gabarit).Tient);
         var auto = trouve.M is null
             ? (L: 1200.0, H: 2000.0, N: CellulesMax)
             : (L: trouve.M.Largeur, H: trouve.M.Hauteur, N: trouve.N);
@@ -182,12 +201,12 @@ public static class CalculArmoire
         var enveloppe = CatalogueEnveloppes.Trouver(marque, largeur, hauteur, profondeur, catalogue);
 
         // Taille imposée : la réserve est réduite par pas de 5 % jusqu'à 0 pour essayer de tout faire entrer.
-        var implantation = Implanter(elements, enveloppe, cellules, reserve);
+        var implantation = Implanter(elements, enveloppe, cellules, reserve, gabarit);
         var reserveEffective = reserve;
         while (imposee && !implantation.Tient && reserveEffective > 0)
         {
             reserveEffective = Math.Max(0, reserveEffective - 0.05);
-            implantation = Implanter(elements, enveloppe, cellules, reserveEffective);
+            implantation = Implanter(elements, enveloppe, cellules, reserveEffective, gabarit);
         }
         var alerte = "";
         if (!implantation.Tient)
@@ -217,19 +236,33 @@ public static class CalculArmoire
 
         var appareils = implantation.Appareils;
         AppliquerPositionsManuelles(appareils, config, largeur * cellules, hauteur);
-        ControlerManuel(note, appareils, implantation.Bandes, largeur * cellules, hauteur);
+        var bandes = RecalculerZones(implantation.Bandes, appareils, config.Rails, largeur * cellules, hauteur);
+        ControlerManuel(note, appareils, bandes, largeur * cellules, hauteur);
+
+        var cablage = CalculCablage.Estimer(r, appareils, implantation.Bandes, largeur, enveloppe.PlaqueLargeur, enveloppe.PlaqueHauteur,
+            hauteur, cellules, gabarit);
+        cablage = new ResultatCablage
+        {
+            Fils = cablage.Fils, Horizontale = cablage.Horizontale, Verticale = cablage.Verticale, Gabarit = cablage.Gabarit,
+            LongueurMoyenne = cablage.LongueurMoyenne,
+            Goulottes = cablage.Goulottes.Concat(config.Goulottes.Select(g => new GoulottePlacee(g.X, g.Y,
+                g.Verticale ? g.Largeur : g.Longueur, g.Verticale ? g.Longueur : g.Largeur, g.Verticale,
+                new ModeleGoulotte(g.Largeur, g.Hauteur), 0, 0, g.Id))).ToList(),
+        };
+        CalculCablage.Noter(note, cablage, appareils.Count(a => a.Element is not null));
 
         var sources = ChampMagnetique.Sources(appareils);
         var expositions = ControlerChamps(note, appareils, sources);
-        ControlerSeparation(note, implantation.Bandes);
+        ControlerSeparation(note, bandes);
 
         return new ResultatArmoire
         {
             Note = note, Largeur = largeur, Hauteur = hauteur, Profondeur = profondeur, Cellules = cellules,
             Type = armoire ? "Armoire au sol" : "Coffret mural",
-            Appareils = appareils, Bandes = implantation.Bandes, Sources = sources, Expositions = expositions,
-            LongueurRail = implantation.Bandes.Where(b => b.Rail).Sum(b => b.Largeur - 2 * MargeLaterale) / 1000,
-            LongueurGoulotte = (implantation.Bandes.Count + 1) * (enveloppe.PlaqueLargeur - 2 * MargeLaterale) / 1000 + 2 * cellules * enveloppe.PlaqueHauteur / 1000,
+            Appareils = appareils, Bandes = bandes, Sources = sources, Expositions = expositions,
+            LongueurRail = (implantation.Bandes.Where(b => b.Rail).Sum(b => b.Largeur - 2 * gabarit.Laterale) + config.Rails.Sum(x => x.Longueur)) / 1000,
+            LongueurGoulotte = cablage.Goulottes.Sum(x => x.Verticale ? x.Hauteur : x.Largeur) / 1000,
+            Cablage = cablage, Laterale = gabarit.Laterale,
             Marque = marque.ToString(), Gamme = enveloppe.Gamme, Reference = enveloppe.Reference, ReferencePlaque = enveloppe.ReferencePlaque,
             PlaqueLargeur = enveloppe.PlaqueLargeur, PlaqueHauteur = enveloppe.PlaqueHauteur,
             Occupation = implantation.Occupation,
@@ -301,15 +334,19 @@ public static class CalculArmoire
     /// et démarreurs progressifs sont regroupés côte à côte sur le côté droit, fixés sur la plaque avec leur dégagement
     /// de ventilation, au plus près des presse-étoupes des câbles moteurs ; contacteurs et borniers occupent les rails à gauche.
     /// </summary>
-    public static Implantation Implanter(IReadOnlyList<AppareilImplante> elements, ModeleEnveloppe enveloppe, int cellules, double reserve)
+    public static Implantation Implanter(IReadOnlyList<AppareilImplante> elements, ModeleEnveloppe enveloppe, int cellules, double reserve,
+        Gabarit? gabarit = null)
     {
+        var g = gabarit ?? Gabarit.Defaut;
+        var margeLaterale = g.Laterale;
+        var entreRangees = g.EntreRangees;
         // Coordonnées dans l'enveloppe ; le matériel est posé sur la plaque de montage, centrée dans chaque cellule.
         var largeur = enveloppe.Largeur;
         var plaque = enveloppe.PlaqueLargeur;
         var dx = (largeur - plaque) / 2;
         var haut = (enveloppe.Hauteur - enveloppe.PlaqueHauteur) / 2 + MargeHaute;
         var bas = (enveloppe.Hauteur + enveloppe.PlaqueHauteur) / 2 - MargeBasse;
-        var utile = plaque - 2 * MargeLaterale;
+        var utile = plaque - 2 * margeLaterale;
         var capacite = utile * (1 - reserve);
         var places = new List<AppareilImplante>();
         var bandes = new List<BandeZone>();
@@ -363,28 +400,28 @@ public static class CalculArmoire
             var rangeesRail = Rangees(surRail, largeurRails * (1 - reserve), JeuDeparts);
             if (rangeesRail.Any(r => r.Sum(e => e.Largeur) > largeurRails)) tient = false;
 
-            double HauteurRail(IEnumerable<List<AppareilImplante>> r) => r.Sum(x => x.Max(e => e.Hauteur) + EntreRangees);
-            double HauteurBloc(IEnumerable<List<AppareilImplante>> r) => r.Sum(x => x.Max(e => e.Hauteur) + DegagementVariateur) + DegagementVariateur - EntreRangees;
+            double HauteurRail(IEnumerable<List<AppareilImplante>> r) => r.Sum(x => x.Max(e => e.Hauteur) + entreRangees);
+            double HauteurBloc(IEnumerable<List<AppareilImplante>> r) => r.Sum(x => x.Max(e => e.Hauteur) + DegagementVariateur) + DegagementVariateur - entreRangees;
 
             if (aCote)
             {
                 // Rails à gauche et bloc des variateurs à droite partagent la même hauteur de zone.
                 var h = Math.Max(HauteurRail(rangeesRail), HauteurBloc(rangeesVariateurs));
-                Reserver(h - EntreRangees);
-                var x0 = cellule * largeur + dx + MargeLaterale;
+                Reserver(h - entreRangees);
+                var x0 = cellule * largeur + dx + margeLaterale;
                 var yRail = y;
                 foreach (var rangee in rangeesRail)
                 {
                     var hr = Poser(rangee, x0, yRail, JeuDeparts, true);
-                    bandes.Add(new BandeZone(zone, cellule * largeur + dx, yRail - EntreRangees / 2, MargeLaterale + largeurRails + GoulotteVariateurs / 2, hr + EntreRangees));
-                    yRail += hr + EntreRangees;
+                    bandes.Add(new BandeZone(zone, cellule * largeur + dx, yRail - entreRangees / 2, margeLaterale + largeurRails + GoulotteVariateurs / 2, hr + entreRangees));
+                    yRail += hr + entreRangees;
                 }
                 var xBloc = x0 + largeurRails + GoulotteVariateurs;
-                var yBloc = y - EntreRangees / 2 + DegagementVariateur;
+                var yBloc = y - entreRangees / 2 + DegagementVariateur;
                 foreach (var rangee in rangeesVariateurs)
                     yBloc += Poser(rangee, xBloc + largeurBloc - (rangee.Sum(e => e.Largeur) + (rangee.Count - 1) * JeuVariateurs), yBloc, JeuVariateurs, false)
                              + DegagementVariateur;
-                bandes.Add(new BandeZone(zone, xBloc - GoulotteVariateurs / 2, y - EntreRangees / 2,
+                bandes.Add(new BandeZone(zone, xBloc - GoulotteVariateurs / 2, y - entreRangees / 2,
                     cellule * largeur + dx + plaque - (xBloc - GoulotteVariateurs / 2), h, false));
                 y += h;
                 continue;
@@ -394,23 +431,23 @@ public static class CalculArmoire
             {
                 var hr = rangee.Max(e => e.Hauteur);
                 Reserver(hr);
-                Poser(rangee, cellule * largeur + dx + MargeLaterale, y, JeuDeparts, true);
-                bandes.Add(new BandeZone(zone, cellule * largeur + dx, y - EntreRangees / 2, plaque, hr + EntreRangees));
-                y += hr + EntreRangees;
+                Poser(rangee, cellule * largeur + dx + margeLaterale, y, JeuDeparts, true);
+                bandes.Add(new BandeZone(zone, cellule * largeur + dx, y - entreRangees / 2, plaque, hr + entreRangees));
+                y += hr + entreRangees;
             }
             foreach (var rangee in rangeesVariateurs)
             {
-                var hr = rangee.Max(e => e.Hauteur) + 2 * DegagementVariateur - EntreRangees;
+                var hr = rangee.Max(e => e.Hauteur) + 2 * DegagementVariateur - entreRangees;
                 Reserver(hr);
-                var yr = y - EntreRangees / 2 + DegagementVariateur;
-                Poser(rangee, cellule * largeur + dx + MargeLaterale, yr, JeuVariateurs, false);
-                bandes.Add(new BandeZone(zone, cellule * largeur + dx, y - EntreRangees / 2, plaque, hr + EntreRangees, false));
-                y += hr + EntreRangees;
+                var yr = y - entreRangees / 2 + DegagementVariateur;
+                Poser(rangee, cellule * largeur + dx + margeLaterale, yr, JeuVariateurs, false);
+                bandes.Add(new BandeZone(zone, cellule * largeur + dx, y - entreRangees / 2, plaque, hr + entreRangees, false));
+                y += hr + entreRangees;
             }
         }
         if (cellule >= cellules) tient = false;
         var disponible = cellules * (bas - haut);
-        var occupe = cellule * (bas - haut) + Math.Max(0, y - EntreRangees - haut);
+        var occupe = cellule * (bas - haut) + Math.Max(0, y - entreRangees - haut);
         return new Implantation(tient, places, bandes, disponible > 0 ? 100 * occupe / disponible : 100);
     }
 
@@ -468,24 +505,60 @@ public static class CalculArmoire
         }
     }
 
+    /// <summary>Appareils d'une bande : ceux dont le centre est dans son rectangle.</summary>
+    public static IEnumerable<AppareilImplante> Dans(BandeZone b, IEnumerable<AppareilImplante> appareils) =>
+        appareils.Where(a => a.CentreX >= b.X && a.CentreX <= b.X + b.Largeur && a.CentreY >= b.Y && a.CentreY <= b.Y + b.Hauteur);
+
+    /// <summary>
+    /// Zones après les déplacements manuels : chaque bande (rangée automatique ou rail ajouté) prend le niveau d'émission
+    /// le plus fort des appareils qu'elle porte (sale, puis intermédiaire, puis propre) ; une bande vide garde son niveau prévu.
+    /// Un rail ajouté reçoit une bande à la hauteur des appareils posés dessus.
+    /// </summary>
+    public static List<BandeZone> RecalculerZones(IReadOnlyList<BandeZone> bandes, IReadOnlyList<AppareilImplante> appareils,
+        IEnumerable<RailManuel> rails, double largeur, double hauteur)
+    {
+        static ZoneCem? Niveau(IEnumerable<AppareilImplante> sur) =>
+            sur.Where(a => a.Famille != "Bornier" && a.Zone != ZoneCem.HorsArmoire).Select(a => (ZoneCem?)a.Zone).Min();
+        var resultat = bandes.Select(b => Niveau(Dans(b, appareils)) is { } z && z != b.Zone ? b with { Zone = z } : b).ToList();
+        foreach (var rail in rails)
+        {
+            var x = Math.Clamp(rail.X, 0, largeur);
+            var longueur = Math.Min(rail.Longueur, largeur - x);
+            var sur = appareils.Where(a => a.CentreX >= x && a.CentreX <= x + longueur
+                                           && a.Y - 10 <= rail.Y && a.Y + a.Hauteur + 10 >= rail.Y).ToList();
+            var h = Math.Max(120, sur.Select(a => 2 * Math.Max(rail.Y - a.Y, a.Y + a.Hauteur - rail.Y)).DefaultIfEmpty(0).Max() + 30);
+            resultat.Add(new BandeZone(Niveau(sur) ?? ZoneCem.Intermediaire, x, Math.Clamp(rail.Y, 0, hauteur) - h / 2, longueur, h, true, rail.Id));
+        }
+        return resultat;
+    }
+
     static void ControlerManuel(NoteDeCalcul note, List<AppareilImplante> appareils, List<BandeZone> bandes, double largeur, double hauteur)
     {
         var manuels = appareils.Where(a => a.Manuel).ToList();
         if (manuels.Count > 0)
-            note.Info("Ajustement manuel", $"{manuels.Count} appareil(s) déplacé(s) à la main : {string.Join(", ", manuels.Select(a => a.Repere))}.");
+            note.Info("Ajustement manuel", $"{manuels.Count} appareil(s) déplacé(s) à la main : {string.Join(", ", manuels.Select(a => a.Repere))}. " +
+                "Les zones sont recalculées d'après les appareils posés sur chaque rail.");
+        var railsManuels = bandes.Count(b => b.Manuel);
+        if (railsManuels > 0)
+            note.Info("Rails ajoutés à la main", $"{railsManuels} rail(s) DIN : " +
+                string.Join(", ", bandes.Where(b => b.Manuel).Select(b => $"{N(b.Largeur, 0)} mm en {Libelle(b.Zone)}")) + ".");
 
-        foreach (var a in manuels)
+        // Une même bande ne doit pas mêler sources de perturbations et appareils sensibles.
+        foreach (var b in bandes)
         {
-            var bande = bandes.FirstOrDefault(b => a.CentreX >= b.X && a.CentreX <= b.X + b.Largeur
-                                                   && a.CentreY >= b.Y && a.CentreY <= b.Y + b.Hauteur);
-            if (bande is null) continue;
-            var conflit = (a.Zone, bande.Zone) is (ZoneCem.Sale, ZoneCem.Propre) or (ZoneCem.Propre, ZoneCem.Sale);
-            note.Verifier($"Zone de {a.Repere}", !conflit,
-                conflit
-                    ? $"{a.Designation} ({Libelle(a.Zone)}) est placé en {Libelle(bande.Zone)} : le ramener dans sa zone ou séparer par une tôle reliée à la masse."
-                    : $"{a.Designation} placé en {Libelle(bande.Zone)}.",
+            var sur = Dans(b, appareils).ToList();
+            var sales = sur.Where(a => a.Zone == ZoneCem.Sale).ToList();
+            var propres = sur.Where(a => a.Zone == ZoneCem.Propre && a.Famille != "Bornier").ToList();
+            if (sales.Count == 0 || propres.Count == 0) continue;
+            note.Verifier($"Mélange de zones ({string.Join(", ", propres.Select(a => a.Repere))})", false,
+                $"{string.Join(", ", propres.Select(a => a.Repere))} (sensible) à côté de {string.Join(", ", sales.Select(a => a.Repere))} (source) " +
+                "sur la même rangée : la rangée passe en zone sale. Déplacer, ou séparer par une tôle reliée à la masse.",
                 RefCem, StatutCalcul.Alerte);
         }
+        foreach (var a in manuels.Where(a => !EstVariateur(a)))
+            if (!bandes.Any(b => b.Rail && Dans(b, new[] { a }).Any()))
+                note.Verifier($"Rail de {a.Repere}", false, $"{a.Designation} n'est sur aucun rail DIN : ajouter un rail sous l'appareil.",
+                    RefArmoire, StatutCalcul.Alerte);
 
         var chevauchements = new List<string>();
         for (var i = 0; i < appareils.Count; i++)
