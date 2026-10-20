@@ -22,6 +22,8 @@ public static class Encombrements
         var q = Math.Max(1, e.Quantite);
         var poles = e.Poles > 0 ? e.Poles : 3;
         var i = e.Courant;
+        if (e.HorsArmoire) return null;
+        if (e.Loge) return new(0, 0, 0, e.PertesW);
         if (e.LargeurMm > 0 && e.HauteurMm > 0)
             return new(e.LargeurMm, e.HauteurMm, e.ProfondeurMm, e.PertesW);
         return e.Famille switch

@@ -37,6 +37,15 @@ public class ModeleVuePrincipal : Observable
     IReadOnlyList<ModeleVariateur> _variateurs = CatalogueVariateurs.Charger(CheminVariateurs);
     IReadOnlyList<ModeleEnveloppe> _enveloppes = CatalogueEnveloppes.Charger(CheminEnveloppes);
 
+    /// <summary>Catalogues de sécurité et des cartes d'E/S modifiables par l'utilisateur.</summary>
+    static readonly string CheminSecurite = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueSecurite.NomFichier);
+    static readonly string CheminCartes = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueCartesEs.NomFichier);
+    IReadOnlyList<ModeleSecurite> _securite = CatalogueSecurite.Charger(CheminSecurite);
+    IReadOnlyList<CarteEs> _cartes = CatalogueCartesEs.Charger(CheminCartes);
+    IReadOnlyList<ChoixCpu> _cpus = Array.Empty<ChoixCpu>();
+
     Projet _projet = new();
     string? _chemin;
     bool _modifie;
@@ -45,7 +54,8 @@ public class ModeleVuePrincipal : Observable
     public ModeleVuePrincipal()
     {
         _selection = _projet;
-        Resultat = CalculProjet.Calculer(_projet, _catalogue, _references, _variateurs, _enveloppes);
+        _cpus = ListerCpus(_catalogue);
+        Resultat = CalculerProjet();
 
         Nouveau = new Commande(NouveauProjet);
         Ouvrir = new Commande(OuvrirProjet);
@@ -71,6 +81,9 @@ public class ModeleVuePrincipal : Observable
         AjouterFonction = new Commande(() => Modifier(() => _projet.Securite.Fonctions.Add(new FonctionSecurite
             { Nom = $"Fonction {_projet.Securite.Fonctions.Count + 1}" })));
         SupprimerFonction = new Commande(p => Modifier(() => _projet.Securite.Fonctions.Remove((FonctionSecurite)p!)), p => p is FonctionSecurite);
+        AjouterStation = new Commande(() => Modifier(() => _projet.Automate.Stations.Add(new StationDeportee
+            { Nom = $"Station {_projet.Automate.Stations.Count + 1}", EntreesTor = 16, SortiesTor = 8 })));
+        SupprimerStation = new Commande(p => Modifier(() => _projet.Automate.Stations.Remove((StationDeportee)p!)), p => p is StationDeportee);
         AfficherArmoire = new Commande(() => Selection = new PageArmoire(_projet));
         AfficherThermique = new Commande(() => Selection = new PageThermique(_projet));
         AfficherSelectivite = new Commande(() => Selection = new PageSelectivite(_projet));
@@ -100,16 +113,23 @@ public class ModeleVuePrincipal : Observable
             _references = CatalogueReferences.Charger(CheminReferences);
             _variateurs = CatalogueVariateurs.Charger(CheminVariateurs);
             _enveloppes = CatalogueEnveloppes.Charger(CheminEnveloppes);
+            _securite = CatalogueSecurite.Charger(CheminSecurite);
             Recalculer();
         });
         OuvrirCatalogueVariateurs = new Commande(() => OuvrirCatalogueUtilisateur(CheminVariateurs, CatalogueVariateurs.TexteEmbarque(),
             "Impossible d'ouvrir le catalogue des variateurs"));
         OuvrirCatalogueEnveloppes = new Commande(() => OuvrirCatalogueUtilisateur(CheminEnveloppes, CatalogueEnveloppes.TexteEmbarque(),
             "Impossible d'ouvrir le catalogue des enveloppes"));
+        OuvrirCatalogueSecurite = new Commande(() => OuvrirCatalogueUtilisateur(CheminSecurite, CatalogueSecurite.TexteEmbarque(),
+            "Impossible d'ouvrir le catalogue de sécurité"));
+        OuvrirCatalogueCartes = new Commande(() => OuvrirCatalogueUtilisateur(CheminCartes, CatalogueCartesEs.TexteEmbarque(),
+            "Impossible d'ouvrir le catalogue des cartes d'E/S"));
         OuvrirCatalogue = new Commande(OuvrirCatalogueAutomates);
         RechargerCatalogue = new Commande(() =>
         {
             _catalogue = CatalogueAutomates.Charger(CheminCatalogue);
+            _cartes = CatalogueCartesEs.Charger(CheminCartes);
+            _cpus = ListerCpus(_catalogue);
             Recalculer();
         });
         Forcer = new Commande(p => ForcerValeur(p as LigneCalcul), p => p is LigneCalcul { Forcable: true });
@@ -139,6 +159,8 @@ public class ModeleVuePrincipal : Observable
     public Commande SupprimerConsommateur { get; }
     public Commande AjouterFonction { get; }
     public Commande SupprimerFonction { get; }
+    public Commande AjouterStation { get; }
+    public Commande SupprimerStation { get; }
     public Commande AfficherArmoire { get; }
     public Commande AfficherThermique { get; }
     public Commande AfficherSelectivite { get; }
@@ -157,6 +179,19 @@ public class ModeleVuePrincipal : Observable
     public Commande OuvrirCatalogueVariateurs { get; }
     public Commande OuvrirCatalogueEnveloppes { get; }
     public Commande OuvrirCatalogue { get; }
+    public Commande OuvrirCatalogueSecurite { get; }
+    public Commande OuvrirCatalogueCartes { get; }
+
+    /// <summary>CPU proposées au choix manuel, précédées du choix automatique.</summary>
+    public IReadOnlyList<ChoixCpu> CpusDisponibles => _cpus;
+
+    static IReadOnlyList<ChoixCpu> ListerCpus(IReadOnlyList<CpuAutomate> catalogue) =>
+        catalogue.Select(c => new ChoixCpu(c.Reference, c.Libelle))
+            .Prepend(new ChoixCpu("", "Automatique, selon la charge et les cartes"))
+            .ToList();
+
+    ResultatProjet CalculerProjet() =>
+        CalculProjet.Calculer(_projet, _catalogue, _references, _variateurs, _enveloppes, _securite, _cartes);
     public Commande RechargerCatalogue { get; }
     public Commande Forcer { get; }
     public Commande AnnulerForcage { get; }
@@ -236,7 +271,7 @@ public class ModeleVuePrincipal : Observable
     public void Recalculer()
     {
         _modifie = true;
-        Resultat = CalculProjet.Calculer(_projet, _catalogue, _references, _variateurs, _enveloppes);
+        Resultat = CalculerProjet();
         SignalerTout();
     }
 
@@ -341,7 +376,7 @@ public class ModeleVuePrincipal : Observable
         _chemin = chemin;
         _selection = projet;
         if (chemin is not null) MemoriserRecent(chemin);
-        Resultat = CalculProjet.Calculer(_projet, _catalogue, _references, _variateurs, _enveloppes);
+        Resultat = CalculerProjet();
         _modifie = false;
         SignalerTout();
     }
@@ -524,7 +559,7 @@ public class ModeleVuePrincipal : Observable
         }
         Selection = carte.Chaine.FirstOrDefault()?.Element.Famille switch
         {
-            "Automate" or "Entrées/sorties" => _projet.Automate,
+            "Automate" or "Entrées/sorties" or "Accessoire automate" => _projet.Automate,
             "Sécurité" => _projet.Securite,
             _ => _projet,
         };
@@ -569,3 +604,6 @@ public class ModeleVuePrincipal : Observable
         return propre.Length > 0 ? propre : "projet";
     }
 }
+
+/// <summary>Une CPU proposée dans la liste de choix ; référence vide pour le choix automatique.</summary>
+public record ChoixCpu(string Reference, string Libelle);

@@ -284,7 +284,8 @@ public static class CalculArmoire
     public static (int Nombre, string Detail) BornesCommande(Projet projet)
     {
         var a = projet.Automate;
-        var es = a.Actif ? a.EntreesTor + a.SortiesTor + 2 * (a.EntreesAnalogiques + a.SortiesAnalogiques) : 0;
+        var es = a.Actif ? a.EntreesTor + a.SortiesTor + 2 * (a.EntreesAnalogiques + a.SortiesAnalogiques)
+            + a.Stations.Where(x => x.DansArmoire).Sum(x => x.EntreesTor + x.SortiesTor + 2 * (x.EntreesAnalogiques + x.SortiesAnalogiques)) : 0;
         var securite = projet.Securite.Fonctions.Sum(f => 2 * Math.Max(1, f.NombreCapteurs));
         var distribution = es + securite > 0 || projet.Departs.OfType<DepartAlimentation24V>().Any() ? 10 : 0;
         return (es + securite + distribution, $"{es} E/S, {securite} sécurité, {distribution} distribution 24 V");

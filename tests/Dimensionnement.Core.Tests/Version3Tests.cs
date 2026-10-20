@@ -399,4 +399,19 @@ public class ChampMagnetiqueTests
         Assert.Contains("API1", a.Expositions.Keys);
         Assert.Contains(a.Note.Lignes, l => l.Libelle == "Source U1" && l.Message.Contains("30 A/m jusqu'à"));
     }
+
+    [Fact]
+    public void Cartes_d_ES_implantees_a_leurs_cotes_reelles_sans_les_accessoires()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        projet.Automate.CartesCompactes = true;
+
+        var a = CalculProjet.Calculer(projet).Armoire!;
+
+        var cartes = a.Appareils.Where(x => x.Repere.StartsWith("API1.")).ToList();
+        Assert.NotEmpty(cartes);
+        Assert.All(cartes, x => Assert.Equal(15, x.Largeur));
+        Assert.Equal(100, a.Appareils.Single(x => x.Repere == "API1").Largeur);
+        Assert.DoesNotContain(a.Appareils, x => x.Repere.EndsWith("-X"));
+    }
 }

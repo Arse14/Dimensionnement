@@ -20,7 +20,7 @@ public static class SyntheseMateriel
     /// <summary>Titre du groupe de commande (automate, sécurité), distinct d'une rubrique « Commande » de départs.</summary>
     public const string TitreCommande = "AUTOMATISME ET SÉCURITÉ";
 
-    static readonly string[] Commande = { "Automate", "Entrées/sorties", "Sécurité" };
+    static readonly string[] Commande = { "Automate", "Entrées/sorties", "Accessoire automate", "Sécurité" };
 
     public static IReadOnlyList<GroupeMateriel> Grouper(ResultatProjet r)
     {
@@ -45,7 +45,7 @@ public static class SyntheseMateriel
         var commande = new List<CarteMateriel>();
         foreach (var racine in r.Arbre.Parcourir().Where(e => e.Famille is "Automate" || (e.Famille == "Sécurité" && !e.Repere.StartsWith("KM"))))
         {
-            var maillons = racine.Parcourir().Select(e => new MaillonMateriel(e, false)).ToList();
+            var maillons = racine.Parcourir().Where(e => e.Famille != "Accessoire automate").Select(e => new MaillonMateriel(e, false)).ToList();
             commande.Add(new CarteMateriel($"{racine.Repere}  {racine.Designation}", racine.Calibre, racine.Statut, maillons, null));
         }
         if (commande.Count > 0) groupes.Add(new GroupeMateriel(TitreCommande, commande));

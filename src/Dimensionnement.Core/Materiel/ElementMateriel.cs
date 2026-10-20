@@ -39,6 +39,12 @@ public class ElementMateriel
     public double HauteurMm { get; set; }
     public double ProfondeurMm { get; set; }
     public double PertesW { get; set; }
+
+    /// <summary>Logé dans un autre appareil (module dans un châssis, connecteur frontal) : pas de place propre sur la plaque.</summary>
+    public bool Loge { get; set; }
+
+    /// <summary>Monté hors de l'armoire (station déportée en coffret machine) : repris au devis, absent de la plaque.</summary>
+    public bool HorsArmoire { get; set; }
     public StatutCalcul Statut { get; set; } = StatutCalcul.Info;
 
     /// <summary>Départ auquel l'appareil appartient ; null pour l'arrivée.</summary>
@@ -49,7 +55,7 @@ public class ElementMateriel
     {
         "Variateur" or "Démarreur progressif" or "Contacteur" or "Relais thermique" => ZoneCem.Sale,
         "Câble" or "Moteur" or "Récepteur" or "Prise de courant" or "Réseau" => ZoneCem.HorsArmoire,
-        "Automate" or "Entrées/sorties" or "Sécurité" => ZoneCem.Propre,
+        "Automate" or "Entrées/sorties" or "Accessoire automate" or "Sécurité" => ZoneCem.Propre,
         _ => ZoneCem.Intermediaire,
     };
 

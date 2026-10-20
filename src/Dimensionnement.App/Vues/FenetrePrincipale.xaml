@@ -384,6 +384,10 @@
                                         <TextBlock Text="Départs coupés (ex. 1, 3, 4)" Style="{StaticResource Etiquette}"/>
                                         <TextBox Text="{inf:Lien DepartsTexte}"/>
                                     </DockPanel>
+                                    <DockPanel Style="{StaticResource Ligne}">
+                                        <TextBlock Text="Sorties de sécurité en plus (voyants, freins…)" Style="{StaticResource Etiquette}"/>
+                                        <TextBox Text="{inf:Lien SortiesSupplementaires}"/>
+                                    </DockPanel>
                                 </StackPanel>
                             </Border>
                         </DataTemplate>
@@ -394,6 +398,44 @@
                             Command="{Binding DataContext.AjouterFonction, RelativeSource={RelativeSource AncestorType=Window}}"/>
                     <Button Content="Exporter pour SISTEMA (CSV)"
                             Command="{Binding DataContext.ExporterSistema, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                </StackPanel>
+
+                <TextBlock Text="Capacité de câblage des appareils retenus" Style="{StaticResource Section}"/>
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
+                           Text="Voies utilisées sur voies disponibles. Quand une fonction dépasse un relais, la référence passe au modèle supérieur, puis aux extensions de contacts, puis à un automate de sécurité avec modules."/>
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="80"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="90"/><ColumnDefinition Width="90"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Repère" Foreground="{StaticResource TexteSecondaire}"/>
+                    <TextBlock Grid.Column="1" Text="Référence" Foreground="{StaticResource TexteSecondaire}"/>
+                    <TextBlock Grid.Column="2" Text="Fonction" Foreground="{StaticResource TexteSecondaire}"/>
+                    <TextBlock Grid.Column="3" Text="Entrées" Foreground="{StaticResource TexteSecondaire}"/>
+                    <TextBlock Grid.Column="4" Text="Sorties" Foreground="{StaticResource TexteSecondaire}"/>
+                </Grid>
+                <ItemsControl ItemsSource="{Binding DataContext.Resultat.Securite.Capacites, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="80"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="90"/><ColumnDefinition Width="90"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding Repere}" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Reference}" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Grid.Column="2" Text="{Binding Usage}" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Grid.Column="3" Text="{Binding Entrees}"/>
+                                <TextBlock Grid.Column="4" Text="{Binding Sorties}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <Button Content="Ouvrir le catalogue de sécurité"
+                            Command="{Binding DataContext.OuvrirCatalogueSecurite, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <Button Content="Recharger les catalogues"
+                            Command="{Binding DataContext.RechargerCatalogueReferences, RelativeSource={RelativeSource AncestorType=Window}}"/>
                 </StackPanel>
             </StackPanel>
         </DataTemplate>
@@ -409,6 +451,23 @@
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Marque" Style="{StaticResource Etiquette}"/>
                     <ComboBox ItemsSource="{x:Static inf:Listes.MarquesAutomate}" SelectedItem="{inf:Lien Marque}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="CPU" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{Binding DataContext.CpusDisponibles, RelativeSource={RelativeSource AncestorType=Window}}"
+                              SelectedValuePath="Reference" SelectedValue="{inf:Lien CpuImposee}"
+                              ToolTip="Choix automatique selon la communication et la place des cartes, ou CPU imposée : les cartes d'E/S suivent alors sa famille.">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Libelle}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Cartes compactes (ET200SP / haute densité)" Style="{StaticResource Etiquette}"/>
+                    <CheckBox IsChecked="{inf:Lien CartesCompactes}"
+                              ToolTip="Siemens : CPU ET200SP, ou station ET200SP à côté d'une autre CPU. Schneider : cartes 32 voies à connecteurs."/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Sécurité intégrée (CPU F / Safety)" Style="{StaticResource Etiquette}"/>
@@ -459,13 +518,78 @@
                     <TextBox Text="{inf:Lien SortiesAnalogiques}"/>
                 </DockPanel>
 
+                <TextBlock Text="Cartes d'E/S retenues" Style="{StaticResource Section}"/>
+                <ItemsControl ItemsSource="{Binding DataContext.Resultat.Automate.Plan.Cartes, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="140"/><ColumnDefinition Width="*"/><ColumnDefinition Width="110"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding Reference}" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Designation}" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Grid.Column="2" Foreground="{StaticResource TexteSecondaire}">
+                                    <Run Text="{Binding Largeur, Mode=OneWay}"/><Run Text=" × "/><Run Text="{Binding Hauteur, Mode=OneWay}"/><Run Text=" mm"/>
+                                </TextBlock>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Text="Stations d'E/S déportées" Style="{StaticResource Section}"/>
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
+                           Text="Chaque station (ET200SP chez Siemens, îlot TM3 chez Schneider) compte comme un périphérique réseau et ses E/S dans la zone d'adresses de la CPU."/>
+                <ItemsControl ItemsSource="{Binding Stations}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type mod:StationDeportee}">
+                            <Border Background="{StaticResource PanneauClair}" CornerRadius="4" Padding="10" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <DockPanel Style="{StaticResource Ligne}">
+                                        <Button DockPanel.Dock="Right" Margin="6,0,0,0" Style="{StaticResource BoutonPetit}" ToolTip="Supprimer la station"
+                                                Command="{Binding DataContext.SupprimerStation, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}">
+                                            <TextBlock FontFamily="{StaticResource Icones}" Text="&#xE74D;"/>
+                                        </Button>
+                                        <TextBlock Text="Nom" Style="{StaticResource Etiquette}"/>
+                                        <TextBox Text="{inf:Lien Nom}"/>
+                                    </DockPanel>
+                                    <DockPanel Style="{StaticResource Ligne}">
+                                        <TextBlock Text="Entrées TOR" Style="{StaticResource Etiquette}"/>
+                                        <TextBox Text="{inf:Lien EntreesTor}"/>
+                                    </DockPanel>
+                                    <DockPanel Style="{StaticResource Ligne}">
+                                        <TextBlock Text="Sorties TOR" Style="{StaticResource Etiquette}"/>
+                                        <TextBox Text="{inf:Lien SortiesTor}"/>
+                                    </DockPanel>
+                                    <DockPanel Style="{StaticResource Ligne}">
+                                        <TextBlock Text="Entrées analogiques" Style="{StaticResource Etiquette}"/>
+                                        <TextBox Text="{inf:Lien EntreesAnalogiques}"/>
+                                    </DockPanel>
+                                    <DockPanel Style="{StaticResource Ligne}">
+                                        <TextBlock Text="Sorties analogiques" Style="{StaticResource Etiquette}"/>
+                                        <TextBox Text="{inf:Lien SortiesAnalogiques}"/>
+                                    </DockPanel>
+                                    <DockPanel Style="{StaticResource Ligne}">
+                                        <TextBlock Text="Montée dans l'armoire" Style="{StaticResource Etiquette}"/>
+                                        <CheckBox IsChecked="{inf:Lien DansArmoire}" ToolTip="Décochée : coffret sur la machine, hors plaque et hors bilan 24 V."/>
+                                    </DockPanel>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button Content="Ajouter une station" HorizontalAlignment="Left" Margin="0,4,0,0"
+                        Command="{Binding DataContext.AjouterStation, RelativeSource={RelativeSource AncestorType=Window}}"/>
+
                 <TextBlock Text="Catalogue des CPU" Style="{StaticResource Section}"/>
                 <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
                            Text="Les capacités des CPU sont indicatives tant qu'elles ne sont pas validées : ouvrez le catalogue, complétez-le d'après les fiches techniques et passez « verifie » à true, puis rechargez."/>
                 <StackPanel Orientation="Horizontal">
                     <Button Content="Ouvrir le catalogue"
                             Command="{Binding DataContext.OuvrirCatalogue, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                    <Button Content="Recharger le catalogue"
+                    <Button Content="Catalogue des cartes d'E/S"
+                            Command="{Binding DataContext.OuvrirCatalogueCartes, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <Button Content="Recharger les catalogues"
                             Command="{Binding DataContext.RechargerCatalogue, RelativeSource={RelativeSource AncestorType=Window}}"/>
                 </StackPanel>
             </StackPanel>

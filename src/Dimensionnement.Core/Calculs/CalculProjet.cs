@@ -74,15 +74,17 @@ public static class CalculProjet
 
     public static ResultatProjet Calculer(Projet projet, IReadOnlyList<CpuAutomate> catalogue,
         IReadOnlyList<ReferenceCatalogue>? references = null, IReadOnlyList<ModeleVariateur>? variateurs = null,
-        IReadOnlyList<ModeleEnveloppe>? enveloppes = null)
+        IReadOnlyList<ModeleEnveloppe>? enveloppes = null, IReadOnlyList<ModeleSecurite>? catalogueSecurite = null,
+        IReadOnlyList<CarteEs>? cartes = null)
     {
+        cartes ??= CatalogueCartesEs.Charger();
         var reseau = projet.Reseau;
         variateurs ??= CatalogueVariateurs.Charger();
         var fabricant = projet.References.Fabricant;
 
         // Le bilan ne dépend pas des câbles : un premier passage donne les puissances, le second
         // recalcule les départs avec la chute de tension consommée par le câble d'arrivée.
-        var consommateurs24V = Consommateurs24V(projet);
+        var consommateurs24V = Consommateurs24V(projet, catalogueSecurite, catalogue, cartes);
         var consommation24V = consommateurs24V.Sum(c => c.Courant);
         var premierPassage = projet.Departs.Select(d => CalculDepart.Calculer(d, reseau, 0, consommation24V, fabricant, variateurs)).ToList();
 
@@ -127,8 +129,8 @@ public static class CalculProjet
             note.Verifier("Alimentation 24 V", projet.Departs.OfType<DepartAlimentation24V>().Any(),
                 "Le projet consomme du 24 V DC : ajouter un départ « Alimentation 24 V DC ».", siEchec: StatutCalcul.Alerte);
         }
-        var securite = CalculSecurite.Calculer(projet, departs);
-        var automate = CalculAutomate.Calculer(projet.Automate, catalogue);
+        var securite = CalculSecurite.Calculer(projet, departs, catalogueSecurite);
+        var automate = CalculAutomate.Calculer(projet.Automate, catalogue, cartes);
 
         var arbre = new ElementMateriel { Repere = "Réseau", Famille = "Réseau",
             Designation = $"Arrivée {Libelle(reseau.Alimentation)}, {reseau.Slt}", Calibre = $"Icc {N(reseau.IccKiloAmperes)} kA" };
@@ -175,13 +177,14 @@ public static class CalculProjet
     }
 
     /// <summary>Consommateurs 24 V DC du projet : ceux déclarés à la main et ceux déduits du matériel.</summary>
-    public static IReadOnlyList<ConsommationCommande> Consommateurs24V(Projet projet) =>
+    public static IReadOnlyList<ConsommationCommande> Consommateurs24V(Projet projet, IReadOnlyList<ModeleSecurite>? securite = null,
+        IReadOnlyList<CpuAutomate>? cpus = null, IReadOnlyList<CarteEs>? cartes = null) =>
         projet.Consommateurs24V
             .Where(c => c.CourantMa > 0 && c.Quantite > 0)
             .Select(c => new ConsommationCommande(c.Quantite > 1 ? $"{c.Designation} × {c.Quantite}" : c.Designation,
                 c.CourantMa * c.Quantite / 1000))
-            .Concat(CalculSecurite.Consommations(projet.Securite))
-            .Concat(CalculAutomate.Consommations(projet.Automate))
+            .Concat(CalculSecurite.Consommations(projet, securite))
+            .Concat(CalculAutomate.Consommations(projet.Automate, cpus, cartes))
             .ToList();
 
     /// <summary>Coefficient de simultanéité d'une armoire de distribution selon son nombre de circuits.</summary>

@@ -80,7 +80,7 @@ public static class SchemaUnifilaire
     }
 
     /// <summary>Appareils représentés : la partie commande (automate, sécurité) n'est pas sur le schéma de puissance.</summary>
-    static bool Dessinable(ElementMateriel e) => e.Famille is not ("Automate" or "Entrées/sorties" or "Sécurité");
+    static bool Dessinable(ElementMateriel e) => e.Famille is not ("Automate" or "Entrées/sorties" or "Accessoire automate" or "Sécurité");
 
     /// <summary>Enfant qui continue la ligne de puissance : celui qui mène au câble ou au récepteur.</summary>
     static ElementMateriel? Principal(ElementMateriel e) =>

@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace Dimensionnement.Core.Modele;
 
 public enum MarqueAutomate { Siemens, Schneider }
@@ -8,6 +10,16 @@ public class ConfigurationAutomate
     /// <summary>Faux tant que le projet ne comporte pas d'automate.</summary>
     public bool Actif { get; set; }
     public MarqueAutomate Marque { get; set; } = MarqueAutomate.Siemens;
+
+    /// <summary>Référence de la CPU choisie à la main ; vide pour un choix automatique selon la charge.</summary>
+    public string CpuImposee { get => _cpuImposee; set => _cpuImposee = value ?? ""; }
+    string _cpuImposee = "";
+
+    /// <summary>
+    /// Cartes compactes : périphérie ET200SP chez Siemens (CPU ET200SP, ou station IM 155-6 à côté d'une autre CPU),
+    /// cartes haute densité à connecteurs chez Schneider.
+    /// </summary>
+    public bool CartesCompactes { get; set; }
 
     public int EntreesTor { get; set; }
     public int SortiesTor { get; set; }
@@ -32,6 +44,25 @@ public class ConfigurationAutomate
     /// <summary>Sécurité intégrée à la CPU (CPU F chez Siemens, Safety chez Schneider).</summary>
     public bool SecuriteIntegree { get; set; }
 
+    /// <summary>Stations d'E/S déportées (ET200SP chez Siemens, îlot TM3 chez Schneider) pilotées par la CPU.</summary>
+    public ObservableCollection<StationDeportee> Stations { get; set; } = new();
+
     /// <summary>Réserve demandée sur les ressources de communication et d'E/S, en %.</summary>
     public double ReservePourcent { get; set; } = 20;
+}
+
+/// <summary>
+/// Station d'E/S déportée sur le réseau (PROFINET, EtherNet/IP) : une tête de station et ses cartes, dans l'armoire
+/// ou dans un coffret au plus près de la machine.
+/// </summary>
+public class StationDeportee
+{
+    public string Nom { get; set; } = "Station";
+    public int EntreesTor { get; set; }
+    public int SortiesTor { get; set; }
+    public int EntreesAnalogiques { get; set; }
+    public int SortiesAnalogiques { get; set; }
+
+    /// <summary>Faux pour une station en coffret sur la machine : elle n'occupe pas la plaque de l'armoire.</summary>
+    public bool DansArmoire { get; set; } = true;
 }

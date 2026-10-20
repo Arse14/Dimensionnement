@@ -29,6 +29,9 @@ public class FonctionSecurite
     /// <summary>Nombre de capteurs ou de boutons raccordés (boutons d'arrêt d'urgence, interrupteurs de porte…).</summary>
     public int NombreCapteurs { get; set; } = 1;
 
+    /// <summary>Sorties de sécurité à prévoir en plus des coupures des départs (voyants, électrovannes, freins…).</summary>
+    public int SortiesSupplementaires { get; set; }
+
     /// <summary>Numéros des départs dont la fonction coupe la puissance.</summary>
     public List<int> Departs { get; set; } = new();
 

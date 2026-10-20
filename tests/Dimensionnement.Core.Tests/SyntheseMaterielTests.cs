@@ -15,7 +15,7 @@ public class SyntheseMaterielTests
         Assert.Equal("ARRIVÉE", groupes[0].Titre);
         Assert.Equal(new[] { "W0", "QS0", "QG" }, groupes[0].Cartes.Single().Chaine.Select(m => m.Element.Repere));
         Assert.Equal(SyntheseMateriel.TitreCommande, groupes[^1].Titre);
-        Assert.Contains(groupes[^1].Cartes, c => c.Chaine.Any(m => m.Element.Repere == "API1-TOR"));
+        Assert.Contains(groupes[^1].Cartes, c => c.Chaine.Any(m => m.Element.Repere == "API1.1"));
         Assert.Equal(r.Departs.Count, groupes.Skip(1).Take(groupes.Count - 2).Sum(g => g.Cartes.Count));
     }
 
