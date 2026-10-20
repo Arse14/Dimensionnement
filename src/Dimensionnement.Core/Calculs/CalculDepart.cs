@@ -42,18 +42,19 @@ public static class CalculDepart
     const string RefContacteur = "NF EN 60947-4-1, catégories d'emploi";
 
     /// <param name="consommation24V">Consommation 24 V DC du projet, en A, pour les départs d'alimentation 24 V.</param>
-    /// <param name="fabricant">Fabricant du projet, marque des variateurs laissés au choix du projet.</param>
+    /// <param name="fabricant">Fabricant du projet (alimentations).</param>
+    /// <param name="marqueVariateurs">Marque des variateurs laissés au choix du projet ; le fabricant du projet si absente.</param>
     /// <param name="variateurs">Catalogue des variateurs ; le catalogue embarqué par défaut.</param>
     public static ResultatDepart Calculer(Depart depart, Reseau reseau, double chuteAmont = 0, double consommation24V = 0,
         FabricantMateriel fabricant = FabricantMateriel.Schneider, IReadOnlyList<ModeleVariateur>? variateurs = null,
         IReadOnlyList<ConsommationCommande>? postes24V = null, IReadOnlyList<ModeleAlimentation>? alimentations = null,
-        ChargeAval? chargeAval = null) => depart switch
+        ChargeAval? chargeAval = null, FabricantMateriel? marqueVariateurs = null) => depart switch
     {
         DepartAlimentation24V { EstTransformateur: true } t => Transformateur(t, reseau, chuteAmont, consommation24V, postes24V, fabricant,
             alimentations ?? CatalogueAlimentations.Charger(), chargeAval),
         DepartAlimentation24V a => Alimentation24V(a, reseau, chuteAmont, consommation24V, postes24V, fabricant,
             alimentations ?? CatalogueAlimentations.Charger()),
-        DepartMoteur m => Moteur(m, reseau, chuteAmont, fabricant, variateurs ?? CatalogueVariateurs.Charger()),
+        DepartMoteur m => Moteur(m, reseau, chuteAmont, marqueVariateurs ?? fabricant, variateurs ?? CatalogueVariateurs.Charger()),
         DepartResistif r => Resistif(r, reseau, chuteAmont),
         DepartPrise p => Prise(p, reseau, chuteAmont),
         DepartGenerique g => Generique(g, reseau, chuteAmont),

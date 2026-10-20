@@ -159,6 +159,11 @@
                     <ComboBox ItemsSource="{x:Static inf:Listes.MarquesFamille}" SelectedItem="{inf:Lien References.MarqueContacteurs}"
                               ToolTip="Contacteurs et relais thermiques."/>
                 </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Variateurs" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.FabricantsVariateurs}" SelectedItem="{inf:Lien References.MarqueVariateurs}"
+                              ToolTip="Marque des variateurs et servovariateurs quand le départ laisse le choix au projet."/>
+                </DockPanel>
             </StackPanel>
         </DataTemplate>
 

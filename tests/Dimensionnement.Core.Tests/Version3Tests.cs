@@ -193,7 +193,9 @@ public class Version3Tests
     [Fact]
     public void Disjoncteur_modulaire_reference_par_modele()
     {
-        var r = CalculProjet.Calculer(ProjetMachine());
+        var projet = ProjetMachine();
+        projet.References.Fabricant = FabricantMateriel.Schneider;
+        var r = CalculProjet.Calculer(projet);
 
         // Q4 : 13 A courbe B, 3 pôles → Acti9 iC60N A9F73313.
         Assert.Equal("A9F73313", r.Arbre.Parcourir().Single(e => e.Repere == "Q4").Reference);
@@ -218,7 +220,9 @@ public class Version3Tests
     [Fact]
     public void Liste_de_devis_complete()
     {
-        var r = CalculProjet.Calculer(ProjetMachine());
+        var projet = ProjetMachine();
+        projet.References.Fabricant = FabricantMateriel.Schneider;
+        var r = CalculProjet.Calculer(projet);
         var devis = ListeDevis.Generer(r);
 
         Assert.Contains(devis, l => l.Categorie == ListeDevis.Enveloppe && l.Designation == "Coffret électrique mural" && l.Quantite == 1);

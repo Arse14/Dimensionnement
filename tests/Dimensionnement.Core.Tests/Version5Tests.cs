@@ -97,3 +97,19 @@ public class Version5Tests
         Assert.False(r.Selectivite!.AttentionRequise);
     }
 }
+
+public class MarquesParDefautTests
+{
+    [Fact]
+    public void Siemens_pour_l_appareillage_et_Schneider_pour_les_variateurs()
+    {
+        var projet = new Projet();
+        projet.Ajouter(new DepartMoteur { PuissanceKw = 4, CourantPlaque = 8.5 });
+        projet.Ajouter(new DepartMoteur { PuissanceKw = 5.5, Demarrage = ModeDemarrage.Variateur });
+        var r = CalculProjet.Calculer(projet);
+
+        var elements = r.Arbre.Parcourir().ToList();
+        Assert.StartsWith("Siemens", elements.Single(e => e.Repere == "KM1").Fabricant);
+        Assert.StartsWith("Schneider", elements.Single(e => e.Repere == "U2").Fabricant);
+    }
+}

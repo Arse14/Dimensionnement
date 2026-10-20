@@ -103,7 +103,7 @@ public static class CalculProjet
         var alimentesPar = SourcesCommande.AlimentesPar(projet);
         ResultatDepart CalculerDepart(Depart d, double chute, ChargeAval? charge) => CalculDepart.Calculer(d, reseau, chute,
             repartition.TryGetValue(d.Id, out var postes) ? postes.Sum(p => p.Courant) : consommation24V, fabricant, variateurs,
-            repartition.TryGetValue(d.Id, out var liste) ? liste : null, alimentations, charge);
+            repartition.TryGetValue(d.Id, out var liste) ? liste : null, alimentations, charge, projet.References.MarqueVariateurs);
         // Les transformateurs 400/230 V sont calculés après les départs qu'ils alimentent.
         List<ResultatDepart> Passe(double chute)
         {

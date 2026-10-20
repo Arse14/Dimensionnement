@@ -94,7 +94,11 @@ public enum MarqueFamille { Projet, Schneider, ABB, Siemens, Legrand }
 
 public class ConfigurationReferences
 {
-    public FabricantMateriel Fabricant { get; set; } = FabricantMateriel.Schneider;
+    /// <summary>Fabricant de l'appareillage (moteurs et leurs protections) : Siemens par défaut, fournisseur habituel.</summary>
+    public FabricantMateriel Fabricant { get; set; } = FabricantMateriel.Siemens;
+
+    /// <summary>Marque des variateurs laissés au choix du projet : Schneider par défaut.</summary>
+    public FabricantMateriel MarqueVariateurs { get; set; } = FabricantMateriel.Schneider;
 
     /// <summary>Marque des contacteurs et de leurs relais thermiques.</summary>
     public MarqueFamille MarqueContacteurs { get; set; } = MarqueFamille.Projet;

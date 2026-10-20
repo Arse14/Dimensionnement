@@ -47,7 +47,8 @@ public static class CatalogueReferences
     static readonly Lazy<IReadOnlyList<ReferenceCatalogue>> Embarque = new(() => Lire(TexteEmbarque()));
 
     /// <summary>Ordre des fabricants de repli quand le fabricant retenu n'a pas l'appareil (ex. variateur chez Legrand).</summary>
-    static readonly FabricantMateriel[] Repli = { FabricantMateriel.Schneider, FabricantMateriel.Siemens, FabricantMateriel.ABB };
+    // Schneider en dernier : le fournisseur habituel ne le distribue pas.
+    static readonly FabricantMateriel[] Repli = { FabricantMateriel.Siemens, FabricantMateriel.ABB, FabricantMateriel.Schneider };
 
     public static IReadOnlyList<ReferenceCatalogue> Charger(string? fichierPersonnalise = null) =>
         fichierPersonnalise is not null && File.Exists(fichierPersonnalise) ? Lire(File.ReadAllText(fichierPersonnalise)) : Embarque.Value;

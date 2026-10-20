@@ -80,7 +80,7 @@ public class LibelleEnum : IValueConverter
         SensibiliteDifferentiel.Aucun => "Sans différentiel",
         SensibiliteDifferentiel.Ma30 => "30 mA",
         SensibiliteDifferentiel.Ma300 => "300 mA",
-        MarqueVariateur.Projet => "Fabricant du projet",
+        MarqueVariateur.Projet => "Marque des variateurs du projet",
         MateriauEnveloppe.AcierPeint => "Acier peint (k = 5,5)",
         MateriauEnveloppe.Inox => "Inox (k = 4,5)",
         MateriauEnveloppe.Aluminium => "Aluminium (k = 12)",
@@ -163,6 +163,7 @@ public static class Listes
     public static InstallationEnveloppe[] Installations { get; } = Enum.GetValues<InstallationEnveloppe>();
     public static FabricantMateriel[] FabricantsMateriel { get; } = Enum.GetValues<FabricantMateriel>();
     public static MarqueVariateur[] MarquesVariateur { get; } = Enum.GetValues<MarqueVariateur>();
+    public static FabricantMateriel[] FabricantsVariateurs { get; } = Core.Normes.CatalogueVariateurs.Fabricants;
     public static MarqueEnveloppe[] MarquesEnveloppe { get; } = Enum.GetValues<MarqueEnveloppe>();
     public static MarqueFamille[] MarquesFamille { get; } = Enum.GetValues<MarqueFamille>();
     public static MarqueAlimentation[] MarquesAlimentation { get; } = Enum.GetValues<MarqueAlimentation>();
