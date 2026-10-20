@@ -92,6 +92,28 @@
   "fabricant": "Pilz",
   "gamme": "PNOZmulti 2",
   "type": "Automate",
+  "reference": "PNOZ m B0 (772100)",
+  "fonctions": [
+   "ArretUrgence",
+   "ProtecteurMobile",
+   "BarriereImmaterielle",
+   "CommandeBimanuelle",
+   "ArretSurCouple",
+   "Autre"
+  ],
+  "capteurs": 0,
+  "entrees": 20,
+  "sorties": 4,
+  "sortiesInfo": 0,
+  "largeur": 22.5,
+  "consommation": 0.1,
+  "extensionsMax": 4,
+  "notes": "Base compacte PNOZmulti 2 sans bus de terrain : 20 entrées, 4 sorties statiques de sécurité, 4 E/S configurables, jusqu'à 4 modules d'extension. Valeurs indicatives à vérifier sur la fiche Pilz."
+ },
+ {
+  "fabricant": "Pilz",
+  "gamme": "PNOZmulti 2",
+  "type": "Automate",
   "reference": "PNOZ m B1 (772101)",
   "fonctions": [
    "ArretUrgence",
