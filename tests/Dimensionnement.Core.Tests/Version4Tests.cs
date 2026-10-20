@@ -147,7 +147,7 @@ public class Version4Tests
     public void Ihm_schneider_selon_la_marque_de_l_automate()
     {
         var p = new PupitreIhm { Diagonale = 10 };
-        Assert.Equal("HMIST6600", CatalogueIhm.Choisir(p, "Schneider", CatalogueIhm.Charger())!.Reference);
+        Assert.Equal("HMIST6500", CatalogueIhm.Choisir(p, "Schneider", CatalogueIhm.Charger())!.Reference);
     }
 
     [Fact]

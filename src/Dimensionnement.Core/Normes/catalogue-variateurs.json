@@ -1176,14 +1176,16 @@
   "taille": "3",
   "kw": 18.5,
   "courant": 38,
-  "largeur": 226,
-  "hauteur": 495,
-  "profondeur": 271,
+  "largeur": 211,
+  "hauteur": 546,
+  "profondeur": 232,
   "pertes": 543,
   "reference": "ATV630D18N4",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "source": "https://www.se.com/fr/fr/faqs/FA302753/",
+  "verifie": true
  },
  {
   "fabricant": "Schneider",
@@ -1192,14 +1194,16 @@
   "taille": "3",
   "kw": 22,
   "courant": 45,
-  "largeur": 226,
-  "hauteur": 495,
-  "profondeur": 271,
+  "largeur": 211,
+  "hauteur": 546,
+  "profondeur": 232,
   "pertes": 641,
   "reference": "ATV630D22N4",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "source": "https://www.se.com/fr/fr/faqs/FA302753/",
+  "verifie": true
  },
  {
   "fabricant": "Schneider",
@@ -1208,14 +1212,16 @@
   "taille": "4",
   "kw": 30,
   "courant": 61,
-  "largeur": 290,
-  "hauteur": 701,
-  "profondeur": 297,
+  "largeur": 226,
+  "hauteur": 673,
+  "profondeur": 271,
   "pertes": 865,
   "reference": "ATV630D30N4",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "source": "https://www.se.com/fr/fr/faqs/FA302753/",
+  "verifie": true
  },
  {
   "fabricant": "Schneider",
@@ -1224,14 +1230,16 @@
   "taille": "4",
   "kw": 37,
   "courant": 73,
-  "largeur": 290,
-  "hauteur": 701,
-  "profondeur": 297,
+  "largeur": 226,
+  "hauteur": 673,
+  "profondeur": 271,
   "pertes": 1061,
   "reference": "ATV630D37N4",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "source": "https://www.se.com/fr/fr/faqs/FA302753/",
+  "verifie": true
  },
  {
   "fabricant": "Schneider",
@@ -1240,14 +1248,16 @@
   "taille": "4",
   "kw": 45,
   "courant": 88,
-  "largeur": 290,
-  "hauteur": 701,
-  "profondeur": 297,
+  "largeur": 226,
+  "hauteur": 673,
+  "profondeur": 271,
   "pertes": 1285,
   "reference": "ATV630D45N4",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "source": "https://www.se.com/fr/fr/faqs/FA302753/",
+  "verifie": true
  },
  {
   "fabricant": "Schneider",
@@ -1256,14 +1266,16 @@
   "taille": "5",
   "kw": 55,
   "courant": 106,
-  "largeur": 320,
-  "hauteur": 960,
-  "profondeur": 354,
+  "largeur": 290,
+  "hauteur": 922,
+  "profondeur": 323,
   "pertes": 1565,
   "reference": "ATV630D55N4",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "source": "https://www.se.com/fr/fr/faqs/FA302753/",
+  "verifie": true
  },
  {
   "fabricant": "Schneider",
@@ -1272,14 +1284,16 @@
   "taille": "5",
   "kw": 75,
   "courant": 145,
-  "largeur": 320,
-  "hauteur": 960,
-  "profondeur": 354,
+  "largeur": 290,
+  "hauteur": 922,
+  "profondeur": 323,
   "pertes": 2125,
   "reference": "ATV630D75N4",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "source": "https://www.se.com/fr/fr/faqs/FA302753/",
+  "verifie": true
  },
  {
   "fabricant": "Schneider",
@@ -1288,14 +1302,16 @@
   "taille": "5",
   "kw": 90,
   "courant": 169,
-  "largeur": 320,
-  "hauteur": 960,
-  "profondeur": 354,
+  "largeur": 290,
+  "hauteur": 922,
+  "profondeur": 323,
   "pertes": 2545,
   "reference": "ATV630D90N4",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "source": "https://www.se.com/fr/fr/faqs/FA302753/",
+  "verifie": true
  },
  {
   "fabricant": "Schneider",
@@ -1305,13 +1321,15 @@
   "kw": 110,
   "courant": 206,
   "largeur": 320,
-  "hauteur": 1220,
-  "profondeur": 420,
+  "hauteur": 852,
+  "profondeur": 390,
   "pertes": 3105,
   "reference": "ATV630C11N4",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "source": "https://www.se.com/fr/fr/faqs/FA302753/",
+  "verifie": true
  },
  {
   "fabricant": "Schneider",
@@ -1321,13 +1339,15 @@
   "kw": 132,
   "courant": 246,
   "largeur": 320,
-  "hauteur": 1220,
-  "profondeur": 420,
+  "hauteur": 852,
+  "profondeur": 390,
   "pertes": 3721,
   "reference": "ATV630C13N4",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "source": "https://www.se.com/fr/fr/faqs/FA302753/",
+  "verifie": true
  },
  {
   "fabricant": "Schneider",
@@ -1337,13 +1357,15 @@
   "kw": 160,
   "courant": 293,
   "largeur": 320,
-  "hauteur": 1220,
-  "profondeur": 420,
+  "hauteur": 852,
+  "profondeur": 390,
   "pertes": 4505,
   "reference": "ATV630C16N4",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "source": "https://www.se.com/fr/fr/faqs/FA302753/",
+  "verifie": true
  },
  {
   "fabricant": "Siemens",
@@ -1496,14 +1518,16 @@
   "taille": "1",
   "kw": 0.4,
   "courant": 1.5,
-  "largeur": 48,
+  "largeur": 68,
   "hauteur": 270,
-  "profondeur": 225,
+  "profondeur": 237,
   "pertes": 25,
   "reference": "LXM32MU60N4",
   "servo": true,
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "verifie": false,
+  "source": "Fiche Lexium 32M (relevé distributeurs)"
  },
  {
   "fabricant": "Schneider",
@@ -1512,14 +1536,16 @@
   "taille": "1",
   "kw": 0.9,
   "courant": 3.0,
-  "largeur": 48,
+  "largeur": 68,
   "hauteur": 270,
-  "profondeur": 225,
+  "profondeur": 237,
   "pertes": 40,
   "reference": "LXM32MD12N4",
   "servo": true,
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "verifie": false,
+  "source": "Fiche Lexium 32M (relevé distributeurs)"
  },
  {
   "fabricant": "Schneider",
@@ -1530,12 +1556,14 @@
   "courant": 6.0,
   "largeur": 68,
   "hauteur": 270,
-  "profondeur": 225,
+  "profondeur": 237,
   "pertes": 70,
   "reference": "LXM32MD18N4",
   "servo": true,
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "verifie": true,
+  "source": "Fiche Lexium 32M (relevé distributeurs)"
  },
  {
   "fabricant": "Schneider",
@@ -1564,12 +1592,14 @@
   "courant": 24,
   "largeur": 108,
   "hauteur": 270,
-  "profondeur": 225,
+  "profondeur": 237,
   "pertes": 250,
   "reference": "LXM32MD72N4",
   "servo": true,
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "verifie": false,
+  "source": "Fiche Lexium 32M (relevé distributeurs)"
  },
  {
   "fabricant": "ABB",

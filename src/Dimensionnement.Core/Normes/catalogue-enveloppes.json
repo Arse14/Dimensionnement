@@ -31,9 +31,10 @@
   "hauteur": 300,
   "profondeur": 200,
   "reference": "NSYS3D3320",
-  "plaqueLargeur": 260,
-  "plaqueHauteur": 260,
-  "referencePlaque": "NSYMM33"
+  "plaqueLargeur": 250,
+  "plaqueHauteur": 250,
+  "referencePlaque": "NSYMM33",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -67,9 +68,10 @@
   "hauteur": 300,
   "profondeur": 250,
   "reference": "NSYS3D3325",
-  "plaqueLargeur": 260,
-  "plaqueHauteur": 260,
-  "referencePlaque": "NSYMM33"
+  "plaqueLargeur": 250,
+  "plaqueHauteur": 250,
+  "referencePlaque": "NSYMM33",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -103,9 +105,10 @@
   "hauteur": 300,
   "profondeur": 300,
   "reference": "NSYS3D3330",
-  "plaqueLargeur": 260,
-  "plaqueHauteur": 260,
-  "referencePlaque": "NSYMM33"
+  "plaqueLargeur": 250,
+  "plaqueHauteur": 250,
+  "referencePlaque": "NSYMM33",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -151,9 +154,10 @@
   "hauteur": 400,
   "profondeur": 200,
   "reference": "NSYS3D4320",
-  "plaqueLargeur": 260,
-  "plaqueHauteur": 360,
-  "referencePlaque": "NSYMM43"
+  "plaqueLargeur": 250,
+  "plaqueHauteur": 350,
+  "referencePlaque": "NSYMM43",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -187,9 +191,10 @@
   "hauteur": 400,
   "profondeur": 250,
   "reference": "NSYS3D4325",
-  "plaqueLargeur": 260,
-  "plaqueHauteur": 360,
-  "referencePlaque": "NSYMM43"
+  "plaqueLargeur": 250,
+  "plaqueHauteur": 350,
+  "referencePlaque": "NSYMM43",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -223,9 +228,10 @@
   "hauteur": 400,
   "profondeur": 300,
   "reference": "NSYS3D4330",
-  "plaqueLargeur": 260,
-  "plaqueHauteur": 360,
-  "referencePlaque": "NSYMM43"
+  "plaqueLargeur": 250,
+  "plaqueHauteur": 350,
+  "referencePlaque": "NSYMM43",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -271,9 +277,10 @@
   "hauteur": 400,
   "profondeur": 200,
   "reference": "NSYS3D4420",
-  "plaqueLargeur": 360,
-  "plaqueHauteur": 360,
-  "referencePlaque": "NSYMM44"
+  "plaqueLargeur": 350,
+  "plaqueHauteur": 350,
+  "referencePlaque": "NSYMM44",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -307,9 +314,10 @@
   "hauteur": 400,
   "profondeur": 250,
   "reference": "NSYS3D4425",
-  "plaqueLargeur": 360,
-  "plaqueHauteur": 360,
-  "referencePlaque": "NSYMM44"
+  "plaqueLargeur": 350,
+  "plaqueHauteur": 350,
+  "referencePlaque": "NSYMM44",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -343,9 +351,10 @@
   "hauteur": 400,
   "profondeur": 300,
   "reference": "NSYS3D4430",
-  "plaqueLargeur": 360,
-  "plaqueHauteur": 360,
-  "referencePlaque": "NSYMM44"
+  "plaqueLargeur": 350,
+  "plaqueHauteur": 350,
+  "referencePlaque": "NSYMM44",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -391,9 +400,10 @@
   "hauteur": 500,
   "profondeur": 200,
   "reference": "NSYS3D5420",
-  "plaqueLargeur": 360,
-  "plaqueHauteur": 460,
-  "referencePlaque": "NSYMM54"
+  "plaqueLargeur": 350,
+  "plaqueHauteur": 450,
+  "referencePlaque": "NSYMM54",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -427,9 +437,10 @@
   "hauteur": 500,
   "profondeur": 250,
   "reference": "NSYS3D5425",
-  "plaqueLargeur": 360,
-  "plaqueHauteur": 460,
-  "referencePlaque": "NSYMM54"
+  "plaqueLargeur": 350,
+  "plaqueHauteur": 450,
+  "referencePlaque": "NSYMM54",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -463,9 +474,10 @@
   "hauteur": 500,
   "profondeur": 300,
   "reference": "NSYS3D5430",
-  "plaqueLargeur": 360,
-  "plaqueHauteur": 460,
-  "referencePlaque": "NSYMM54"
+  "plaqueLargeur": 350,
+  "plaqueHauteur": 450,
+  "referencePlaque": "NSYMM54",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -511,9 +523,10 @@
   "hauteur": 600,
   "profondeur": 200,
   "reference": "NSYS3D6420",
-  "plaqueLargeur": 360,
-  "plaqueHauteur": 560,
-  "referencePlaque": "NSYMM64"
+  "plaqueLargeur": 350,
+  "plaqueHauteur": 550,
+  "referencePlaque": "NSYMM64",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -547,9 +560,10 @@
   "hauteur": 600,
   "profondeur": 250,
   "reference": "NSYS3D6425",
-  "plaqueLargeur": 360,
-  "plaqueHauteur": 560,
-  "referencePlaque": "NSYMM64"
+  "plaqueLargeur": 350,
+  "plaqueHauteur": 550,
+  "referencePlaque": "NSYMM64",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -583,9 +597,10 @@
   "hauteur": 600,
   "profondeur": 300,
   "reference": "NSYS3D6430",
-  "plaqueLargeur": 360,
-  "plaqueHauteur": 560,
-  "referencePlaque": "NSYMM64"
+  "plaqueLargeur": 350,
+  "plaqueHauteur": 550,
+  "referencePlaque": "NSYMM64",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -619,9 +634,10 @@
   "hauteur": 600,
   "profondeur": 400,
   "reference": "NSYS3D6440",
-  "plaqueLargeur": 360,
-  "plaqueHauteur": 560,
-  "referencePlaque": "NSYMM64"
+  "plaqueLargeur": 350,
+  "plaqueHauteur": 550,
+  "referencePlaque": "NSYMM64",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -667,9 +683,10 @@
   "hauteur": 500,
   "profondeur": 200,
   "reference": "NSYS3D5520",
-  "plaqueLargeur": 460,
-  "plaqueHauteur": 460,
-  "referencePlaque": "NSYMM55"
+  "plaqueLargeur": 450,
+  "plaqueHauteur": 450,
+  "referencePlaque": "NSYMM55",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -703,9 +720,10 @@
   "hauteur": 500,
   "profondeur": 250,
   "reference": "NSYS3D5525",
-  "plaqueLargeur": 460,
-  "plaqueHauteur": 460,
-  "referencePlaque": "NSYMM55"
+  "plaqueLargeur": 450,
+  "plaqueHauteur": 450,
+  "referencePlaque": "NSYMM55",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -739,9 +757,10 @@
   "hauteur": 500,
   "profondeur": 300,
   "reference": "NSYS3D5530",
-  "plaqueLargeur": 460,
-  "plaqueHauteur": 460,
-  "referencePlaque": "NSYMM55"
+  "plaqueLargeur": 450,
+  "plaqueHauteur": 450,
+  "referencePlaque": "NSYMM55",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -775,9 +794,10 @@
   "hauteur": 700,
   "profondeur": 200,
   "reference": "NSYS3D7520",
-  "plaqueLargeur": 440,
-  "plaqueHauteur": 640,
-  "referencePlaque": "NSYMM75"
+  "plaqueLargeur": 450,
+  "plaqueHauteur": 650,
+  "referencePlaque": "NSYMM75",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -811,9 +831,10 @@
   "hauteur": 700,
   "profondeur": 250,
   "reference": "NSYS3D7525",
-  "plaqueLargeur": 440,
-  "plaqueHauteur": 640,
-  "referencePlaque": "NSYMM75"
+  "plaqueLargeur": 450,
+  "plaqueHauteur": 650,
+  "referencePlaque": "NSYMM75",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -847,9 +868,10 @@
   "hauteur": 700,
   "profondeur": 300,
   "reference": "NSYS3D7530",
-  "plaqueLargeur": 440,
-  "plaqueHauteur": 640,
-  "referencePlaque": "NSYMM75"
+  "plaqueLargeur": 450,
+  "plaqueHauteur": 650,
+  "referencePlaque": "NSYMM75",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -883,9 +905,10 @@
   "hauteur": 700,
   "profondeur": 400,
   "reference": "NSYS3D7540",
-  "plaqueLargeur": 440,
-  "plaqueHauteur": 640,
-  "referencePlaque": "NSYMM75"
+  "plaqueLargeur": 450,
+  "plaqueHauteur": 650,
+  "referencePlaque": "NSYMM75",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -931,9 +954,10 @@
   "hauteur": 600,
   "profondeur": 200,
   "reference": "NSYS3D6620",
-  "plaqueLargeur": 560,
-  "plaqueHauteur": 560,
-  "referencePlaque": "NSYMM66"
+  "plaqueLargeur": 550,
+  "plaqueHauteur": 550,
+  "referencePlaque": "NSYMM66",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -967,9 +991,10 @@
   "hauteur": 600,
   "profondeur": 250,
   "reference": "NSYS3D6625",
-  "plaqueLargeur": 560,
-  "plaqueHauteur": 560,
-  "referencePlaque": "NSYMM66"
+  "plaqueLargeur": 550,
+  "plaqueHauteur": 550,
+  "referencePlaque": "NSYMM66",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1003,9 +1028,10 @@
   "hauteur": 600,
   "profondeur": 300,
   "reference": "NSYS3D6630",
-  "plaqueLargeur": 560,
-  "plaqueHauteur": 560,
-  "referencePlaque": "NSYMM66"
+  "plaqueLargeur": 550,
+  "plaqueHauteur": 550,
+  "referencePlaque": "NSYMM66",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1039,9 +1065,10 @@
   "hauteur": 600,
   "profondeur": 400,
   "reference": "NSYS3D6640",
-  "plaqueLargeur": 560,
-  "plaqueHauteur": 560,
-  "referencePlaque": "NSYMM66"
+  "plaqueLargeur": 550,
+  "plaqueHauteur": 550,
+  "referencePlaque": "NSYMM66",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1075,9 +1102,10 @@
   "hauteur": 800,
   "profondeur": 200,
   "reference": "NSYS3D8620",
-  "plaqueLargeur": 540,
-  "plaqueHauteur": 740,
-  "referencePlaque": "NSYMM86"
+  "plaqueLargeur": 550,
+  "plaqueHauteur": 750,
+  "referencePlaque": "NSYMM86",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1111,9 +1139,10 @@
   "hauteur": 800,
   "profondeur": 250,
   "reference": "NSYS3D8625",
-  "plaqueLargeur": 540,
-  "plaqueHauteur": 740,
-  "referencePlaque": "NSYMM86"
+  "plaqueLargeur": 550,
+  "plaqueHauteur": 750,
+  "referencePlaque": "NSYMM86",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1147,9 +1176,10 @@
   "hauteur": 800,
   "profondeur": 300,
   "reference": "NSYS3D8630",
-  "plaqueLargeur": 540,
-  "plaqueHauteur": 740,
-  "referencePlaque": "NSYMM86"
+  "plaqueLargeur": 550,
+  "plaqueHauteur": 750,
+  "referencePlaque": "NSYMM86",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1183,9 +1213,10 @@
   "hauteur": 800,
   "profondeur": 400,
   "reference": "NSYS3D8640",
-  "plaqueLargeur": 540,
-  "plaqueHauteur": 740,
-  "referencePlaque": "NSYMM86"
+  "plaqueLargeur": 550,
+  "plaqueHauteur": 750,
+  "referencePlaque": "NSYMM86",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1219,9 +1250,10 @@
   "hauteur": 800,
   "profondeur": 200,
   "reference": "NSYS3D8820",
-  "plaqueLargeur": 740,
-  "plaqueHauteur": 740,
-  "referencePlaque": "NSYMM88"
+  "plaqueLargeur": 750,
+  "plaqueHauteur": 750,
+  "referencePlaque": "NSYMM88",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1255,9 +1287,10 @@
   "hauteur": 800,
   "profondeur": 250,
   "reference": "NSYS3D8825",
-  "plaqueLargeur": 740,
-  "plaqueHauteur": 740,
-  "referencePlaque": "NSYMM88"
+  "plaqueLargeur": 750,
+  "plaqueHauteur": 750,
+  "referencePlaque": "NSYMM88",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1291,9 +1324,10 @@
   "hauteur": 800,
   "profondeur": 300,
   "reference": "NSYS3D8830",
-  "plaqueLargeur": 740,
-  "plaqueHauteur": 740,
-  "referencePlaque": "NSYMM88"
+  "plaqueLargeur": 750,
+  "plaqueHauteur": 750,
+  "referencePlaque": "NSYMM88",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1327,9 +1361,10 @@
   "hauteur": 800,
   "profondeur": 400,
   "reference": "NSYS3D8840",
-  "plaqueLargeur": 740,
-  "plaqueHauteur": 740,
-  "referencePlaque": "NSYMM88"
+  "plaqueLargeur": 750,
+  "plaqueHauteur": 750,
+  "referencePlaque": "NSYMM88",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1363,9 +1398,10 @@
   "hauteur": 1000,
   "profondeur": 200,
   "reference": "NSYS3D10620",
-  "plaqueLargeur": 540,
-  "plaqueHauteur": 940,
-  "referencePlaque": "NSYMM106"
+  "plaqueLargeur": 550,
+  "plaqueHauteur": 950,
+  "referencePlaque": "NSYMM106",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1399,9 +1435,10 @@
   "hauteur": 1000,
   "profondeur": 250,
   "reference": "NSYS3D10625",
-  "plaqueLargeur": 540,
-  "plaqueHauteur": 940,
-  "referencePlaque": "NSYMM106"
+  "plaqueLargeur": 550,
+  "plaqueHauteur": 950,
+  "referencePlaque": "NSYMM106",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1435,9 +1472,10 @@
   "hauteur": 1000,
   "profondeur": 300,
   "reference": "NSYS3D10630",
-  "plaqueLargeur": 540,
-  "plaqueHauteur": 940,
-  "referencePlaque": "NSYMM106"
+  "plaqueLargeur": 550,
+  "plaqueHauteur": 950,
+  "referencePlaque": "NSYMM106",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1471,9 +1509,10 @@
   "hauteur": 1000,
   "profondeur": 400,
   "reference": "NSYS3D10640",
-  "plaqueLargeur": 540,
-  "plaqueHauteur": 940,
-  "referencePlaque": "NSYMM106"
+  "plaqueLargeur": 550,
+  "plaqueHauteur": 950,
+  "referencePlaque": "NSYMM106",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1507,9 +1546,10 @@
   "hauteur": 1000,
   "profondeur": 200,
   "reference": "NSYS3D10820",
-  "plaqueLargeur": 740,
-  "plaqueHauteur": 940,
-  "referencePlaque": "NSYMM108"
+  "plaqueLargeur": 750,
+  "plaqueHauteur": 950,
+  "referencePlaque": "NSYMM108",
+  "verifie": false
  },
  {
   "fabricant": "Legrand",
@@ -1543,9 +1583,10 @@
   "hauteur": 1000,
   "profondeur": 250,
   "reference": "NSYS3D10825",
-  "plaqueLargeur": 740,
-  "plaqueHauteur": 940,
-  "referencePlaque": "NSYMM108"
+  "plaqueLargeur": 750,
+  "plaqueHauteur": 950,
+  "referencePlaque": "NSYMM108",
+  "verifie": false
  },
  {
   "fabricant": "Legrand",
@@ -1579,9 +1620,10 @@
   "hauteur": 1000,
   "profondeur": 300,
   "reference": "NSYS3D10830",
-  "plaqueLargeur": 740,
-  "plaqueHauteur": 940,
-  "referencePlaque": "NSYMM108"
+  "plaqueLargeur": 750,
+  "plaqueHauteur": 950,
+  "referencePlaque": "NSYMM108",
+  "verifie": false
  },
  {
   "fabricant": "Legrand",
@@ -1615,9 +1657,10 @@
   "hauteur": 1000,
   "profondeur": 400,
   "reference": "NSYS3D10840",
-  "plaqueLargeur": 740,
-  "plaqueHauteur": 940,
-  "referencePlaque": "NSYMM108"
+  "plaqueLargeur": 750,
+  "plaqueHauteur": 950,
+  "referencePlaque": "NSYMM108",
+  "verifie": false
  },
  {
   "fabricant": "Legrand",
@@ -1651,9 +1694,10 @@
   "hauteur": 1200,
   "profondeur": 200,
   "reference": "NSYS3D12820",
-  "plaqueLargeur": 740,
-  "plaqueHauteur": 1140,
-  "referencePlaque": "NSYMM128"
+  "plaqueLargeur": 750,
+  "plaqueHauteur": 1150,
+  "referencePlaque": "NSYMM128",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1687,9 +1731,10 @@
   "hauteur": 1200,
   "profondeur": 250,
   "reference": "NSYS3D12825",
-  "plaqueLargeur": 740,
-  "plaqueHauteur": 1140,
-  "referencePlaque": "NSYMM128"
+  "plaqueLargeur": 750,
+  "plaqueHauteur": 1150,
+  "referencePlaque": "NSYMM128",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1723,9 +1768,10 @@
   "hauteur": 1200,
   "profondeur": 300,
   "reference": "NSYS3D12830",
-  "plaqueLargeur": 740,
-  "plaqueHauteur": 1140,
-  "referencePlaque": "NSYMM128"
+  "plaqueLargeur": 750,
+  "plaqueHauteur": 1150,
+  "referencePlaque": "NSYMM128",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1759,9 +1805,10 @@
   "hauteur": 1200,
   "profondeur": 400,
   "reference": "NSYS3D12840",
-  "plaqueLargeur": 740,
-  "plaqueHauteur": 1140,
-  "referencePlaque": "NSYMM128"
+  "plaqueLargeur": 750,
+  "plaqueHauteur": 1150,
+  "referencePlaque": "NSYMM128",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1795,9 +1842,10 @@
   "hauteur": 1000,
   "profondeur": 200,
   "reference": "NSYS3D101020",
-  "plaqueLargeur": 940,
-  "plaqueHauteur": 940,
-  "referencePlaque": "NSYMM1010"
+  "plaqueLargeur": 950,
+  "plaqueHauteur": 950,
+  "referencePlaque": "NSYMM1010",
+  "verifie": false
  },
  {
   "fabricant": "Legrand",
@@ -1831,9 +1879,10 @@
   "hauteur": 1000,
   "profondeur": 250,
   "reference": "NSYS3D101025",
-  "plaqueLargeur": 940,
-  "plaqueHauteur": 940,
-  "referencePlaque": "NSYMM1010"
+  "plaqueLargeur": 950,
+  "plaqueHauteur": 950,
+  "referencePlaque": "NSYMM1010",
+  "verifie": false
  },
  {
   "fabricant": "Legrand",
@@ -1867,9 +1916,10 @@
   "hauteur": 1000,
   "profondeur": 300,
   "reference": "NSYS3D101030",
-  "plaqueLargeur": 940,
-  "plaqueHauteur": 940,
-  "referencePlaque": "NSYMM1010"
+  "plaqueLargeur": 950,
+  "plaqueHauteur": 950,
+  "referencePlaque": "NSYMM1010",
+  "verifie": false
  },
  {
   "fabricant": "Legrand",
@@ -1903,9 +1953,10 @@
   "hauteur": 1000,
   "profondeur": 400,
   "reference": "NSYS3D101040",
-  "plaqueLargeur": 940,
-  "plaqueHauteur": 940,
-  "referencePlaque": "NSYMM1010"
+  "plaqueLargeur": 950,
+  "plaqueHauteur": 950,
+  "referencePlaque": "NSYMM1010",
+  "verifie": false
  },
  {
   "fabricant": "Legrand",
@@ -1939,9 +1990,10 @@
   "hauteur": 1200,
   "profondeur": 200,
   "reference": "NSYS3D121020",
-  "plaqueLargeur": 940,
-  "plaqueHauteur": 1140,
-  "referencePlaque": "NSYMM1210"
+  "plaqueLargeur": 950,
+  "plaqueHauteur": 1150,
+  "referencePlaque": "NSYMM1210",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -1975,9 +2027,10 @@
   "hauteur": 1200,
   "profondeur": 250,
   "reference": "NSYS3D121025",
-  "plaqueLargeur": 940,
-  "plaqueHauteur": 1140,
-  "referencePlaque": "NSYMM1210"
+  "plaqueLargeur": 950,
+  "plaqueHauteur": 1150,
+  "referencePlaque": "NSYMM1210",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2011,9 +2064,10 @@
   "hauteur": 1200,
   "profondeur": 300,
   "reference": "NSYS3D121030",
-  "plaqueLargeur": 940,
-  "plaqueHauteur": 1140,
-  "referencePlaque": "NSYMM1210"
+  "plaqueLargeur": 950,
+  "plaqueHauteur": 1150,
+  "referencePlaque": "NSYMM1210",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2047,9 +2101,10 @@
   "hauteur": 1200,
   "profondeur": 400,
   "reference": "NSYS3D121040",
-  "plaqueLargeur": 940,
-  "plaqueHauteur": 1140,
-  "referencePlaque": "NSYMM1210"
+  "plaqueLargeur": 950,
+  "plaqueHauteur": 1150,
+  "referencePlaque": "NSYMM1210",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2083,9 +2138,10 @@
   "hauteur": 1400,
   "profondeur": 200,
   "reference": "NSYS3D141020",
-  "plaqueLargeur": 940,
-  "plaqueHauteur": 1340,
-  "referencePlaque": "NSYMM1410"
+  "plaqueLargeur": 950,
+  "plaqueHauteur": 1350,
+  "referencePlaque": "NSYMM1410",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2119,9 +2175,10 @@
   "hauteur": 1400,
   "profondeur": 250,
   "reference": "NSYS3D141025",
-  "plaqueLargeur": 940,
-  "plaqueHauteur": 1340,
-  "referencePlaque": "NSYMM1410"
+  "plaqueLargeur": 950,
+  "plaqueHauteur": 1350,
+  "referencePlaque": "NSYMM1410",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2155,9 +2212,10 @@
   "hauteur": 1400,
   "profondeur": 300,
   "reference": "NSYS3D141030",
-  "plaqueLargeur": 940,
-  "plaqueHauteur": 1340,
-  "referencePlaque": "NSYMM1410"
+  "plaqueLargeur": 950,
+  "plaqueHauteur": 1350,
+  "referencePlaque": "NSYMM1410",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2191,9 +2249,10 @@
   "hauteur": 1400,
   "profondeur": 400,
   "reference": "NSYS3D141040",
-  "plaqueLargeur": 940,
-  "plaqueHauteur": 1340,
-  "referencePlaque": "NSYMM1410"
+  "plaqueLargeur": 950,
+  "plaqueHauteur": 1350,
+  "referencePlaque": "NSYMM1410",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2227,9 +2286,10 @@
   "hauteur": 1800,
   "profondeur": 400,
   "reference": "NSYSF18640",
-  "plaqueLargeur": 500,
-  "plaqueHauteur": 1700,
-  "referencePlaque": "NSYMF186"
+  "plaqueLargeur": 496,
+  "plaqueHauteur": 1697,
+  "referencePlaque": "NSYMP186",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2263,9 +2323,10 @@
   "hauteur": 1800,
   "profondeur": 500,
   "reference": "NSYSF18650",
-  "plaqueLargeur": 500,
-  "plaqueHauteur": 1700,
-  "referencePlaque": "NSYMF186"
+  "plaqueLargeur": 496,
+  "plaqueHauteur": 1697,
+  "referencePlaque": "NSYMP186",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2299,9 +2360,10 @@
   "hauteur": 1800,
   "profondeur": 600,
   "reference": "NSYSF18660",
-  "plaqueLargeur": 500,
-  "plaqueHauteur": 1700,
-  "referencePlaque": "NSYMF186"
+  "plaqueLargeur": 496,
+  "plaqueHauteur": 1697,
+  "referencePlaque": "NSYMP186",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2335,9 +2397,10 @@
   "hauteur": 1800,
   "profondeur": 800,
   "reference": "NSYSF18680",
-  "plaqueLargeur": 500,
-  "plaqueHauteur": 1700,
-  "referencePlaque": "NSYMF186"
+  "plaqueLargeur": 496,
+  "plaqueHauteur": 1697,
+  "referencePlaque": "NSYMP186",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2371,9 +2434,10 @@
   "hauteur": 1800,
   "profondeur": 400,
   "reference": "NSYSF18840",
-  "plaqueLargeur": 700,
-  "plaqueHauteur": 1700,
-  "referencePlaque": "NSYMF188"
+  "plaqueLargeur": 696,
+  "plaqueHauteur": 1697,
+  "referencePlaque": "NSYMP188",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2407,9 +2471,10 @@
   "hauteur": 1800,
   "profondeur": 500,
   "reference": "NSYSF18850",
-  "plaqueLargeur": 700,
-  "plaqueHauteur": 1700,
-  "referencePlaque": "NSYMF188"
+  "plaqueLargeur": 696,
+  "plaqueHauteur": 1697,
+  "referencePlaque": "NSYMP188",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2443,9 +2508,10 @@
   "hauteur": 1800,
   "profondeur": 600,
   "reference": "NSYSF18860",
-  "plaqueLargeur": 700,
-  "plaqueHauteur": 1700,
-  "referencePlaque": "NSYMF188"
+  "plaqueLargeur": 696,
+  "plaqueHauteur": 1697,
+  "referencePlaque": "NSYMP188",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2479,9 +2545,10 @@
   "hauteur": 1800,
   "profondeur": 800,
   "reference": "NSYSF18880",
-  "plaqueLargeur": 700,
-  "plaqueHauteur": 1700,
-  "referencePlaque": "NSYMF188"
+  "plaqueLargeur": 696,
+  "plaqueHauteur": 1697,
+  "referencePlaque": "NSYMP188",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2515,9 +2582,10 @@
   "hauteur": 1800,
   "profondeur": 400,
   "reference": "NSYSF181040",
-  "plaqueLargeur": 900,
-  "plaqueHauteur": 1700,
-  "referencePlaque": "NSYMF1810"
+  "plaqueLargeur": 896,
+  "plaqueHauteur": 1697,
+  "referencePlaque": "NSYMP1810",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2551,9 +2619,10 @@
   "hauteur": 1800,
   "profondeur": 500,
   "reference": "NSYSF181050",
-  "plaqueLargeur": 900,
-  "plaqueHauteur": 1700,
-  "referencePlaque": "NSYMF1810"
+  "plaqueLargeur": 896,
+  "plaqueHauteur": 1697,
+  "referencePlaque": "NSYMP1810",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2587,9 +2656,10 @@
   "hauteur": 1800,
   "profondeur": 600,
   "reference": "NSYSF181060",
-  "plaqueLargeur": 900,
-  "plaqueHauteur": 1700,
-  "referencePlaque": "NSYMF1810"
+  "plaqueLargeur": 896,
+  "plaqueHauteur": 1697,
+  "referencePlaque": "NSYMP1810",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2623,9 +2693,10 @@
   "hauteur": 1800,
   "profondeur": 800,
   "reference": "NSYSF181080",
-  "plaqueLargeur": 900,
-  "plaqueHauteur": 1700,
-  "referencePlaque": "NSYMF1810"
+  "plaqueLargeur": 896,
+  "plaqueHauteur": 1697,
+  "referencePlaque": "NSYMP1810",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2659,9 +2730,10 @@
   "hauteur": 1800,
   "profondeur": 400,
   "reference": "NSYSF181240",
-  "plaqueLargeur": 1100,
-  "plaqueHauteur": 1700,
-  "referencePlaque": "NSYMF1812"
+  "plaqueLargeur": 1096,
+  "plaqueHauteur": 1697,
+  "referencePlaque": "NSYMP1812",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2695,9 +2767,10 @@
   "hauteur": 1800,
   "profondeur": 500,
   "reference": "NSYSF181250",
-  "plaqueLargeur": 1100,
-  "plaqueHauteur": 1700,
-  "referencePlaque": "NSYMF1812"
+  "plaqueLargeur": 1096,
+  "plaqueHauteur": 1697,
+  "referencePlaque": "NSYMP1812",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2731,9 +2804,10 @@
   "hauteur": 1800,
   "profondeur": 600,
   "reference": "NSYSF181260",
-  "plaqueLargeur": 1100,
-  "plaqueHauteur": 1700,
-  "referencePlaque": "NSYMF1812"
+  "plaqueLargeur": 1096,
+  "plaqueHauteur": 1697,
+  "referencePlaque": "NSYMP1812",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2767,9 +2841,10 @@
   "hauteur": 1800,
   "profondeur": 800,
   "reference": "NSYSF181280",
-  "plaqueLargeur": 1100,
-  "plaqueHauteur": 1700,
-  "referencePlaque": "NSYMF1812"
+  "plaqueLargeur": 1096,
+  "plaqueHauteur": 1697,
+  "referencePlaque": "NSYMP1812",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2803,9 +2878,10 @@
   "hauteur": 2000,
   "profondeur": 400,
   "reference": "NSYSF20640",
-  "plaqueLargeur": 500,
-  "plaqueHauteur": 1900,
-  "referencePlaque": "NSYMF206"
+  "plaqueLargeur": 496,
+  "plaqueHauteur": 1897,
+  "referencePlaque": "NSYMP206",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2839,9 +2915,10 @@
   "hauteur": 2000,
   "profondeur": 500,
   "reference": "NSYSF20650",
-  "plaqueLargeur": 500,
-  "plaqueHauteur": 1900,
-  "referencePlaque": "NSYMF206"
+  "plaqueLargeur": 496,
+  "plaqueHauteur": 1897,
+  "referencePlaque": "NSYMP206",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2875,9 +2952,10 @@
   "hauteur": 2000,
   "profondeur": 600,
   "reference": "NSYSF20660",
-  "plaqueLargeur": 500,
-  "plaqueHauteur": 1900,
-  "referencePlaque": "NSYMF206"
+  "plaqueLargeur": 496,
+  "plaqueHauteur": 1897,
+  "referencePlaque": "NSYMP206",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2911,9 +2989,10 @@
   "hauteur": 2000,
   "profondeur": 800,
   "reference": "NSYSF20680",
-  "plaqueLargeur": 500,
-  "plaqueHauteur": 1900,
-  "referencePlaque": "NSYMF206"
+  "plaqueLargeur": 496,
+  "plaqueHauteur": 1897,
+  "referencePlaque": "NSYMP206",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2947,9 +3026,10 @@
   "hauteur": 2000,
   "profondeur": 400,
   "reference": "NSYSF20840",
-  "plaqueLargeur": 700,
-  "plaqueHauteur": 1900,
-  "referencePlaque": "NSYMF208"
+  "plaqueLargeur": 696,
+  "plaqueHauteur": 1897,
+  "referencePlaque": "NSYMP208",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -2983,9 +3063,10 @@
   "hauteur": 2000,
   "profondeur": 500,
   "reference": "NSYSF20850",
-  "plaqueLargeur": 700,
-  "plaqueHauteur": 1900,
-  "referencePlaque": "NSYMF208"
+  "plaqueLargeur": 696,
+  "plaqueHauteur": 1897,
+  "referencePlaque": "NSYMP208",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -3019,9 +3100,10 @@
   "hauteur": 2000,
   "profondeur": 600,
   "reference": "NSYSF20860",
-  "plaqueLargeur": 700,
-  "plaqueHauteur": 1900,
-  "referencePlaque": "NSYMF208"
+  "plaqueLargeur": 696,
+  "plaqueHauteur": 1897,
+  "referencePlaque": "NSYMP208",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -3055,9 +3137,10 @@
   "hauteur": 2000,
   "profondeur": 800,
   "reference": "NSYSF20880",
-  "plaqueLargeur": 700,
-  "plaqueHauteur": 1900,
-  "referencePlaque": "NSYMF208"
+  "plaqueLargeur": 696,
+  "plaqueHauteur": 1897,
+  "referencePlaque": "NSYMP208",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -3091,9 +3174,10 @@
   "hauteur": 2000,
   "profondeur": 400,
   "reference": "NSYSF201040",
-  "plaqueLargeur": 900,
-  "plaqueHauteur": 1900,
-  "referencePlaque": "NSYMF2010"
+  "plaqueLargeur": 896,
+  "plaqueHauteur": 1897,
+  "referencePlaque": "NSYMP2010",
+  "verifie": false
  },
  {
   "fabricant": "Legrand",
@@ -3127,9 +3211,10 @@
   "hauteur": 2000,
   "profondeur": 500,
   "reference": "NSYSF201050",
-  "plaqueLargeur": 900,
-  "plaqueHauteur": 1900,
-  "referencePlaque": "NSYMF2010"
+  "plaqueLargeur": 896,
+  "plaqueHauteur": 1897,
+  "referencePlaque": "NSYMP2010",
+  "verifie": false
  },
  {
   "fabricant": "Legrand",
@@ -3163,9 +3248,10 @@
   "hauteur": 2000,
   "profondeur": 600,
   "reference": "NSYSF201060",
-  "plaqueLargeur": 900,
-  "plaqueHauteur": 1900,
-  "referencePlaque": "NSYMF2010"
+  "plaqueLargeur": 896,
+  "plaqueHauteur": 1897,
+  "referencePlaque": "NSYMP2010",
+  "verifie": false
  },
  {
   "fabricant": "Legrand",
@@ -3199,9 +3285,10 @@
   "hauteur": 2000,
   "profondeur": 800,
   "reference": "NSYSF201080",
-  "plaqueLargeur": 900,
-  "plaqueHauteur": 1900,
-  "referencePlaque": "NSYMF2010"
+  "plaqueLargeur": 896,
+  "plaqueHauteur": 1897,
+  "referencePlaque": "NSYMP2010",
+  "verifie": false
  },
  {
   "fabricant": "Legrand",
@@ -3235,9 +3322,10 @@
   "hauteur": 2000,
   "profondeur": 400,
   "reference": "NSYSF201240",
-  "plaqueLargeur": 1100,
-  "plaqueHauteur": 1900,
-  "referencePlaque": "NSYMF2012"
+  "plaqueLargeur": 1096,
+  "plaqueHauteur": 1897,
+  "referencePlaque": "NSYMP2012",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -3271,9 +3359,10 @@
   "hauteur": 2000,
   "profondeur": 500,
   "reference": "NSYSF201250",
-  "plaqueLargeur": 1100,
-  "plaqueHauteur": 1900,
-  "referencePlaque": "NSYMF2012"
+  "plaqueLargeur": 1096,
+  "plaqueHauteur": 1897,
+  "referencePlaque": "NSYMP2012",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -3307,9 +3396,10 @@
   "hauteur": 2000,
   "profondeur": 600,
   "reference": "NSYSF201260",
-  "plaqueLargeur": 1100,
-  "plaqueHauteur": 1900,
-  "referencePlaque": "NSYMF2012"
+  "plaqueLargeur": 1096,
+  "plaqueHauteur": 1897,
+  "referencePlaque": "NSYMP2012",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",
@@ -3343,9 +3433,10 @@
   "hauteur": 2000,
   "profondeur": 800,
   "reference": "NSYSF201280",
-  "plaqueLargeur": 1100,
-  "plaqueHauteur": 1900,
-  "referencePlaque": "NSYMF2012"
+  "plaqueLargeur": 1096,
+  "plaqueHauteur": 1897,
+  "referencePlaque": "NSYMP2012",
+  "verifie": true
  },
  {
   "fabricant": "Legrand",

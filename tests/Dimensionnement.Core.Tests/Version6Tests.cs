@@ -73,6 +73,9 @@ public class Version6Tests
         var qs0 = Arbre(projet).Single(e => e.Repere == "QS0");
         Assert.Contains(qs0.Enfants, e => e.Repere == "Q-PF" && e.Enfants.Any(f => f.Famille == "Parafoudre"));
         Assert.Contains(qs0.Enfants, e => e.Repere == "Q-KCP" && e.Enfants.Any(f => f.Famille == "Relais de contrôle"));
+        var tous = qs0.Parcourir().ToList();
+        Assert.StartsWith("SENTRON 5SD7", tous.Single(e => e.Famille == "Parafoudre").Reference);
+        Assert.Equal("3UG4512-1AR20", tous.Single(e => e.Famille == "Relais de contrôle").Reference);
     }
 
     [Fact]
@@ -131,6 +134,12 @@ public class Version6Tests
     [InlineData("Disjoncteur", "A9F74316", 16, 3, 54, 85, 78.5)]
     [InlineData("Disjoncteur moteur", "3RV2021-4BA10", 20, 3, 45, 97, 97)]
     [InlineData("Interrupteur-sectionneur", "VCF3", 63, 3, 60, 83, 65)]
+    [InlineData("Interrupteur-sectionneur", "3LD interrupteur principal 16 A 3P", 16, 3, 67, 84, 92.5)]
+    [InlineData("Interrupteur-sectionneur", "INS250 3P", 200, 3, 140, 136, 96)]
+    [InlineData("Démarreur progressif", "ATS22 7.5 kW 400 V", 15, 3, 130, 265, 169)]
+    [InlineData("Sectionneur porte-fusibles", "DF143", 32, 3, 79.5, 110.8, 76.5)]
+    [InlineData("Parafoudre", "Acti9 iPRD40r, 4 pôles", 0, 4, 72, 85, 69)]
+    [InlineData("Relais de contrôle", "RM17TG00", 0, 3, 17.5, 90, 65.5)]
     public void Cotes_relevees_remplacent_la_moyenne_de_la_famille(string famille, string reference, double courant, int poles,
         double largeur, double hauteur, double profondeur)
     {

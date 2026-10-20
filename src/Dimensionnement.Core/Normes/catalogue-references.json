@@ -2204,5 +2204,39 @@
   "max": 125,
   "reference": "Cartouche {Taille} {Classe} {In} A",
   "gamme": "Cartouches"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Parafoudre",
+  "min": 0,
+  "max": 10000,
+  "reference": "SENTRON 5SD7 type 2, {P} pôles",
+  "gamme": "SENTRON 5SD7"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Parafoudre",
+  "min": 0,
+  "max": 10000,
+  "reference": "Acti9 iPRD40r, {P} pôles",
+  "gamme": "Acti9 iPRD40r"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais de contrôle",
+  "min": 0,
+  "max": 10000,
+  "reference": "3UG4512-1AR20",
+  "gamme": "SIRIUS 3UG45 (ordre et absence de phases)",
+  "verifie": true
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Relais de contrôle",
+  "min": 0,
+  "max": 10000,
+  "reference": "RM17TG00",
+  "gamme": "Zelio Control RM17 (ordre et absence de phases)",
+  "verifie": true
  }
 ]
