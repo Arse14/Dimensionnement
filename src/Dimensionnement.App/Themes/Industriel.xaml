@@ -1,0 +1,235 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:inf="clr-namespace:Dimensionnement.App.Infrastructure">
+
+    <!-- Palette : thème sombre anthracite, accent ambre -->
+    <SolidColorBrush x:Key="Fond" Color="#1B1F24"/>
+    <SolidColorBrush x:Key="Panneau" Color="#242A31"/>
+    <SolidColorBrush x:Key="PanneauClair" Color="#2C333B"/>
+    <SolidColorBrush x:Key="Champ" Color="#161A1F"/>
+    <SolidColorBrush x:Key="Bordure" Color="#3A434D"/>
+    <SolidColorBrush x:Key="Texte" Color="#E6EAEE"/>
+    <SolidColorBrush x:Key="TexteSecondaire" Color="#9AA5B1"/>
+    <SolidColorBrush x:Key="Accent" Color="#F5A623"/>
+    <SolidColorBrush x:Key="Survol" Color="#34404C"/>
+    <SolidColorBrush x:Key="Selection" Color="#2F4256"/>
+
+    <inf:StatutCouleur x:Key="StatutCouleur"/>
+    <inf:LibelleEnum x:Key="LibelleEnum"/>
+    <inf:VideMasque x:Key="VideMasque"/>
+    <FontFamily x:Key="Icones">Segoe MDL2 Assets</FontFamily>
+
+    <DataTemplate x:Key="ModeleEnum">
+        <TextBlock Text="{Binding Converter={StaticResource LibelleEnum}}"/>
+    </DataTemplate>
+
+    <!-- Titres de panneaux -->
+    <Style x:Key="TitrePanneau" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+        <Setter Property="Margin" Value="0,0,0,8"/>
+    </Style>
+
+    <Style x:Key="Section" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Texte}"/>
+        <Setter Property="Margin" Value="0,14,0,6"/>
+    </Style>
+
+    <!-- Ligne de formulaire : étiquette à gauche, champ à droite -->
+    <Style x:Key="Ligne" TargetType="DockPanel">
+        <Setter Property="Margin" Value="0,3"/>
+        <Setter Property="LastChildFill" Value="True"/>
+    </Style>
+    <Style x:Key="Etiquette" TargetType="TextBlock">
+        <Setter Property="DockPanel.Dock" Value="Left"/>
+        <Setter Property="Width" Value="210"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Foreground" Value="{StaticResource TexteSecondaire}"/>
+    </Style>
+
+    <!-- Boutons -->
+    <Style TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource Texte}"/>
+        <Setter Property="Background" Value="{StaticResource PanneauClair}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Bordure}"/>
+        <Setter Property="Padding" Value="10,5"/>
+        <Setter Property="Margin" Value="0,0,6,0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Cadre" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1" CornerRadius="3" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Cadre" Property="Background" Value="{StaticResource Survol}"/>
+                            <Setter TargetName="Cadre" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="BoutonAccent" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Background" Value="{StaticResource Accent}"/>
+        <Setter Property="Foreground" Value="#1B1F24"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+    <Style x:Key="BoutonPetit" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Padding" Value="6,2"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Margin" Value="0"/>
+    </Style>
+
+    <!-- Champs de saisie -->
+    <Style TargetType="TextBox">
+        <Setter Property="Foreground" Value="{StaticResource Texte}"/>
+        <Setter Property="Background" Value="{StaticResource Champ}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Bordure}"/>
+        <Setter Property="CaretBrush" Value="{StaticResource Accent}"/>
+        <Setter Property="SelectionBrush" Value="{StaticResource Accent}"/>
+        <Setter Property="Height" Value="28"/>
+        <Setter Property="Padding" Value="6,0"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="Cadre" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1" CornerRadius="3">
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Cadre" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                        </Trigger>
+                        <Trigger Property="Validation.HasError" Value="True">
+                            <Setter TargetName="Cadre" Property="BorderBrush" Value="#F85149"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ComboBoxItem">
+        <Setter Property="Foreground" Value="{StaticResource Texte}"/>
+        <Setter Property="Padding" Value="8,5"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBoxItem">
+                    <Border x:Name="Cadre" Background="Transparent" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Cadre" Property="Background" Value="{StaticResource Survol}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Cadre" Property="Background" Value="{StaticResource Selection}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ComboBox">
+        <Setter Property="Foreground" Value="{StaticResource Texte}"/>
+        <Setter Property="Background" Value="{StaticResource Champ}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Bordure}"/>
+        <Setter Property="Height" Value="28"/>
+        <Setter Property="ItemTemplate" Value="{StaticResource ModeleEnum}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <ToggleButton Focusable="False" ClickMode="Press"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border x:Name="Cadre" Background="{StaticResource Champ}" BorderBrush="{StaticResource Bordure}"
+                                            BorderThickness="1" CornerRadius="3">
+                                        <Path HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0"
+                                              Data="M0,0 L4,4 L8,0" Stroke="{StaticResource TexteSecondaire}" StrokeThickness="1.5"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Cadre" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+                        <ContentPresenter Margin="8,0,28,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                                          Content="{TemplateBinding SelectionBoxItem}"
+                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"/>
+                        <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True"
+                               Focusable="False" PopupAnimation="Fade">
+                            <Border Background="{StaticResource Panneau}" BorderBrush="{StaticResource Bordure}" BorderThickness="1"
+                                    MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                    MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                <ScrollViewer>
+                                    <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{StaticResource Texte}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <Style TargetType="ToolTip">
+        <Setter Property="Background" Value="{StaticResource PanneauClair}"/>
+        <Setter Property="Foreground" Value="{StaticResource Texte}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Bordure}"/>
+    </Style>
+
+    <!-- Arbre du matériel -->
+    <Style TargetType="TreeView">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Foreground" Value="{StaticResource Texte}"/>
+    </Style>
+    <Style TargetType="TreeViewItem">
+        <Setter Property="IsExpanded" Value="True"/>
+        <Setter Property="Foreground" Value="{StaticResource Texte}"/>
+        <Setter Property="Padding" Value="2,1"/>
+    </Style>
+
+    <!-- Panneaux -->
+    <Style x:Key="CadrePanneau" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource Panneau}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Bordure}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="12"/>
+    </Style>
+
+    <!-- Indicateur du bandeau de synthèse -->
+    <Style x:Key="IndicateurLibelle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource TexteSecondaire}"/>
+    </Style>
+    <Style x:Key="IndicateurValeur" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Texte}"/>
+        <Setter Property="FontFamily" Value="Consolas, Segoe UI"/>
+    </Style>
+</ResourceDictionary>
