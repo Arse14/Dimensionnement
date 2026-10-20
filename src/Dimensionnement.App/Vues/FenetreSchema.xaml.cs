@@ -2,23 +2,29 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using System.Windows.Input;
 using Dimensionnement.App.ModelesVue;
-using Dimensionnement.Core.Rapport;
+using Dimensionnement.Core.Calculs;
 using Microsoft.Web.WebView2.Core;
 
 namespace Dimensionnement.App.Vues;
 
-/// <summary>Schéma unifilaire affiché par WebView2 ; redessiné à chaque recalcul du projet.</summary>
-public partial class FenetreUnifilaire : Window
+/// <summary>Schéma SVG (unifilaire, organigramme) affiché par WebView2 ; redessiné à chaque recalcul du projet.</summary>
+public partial class FenetreSchema : Window
 {
     readonly ModeleVuePrincipal _modele;
+    readonly Func<ResultatProjet, string> _svg;
     bool _pret;
 
-    public FenetreUnifilaire(ModeleVuePrincipal modele)
+    public FenetreSchema(ModeleVuePrincipal modele, string titre, string aide, Func<ResultatProjet, string> svg, ICommand enregistrer)
     {
         InitializeComponent();
         _modele = modele;
+        _svg = svg;
         DataContext = modele;
+        Title = titre;
+        Aide.Text = aide;
+        BoutonEnregistrer.Command = enregistrer;
         Loaded += async (_, _) => await Initialiser();
         modele.PropertyChanged += Recalcul;
         Closed += (_, _) => modele.PropertyChanged -= Recalcul;
@@ -50,7 +56,7 @@ public partial class FenetreUnifilaire : Window
 
     string Html() =>
         "<!doctype html><html><head><meta charset=\"utf-8\"><style>body{margin:0;background:#fff}</style></head><body>" +
-        SchemaUnifilaire.Svg(_modele.Resultat) + "</body></html>";
+        _svg(_modele.Resultat) + "</body></html>";
 
     void Afficher()
     {
@@ -61,13 +67,13 @@ public partial class FenetreUnifilaire : Window
     {
         try
         {
-            var chemin = Path.Combine(Path.GetTempPath(), $"unifilaire-{Guid.NewGuid():N}.html");
+            var chemin = Path.Combine(Path.GetTempPath(), $"schema-{Guid.NewGuid():N}.html");
             File.WriteAllText(chemin, Html());
             Process.Start(new ProcessStartInfo(chemin) { UseShellExecute = true });
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
         {
-            MessageBox.Show($"Impossible d'ouvrir le schéma :\n{ex.Message}", "Schéma unifilaire", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Impossible d'ouvrir le schéma :\n{ex.Message}", Title, MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 }

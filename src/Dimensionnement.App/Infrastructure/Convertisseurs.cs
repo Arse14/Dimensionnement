@@ -105,6 +105,16 @@ public class VideMasque : IValueConverter
         throw new NotSupportedException();
 }
 
+/// <summary>Vrai quand la carte (valeur 0 : son départ) est le départ en cours d'édition (valeur 1 : la sélection).</summary>
+public class MemeDepart : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture) =>
+        values is [Depart carte, Depart selection] && carte.Id == selection.Id;
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
 /// <summary>Listes de choix proposées dans les formulaires.</summary>
 public static class Listes
 {

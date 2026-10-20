@@ -43,8 +43,7 @@ public class ModeleVuePrincipal : Observable
         Ouvrir = new Commande(OuvrirProjet);
         Enregistrer = new Commande(() => EnregistrerProjet(false));
         EnregistrerSous = new Commande(() => EnregistrerProjet(true));
-        AjouterMoteur = new Commande(() => AjouterDepart(new DepartMoteur
-            { Designation = "Moteur", PuissanceKw = 5.5, CosPhi = 0.84, Rendement = 0.88 }));
+        AjouterMoteur = new Commande(p => AjouterDepart(NouveauMoteur(p is ModeDemarrage m ? m : ModeDemarrage.Direct)));
         AjouterResistif = new Commande(() => AjouterDepart(new DepartResistif { Designation = "Résistance", PuissanceKw = 3 }));
         AjouterPrise = new Commande(() => AjouterDepart(new DepartPrise { Designation = "Prise de courant", Rubrique = "Auxiliaires" }));
         AjouterGenerique = new Commande(() => AjouterDepart(new DepartGenerique
@@ -69,7 +68,13 @@ public class ModeleVuePrincipal : Observable
         AfficherSelectivite = new Commande(() => Selection = new PageSelectivite(_projet));
         AfficherReferences = new Commande(() => Selection = new PageReferences(_projet));
         OuvrirVueArmoire = new Commande(() => Afficher(new FenetreArmoire(this)));
-        OuvrirUnifilaire = new Commande(() => Afficher(new FenetreUnifilaire(this)));
+        OuvrirUnifilaire = new Commande(() => Afficher(new FenetreSchema(this, "Schéma unifilaire",
+            "Schéma de puissance indicatif, mis à jour à chaque modification du projet. Molette + Ctrl pour zoomer.",
+            SchemaUnifilaire.Svg, ExporterUnifilaire!)));
+        OuvrirOrganigramme = new Commande(() => Afficher(new FenetreSchema(this, "Organigramme du matériel",
+            "De l'arrivée jusqu'à chaque récepteur, départs groupés par rubrique. Survolez un appareil pour son détail ; molette + Ctrl pour zoomer.",
+            SchemaOrganigramme.Svg, ExporterOrganigramme!)));
+        OuvrirCarte = new Commande(p => OuvrirCarteMateriel((CarteMateriel)p!), p => p is CarteMateriel);
         DeplacerAppareil = new Commande(p => Modifier(() =>
         {
             var d = (DeplacementAppareil)p!;
@@ -78,7 +83,8 @@ public class ModeleVuePrincipal : Observable
         ReinitialiserImplantation = new Commande(() => Modifier(() => _projet.Armoire.Positions.Clear()),
             () => _projet.Armoire.Positions.Count > 0);
         ExporterDevis = new Commande(EnregistrerDevis);
-        ExporterUnifilaire = new Commande(EnregistrerUnifilaire);
+        ExporterUnifilaire = new Commande(() => EnregistrerSvg("unifilaire", SchemaUnifilaire.Svg(Resultat), "Impossible d'enregistrer le schéma unifilaire"));
+        ExporterOrganigramme = new Commande(() => EnregistrerSvg("organigramme", SchemaOrganigramme.Svg(Resultat), "Impossible d'enregistrer l'organigramme"));
         OuvrirCatalogueReferences = new Commande(() => OuvrirCatalogueUtilisateur(CheminReferences, CatalogueReferences.TexteEmbarque(),
             "Impossible d'ouvrir le catalogue des références"));
         RechargerCatalogueReferences = new Commande(() =>
@@ -125,10 +131,13 @@ public class ModeleVuePrincipal : Observable
     public Commande AfficherReferences { get; }
     public Commande OuvrirVueArmoire { get; }
     public Commande OuvrirUnifilaire { get; }
+    public Commande OuvrirOrganigramme { get; }
+    public Commande OuvrirCarte { get; }
     public Commande DeplacerAppareil { get; }
     public Commande ReinitialiserImplantation { get; }
     public Commande ExporterDevis { get; }
     public Commande ExporterUnifilaire { get; }
+    public Commande ExporterOrganigramme { get; }
     public Commande OuvrirCatalogueReferences { get; }
     public Commande RechargerCatalogueReferences { get; }
     public Commande OuvrirCatalogue { get; }
@@ -141,8 +150,8 @@ public class ModeleVuePrincipal : Observable
     public Projet Projet => _projet;
     public ResultatProjet Resultat { get; private set; }
 
-    /// <summary>Racine de l'arbre du matériel, sous forme de collection pour le TreeView.</summary>
-    public IEnumerable<ElementMateriel> Arbre => new[] { Resultat.Arbre };
+    /// <summary>Matériel présenté en cartes : l'arrivée, les départs par rubrique, puis l'automatisme et la sécurité.</summary>
+    public IReadOnlyList<GroupeMateriel> Groupes => SyntheseMateriel.Grouper(Resultat);
 
     /// <summary>Élément en cours d'édition : le projet (et son réseau) ou un départ.</summary>
     public object Selection
@@ -460,19 +469,48 @@ public class ModeleVuePrincipal : Observable
         }
     }
 
-    void EnregistrerUnifilaire()
+    void EnregistrerSvg(string suffixe, string svg, string titreErreur)
     {
-        var chemin = DemanderChemin("Image vectorielle (*.svg)|*.svg", $"{NomFichier(_projet.Nom)}-unifilaire-{NomFichier(_projet.Indice)}.svg");
+        var chemin = DemanderChemin("Image vectorielle (*.svg)|*.svg", $"{NomFichier(_projet.Nom)}-{suffixe}-{NomFichier(_projet.Indice)}.svg");
         if (chemin is null) return;
         try
         {
-            File.WriteAllText(chemin, SchemaUnifilaire.Svg(Resultat));
+            File.WriteAllText(chemin, svg);
             AfficherFichier(chemin);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            Erreur("Impossible d'enregistrer le schéma unifilaire", ex);
+            Erreur(titreErreur, ex);
         }
+    }
+
+    static DepartMoteur NouveauMoteur(ModeDemarrage demarrage) => new()
+    {
+        Designation = demarrage switch
+        {
+            ModeDemarrage.Variateur => "Moteur sur variateur",
+            ModeDemarrage.DemarreurProgressif => "Moteur sur démarreur progressif",
+            ModeDemarrage.Inverseur => "Moteur deux sens",
+            ModeDemarrage.EtoileTriangle => "Moteur étoile-triangle",
+            _ => "Moteur",
+        },
+        PuissanceKw = 5.5, CosPhi = 0.84, Rendement = 0.88, Demarrage = demarrage,
+    };
+
+    /// <summary>Une carte ouvre son départ ; l'arrivée ouvre le projet, la commande la page automate ou sécurité.</summary>
+    void OuvrirCarteMateriel(CarteMateriel carte)
+    {
+        if (carte.Depart is { } d)
+        {
+            Selection = _projet.Departs.FirstOrDefault(x => x.Id == d.Id) ?? (object)_projet;
+            return;
+        }
+        Selection = carte.Chaine.FirstOrDefault()?.Element.Famille switch
+        {
+            "Automate" or "Entrées/sorties" => _projet.Automate,
+            "Sécurité" => _projet.Securite,
+            _ => _projet,
+        };
     }
 
     /// <summary>Ouvre une fenêtre secondaire non modale ; elle suit les recalculs du projet.</summary>

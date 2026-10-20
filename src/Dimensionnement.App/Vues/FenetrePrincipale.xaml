@@ -603,17 +603,97 @@
             </StackPanel>
         </DataTemplate>
 
-        <!-- Arbre du matériel -->
-        <HierarchicalDataTemplate DataType="{x:Type mat:ElementMateriel}" ItemsSource="{Binding Enfants}">
-            <StackPanel Orientation="Horizontal" Margin="0,2"
-                        ToolTip="{Binding Zone, Converter={StaticResource LibelleEnum}}">
-                <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center"
-                         Fill="{Binding Statut, Converter={StaticResource StatutCouleur}}"/>
-                <TextBlock Text="{Binding Repere}" FontWeight="SemiBold" MinWidth="54"/>
-                <TextBlock Text="{Binding Designation}" Margin="0,0,8,0"/>
-                <TextBlock Text="{Binding Calibre}" Foreground="{StaticResource TexteSecondaire}"/>
+        <!-- Matériel en cartes : une carte par départ, la chaîne d'appareils de l'amont vers l'aval -->
+        <Style x:Key="BoutonCarte" TargetType="Button">
+            <Setter Property="Foreground" Value="{StaticResource Texte}"/>
+            <Setter Property="Background" Value="{StaticResource PanneauClair}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Bordure}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Cadre" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1" CornerRadius="4">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Cadre" Property="Background" Value="{StaticResource Survol}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Value="True">
+                    <DataTrigger.Binding>
+                        <MultiBinding Converter="{StaticResource MemeDepart}">
+                            <Binding Path="Depart"/>
+                            <Binding Path="DataContext.Selection" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                        </MultiBinding>
+                    </DataTrigger.Binding>
+                    <Setter Property="Background" Value="{StaticResource Selection}"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <DataTemplate x:Key="MaillonMateriel" DataType="{x:Type mat:MaillonMateriel}">
+            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                <TextBlock x:Name="Lien" Text="→" Foreground="{StaticResource TexteSecondaire}" Margin="3,0" VerticalAlignment="Center"/>
+                <Border Background="{StaticResource Champ}" CornerRadius="3" Padding="6,2"
+                        ToolTip="{Binding Element.Designation}">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="7" Height="7" Margin="0,0,5,0" VerticalAlignment="Center"
+                                 Fill="{Binding Element.Statut, Converter={StaticResource StatutCouleur}}"/>
+                        <TextBlock Text="{Binding Element.Repere}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Element.Calibre}" Foreground="{StaticResource TexteSecondaire}" FontSize="11.5"
+                                   Margin="6,0,0,0" VerticalAlignment="Center" MaxWidth="150" TextTrimming="CharacterEllipsis"
+                                   Visibility="{Binding Element.Calibre, Converter={StaticResource VideMasque}}"/>
+                    </StackPanel>
+                </Border>
             </StackPanel>
-        </HierarchicalDataTemplate>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding EnParallele}" Value="True">
+                    <Setter TargetName="Lien" Property="Text" Value="∥"/>
+                    <Setter TargetName="Lien" Property="ToolTip" Value="En parallèle de l'appareil précédent"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource PreviousData}}" Value="{x:Null}">
+                    <Setter TargetName="Lien" Property="Visibility" Value="Collapsed"/>
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <DataTemplate x:Key="CarteMateriel" DataType="{x:Type mat:CarteMateriel}">
+            <Button Style="{StaticResource BoutonCarte}" CommandParameter="{Binding}"
+                    Command="{Binding DataContext.OuvrirCarte, RelativeSource={RelativeSource AncestorType=Window}}">
+                <DockPanel>
+                    <Border DockPanel.Dock="Left" Width="4" CornerRadius="4,0,0,4"
+                            Background="{Binding Statut, Converter={StaticResource StatutCouleur}}"/>
+                    <StackPanel Margin="10,7,8,8">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding SousTitre}" Foreground="{StaticResource TexteSecondaire}"
+                                       FontSize="11.5" Margin="8,0,0,0" VerticalAlignment="Center" MaxWidth="170" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Text="{Binding Titre}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                        </DockPanel>
+                        <ItemsControl ItemsSource="{Binding Chaine}" ItemTemplate="{StaticResource MaillonMateriel}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                    </StackPanel>
+                </DockPanel>
+            </Button>
+        </DataTemplate>
+
+        <DataTemplate x:Key="GroupeMateriel" DataType="{x:Type mat:GroupeMateriel}">
+            <StackPanel Margin="0,0,0,8">
+                <TextBlock Text="{Binding Titre}" Foreground="{StaticResource Accent}" FontWeight="Bold" FontSize="11.5" Margin="2,4,0,6"/>
+                <ItemsControl ItemsSource="{Binding Cartes}" ItemTemplate="{StaticResource CarteMateriel}"/>
+            </StackPanel>
+        </DataTemplate>
 
         <!-- Ligne de note de calcul -->
         <DataTemplate x:Key="LigneNote" DataType="{x:Type calc:LigneCalcul}">
@@ -699,12 +779,24 @@
                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE792;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Enregistrer sous"/></StackPanel>
                     </Button>
                     <Rectangle Width="1" Fill="{StaticResource Bordure}" Margin="8,2"/>
-                    <TextBlock Text="Ajouter :" Foreground="{StaticResource TexteSecondaire}" VerticalAlignment="Center" Margin="4,0,8,0"/>
-                    <Button Style="{StaticResource BoutonOutil}" Command="{Binding AjouterMoteur}" Content="Moteur"/>
-                    <Button Style="{StaticResource BoutonOutil}" Command="{Binding AjouterResistif}" Content="Résistance"/>
-                    <Button Style="{StaticResource BoutonOutil}" Command="{Binding AjouterPrise}" Content="Prise"/>
-                    <Button Style="{StaticResource BoutonOutil}" Command="{Binding AjouterGenerique}" Content="Autre charge"/>
-                    <Button Style="{StaticResource BoutonOutil}" Command="{Binding AjouterAlimentation}" Content="Alim. 24 V"/>
+                    <Button Style="{StaticResource BoutonOutil}" Click="AfficherAjouts" ToolTip="Ajouter un départ">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Moteur, démarrage direct" Command="{Binding AjouterMoteur}" CommandParameter="{x:Static mod:ModeDemarrage.Direct}"/>
+                                <MenuItem Header="Moteur deux sens (inverseur)" Command="{Binding AjouterMoteur}" CommandParameter="{x:Static mod:ModeDemarrage.Inverseur}"/>
+                                <MenuItem Header="Moteur étoile-triangle" Command="{Binding AjouterMoteur}" CommandParameter="{x:Static mod:ModeDemarrage.EtoileTriangle}"/>
+                                <MenuItem Header="Moteur sur variateur de fréquence" Command="{Binding AjouterMoteur}" CommandParameter="{x:Static mod:ModeDemarrage.Variateur}"/>
+                                <MenuItem Header="Moteur sur démarreur progressif" Command="{Binding AjouterMoteur}" CommandParameter="{x:Static mod:ModeDemarrage.DemarreurProgressif}"/>
+                                <Separator/>
+                                <MenuItem Header="Résistance (chauffage)" Command="{Binding AjouterResistif}"/>
+                                <MenuItem Header="Prise de courant" Command="{Binding AjouterPrise}"/>
+                                <MenuItem Header="Autre charge" Command="{Binding AjouterGenerique}"/>
+                                <Separator/>
+                                <MenuItem Header="Alimentation 24 V DC" Command="{Binding AjouterAlimentation}"/>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                        <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE710;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Ajouter"/><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE70D;" FontSize="9" Margin="6,0,0,0" VerticalAlignment="Center"/></StackPanel>
+                    </Button>
                     <Button Style="{StaticResource BoutonOutil}" Command="{Binding Supprimer}" ToolTip="Supprimer le départ sélectionné (Suppr)">
                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE74D;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Supprimer"/></StackPanel>
                     </Button>
@@ -806,17 +898,18 @@
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Sélectivité" Command="{Binding AfficherSelectivite}"/>
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Références" Command="{Binding AfficherReferences}"/>
                     </WrapPanel>
-                    <TextBlock DockPanel.Dock="Top" Text="ARBRE DU MATÉRIEL" Style="{StaticResource TitrePanneau}"/>
+                    <DockPanel DockPanel.Dock="Top">
+                        <Button DockPanel.Dock="Right" Style="{StaticResource BoutonPetit}" Command="{Binding OuvrirOrganigramme}"
+                                ToolTip="Organigramme complet en plein écran : arrivée, jeu de barres et une colonne par départ">
+                            <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE740;" Margin="0,0,5,0" VerticalAlignment="Center"/><TextBlock Text="Organigramme"/></StackPanel>
+                        </Button>
+                        <TextBlock Text="MATÉRIEL" Style="{StaticResource TitrePanneau}"/>
+                    </DockPanel>
                     <TextBlock DockPanel.Dock="Top" Foreground="{StaticResource TexteSecondaire}" TextWrapping="Wrap" Margin="0,0,0,8"
-                               Text="De l'arrivée jusqu'à chaque récepteur. Cliquez un appareil pour éditer son départ."/>
-                    <TreeView x:Name="ArbreMateriel" ItemsSource="{Binding Arbre}" SelectedItemChanged="ArbreSelection">
-                        <TreeView.Resources>
-                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#2F4256"/>
-                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#E6EAEE"/>
-                            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#2A3846"/>
-                            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="#E6EAEE"/>
-                        </TreeView.Resources>
-                    </TreeView>
+                               Text="Une carte par départ, de l'amont vers l'aval. Cliquez une carte pour l'éditer."/>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Groupes}" ItemTemplate="{StaticResource GroupeMateriel}"/>
+                    </ScrollViewer>
                 </DockPanel>
             </Border>
 

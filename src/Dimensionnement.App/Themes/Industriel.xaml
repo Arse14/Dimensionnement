@@ -17,6 +17,7 @@
     <inf:StatutCouleur x:Key="StatutCouleur"/>
     <inf:LibelleEnum x:Key="LibelleEnum"/>
     <inf:VideMasque x:Key="VideMasque"/>
+    <inf:MemeDepart x:Key="MemeDepart"/>
     <FontFamily x:Key="Icones">Segoe MDL2 Assets</FontFamily>
 
     <DataTemplate x:Key="ModeleEnum">

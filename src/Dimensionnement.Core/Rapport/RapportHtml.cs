@@ -130,6 +130,10 @@ public static class RapportHtml
         sb.Append(SchemaUnifilaire.Svg(r));
         sb.Append("</div>");
 
+        sb.Append("<h2>Organigramme du matériel</h2><div class=\"schema\">");
+        sb.Append(SchemaOrganigramme.Svg(r));
+        sb.Append("</div>");
+
         if (r.Selectivite is { } sel)
         {
             sb.Append("<h2>Sélectivité</h2><table><tr><th>Départ</th><th>Amont</th><th>Aval</th><th>Rapport des calibres</th>" +
