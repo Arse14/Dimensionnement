@@ -1,0 +1,6 @@
+bin/
+obj/
+publication/
+*.user
+.vs/
+TestResults/
