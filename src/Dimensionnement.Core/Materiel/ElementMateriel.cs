@@ -7,7 +7,7 @@ public class ElementMateriel
 {
     public string Repere { get; init; } = "";
     public string Famille { get; init; } = "";
-    public string Designation { get; init; } = "";
+    public string Designation { get; set; } = "";
 
     /// <summary>Calibre ou caractéristique principale, lisible (« 13–18 A », « 2,5 mm² »…).</summary>
     public string Calibre { get; init; } = "";

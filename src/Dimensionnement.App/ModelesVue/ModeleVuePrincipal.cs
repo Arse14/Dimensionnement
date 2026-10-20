@@ -46,6 +46,18 @@ public class ModeleVuePrincipal : Observable
     IReadOnlyList<CarteEs> _cartes = CatalogueCartesEs.Charger(CheminCartes);
     IReadOnlyList<ChoixCpu> _cpus = Array.Empty<ChoixCpu>();
 
+    /// <summary>Catalogues des alimentations / transformateurs et des IHM modifiables par l'utilisateur.</summary>
+    static readonly string CheminAlimentations = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueAlimentations.NomFichier);
+    static readonly string CheminIhm = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueIhm.NomFichier);
+    IReadOnlyList<ModeleAlimentation> _alimentations = CatalogueAlimentations.Charger(CheminAlimentations);
+    IReadOnlyList<ModeleIhm> _ihm = CatalogueIhm.Charger(CheminIhm);
+
+    /// <summary>Tensions dont l'utilisateur a refusé ou supprimé la source ajoutée automatiquement, jusqu'au prochain projet.</summary>
+    readonly HashSet<TensionCommande> _sourcesIgnorees = new();
+    bool _noteVisible;
+
     Projet _projet = new();
     string? _chemin;
     bool _modifie;
@@ -67,6 +79,17 @@ public class ModeleVuePrincipal : Observable
         AjouterGenerique = new Commande(() => AjouterDepart(new DepartGenerique
             { Designation = "Charge", PuissanceKw = 1, Rubrique = "Auxiliaires", Alimentation = TypeAlimentation.Mono230 }));
         AjouterAlimentation = new Commande(() => AjouterDepart(new DepartAlimentation24V()));
+        AjouterTransformateur = new Commande(p => AjouterDepart(NouveauTransformateur(p is TensionCommande t ? t : TensionCommande.Alternatif24)));
+        BasculerNote = new Commande(() => NoteVisible = !NoteVisible);
+        AfficherBilanPuissance = new Commande(() => Selection = new PageBilanPuissance(_projet));
+        AjouterPupitre = new Commande(() => Modifier(() => _projet.Automate.Pupitres.Add(new PupitreIhm { Nom = $"IHM {_projet.Automate.Pupitres.Count + 1}" })));
+        SupprimerPupitre = new Commande(p => Modifier(() => _projet.Automate.Pupitres.Remove((PupitreIhm)p!)), p => p is PupitreIhm);
+        ApercuDevis = new Commande(() => Afficher(new FenetreApercuDevis(this)));
+        ApercuRapport = new Commande(() => Afficher(new FenetreApercuRapport(this)));
+        OuvrirCatalogueAlimentations = new Commande(() => OuvrirCatalogueUtilisateur(CheminAlimentations, CatalogueAlimentations.TexteEmbarque(),
+            "Impossible d'ouvrir le catalogue des alimentations"));
+        OuvrirCatalogueIhm = new Commande(() => OuvrirCatalogueUtilisateur(CheminIhm, CatalogueIhm.TexteEmbarque(),
+            "Impossible d'ouvrir le catalogue des IHM"));
         Supprimer = new Commande(SupprimerDepart, () => Selection is Depart);
         Rapport = new Commande(GenererRapport);
         ExporterExcel = new Commande(EnregistrerExcel);
@@ -89,9 +112,6 @@ public class ModeleVuePrincipal : Observable
         AfficherSelectivite = new Commande(() => Selection = new PageSelectivite(_projet));
         AfficherReferences = new Commande(() => Selection = new PageReferences(_projet));
         OuvrirVueArmoire = new Commande(() => Afficher(new FenetreArmoire(this)));
-        OuvrirUnifilaire = new Commande(() => Afficher(new FenetreSchema(this, "Schéma unifilaire",
-            "Schéma de puissance indicatif, mis à jour à chaque modification du projet. Molette + Ctrl pour zoomer.",
-            SchemaUnifilaire.Svg, ExporterUnifilaire!)));
         OuvrirOrganigramme = new Commande(() => Afficher(new FenetreSchema(this, "Organigramme du matériel",
             "De l'arrivée jusqu'à chaque récepteur, départs groupés par rubrique. Survolez un appareil pour son détail ; molette + Ctrl pour zoomer.",
             SchemaOrganigramme.Svg, ExporterOrganigramme!)));
@@ -123,7 +143,6 @@ public class ModeleVuePrincipal : Observable
         }));
         ModifierArmoire = new Commande(p => Modifier(() => AppliquerAction((ActionArmoire)p!)), p => p is ActionArmoire);
         ExporterDevis = new Commande(EnregistrerDevis);
-        ExporterUnifilaire = new Commande(() => EnregistrerSvg("unifilaire", SchemaUnifilaire.Svg(Resultat), "Impossible d'enregistrer le schéma unifilaire"));
         ExporterOrganigramme = new Commande(() => EnregistrerSvg("organigramme", SchemaOrganigramme.Svg(Resultat), "Impossible d'enregistrer l'organigramme"));
         OuvrirCatalogueReferences = new Commande(() => OuvrirCatalogueUtilisateur(CheminReferences, CatalogueReferences.TexteEmbarque(),
             "Impossible d'ouvrir le catalogue des références"));
@@ -133,6 +152,8 @@ public class ModeleVuePrincipal : Observable
             _variateurs = CatalogueVariateurs.Charger(CheminVariateurs);
             _enveloppes = CatalogueEnveloppes.Charger(CheminEnveloppes);
             _securite = CatalogueSecurite.Charger(CheminSecurite);
+            _alimentations = CatalogueAlimentations.Charger(CheminAlimentations);
+            _ihm = CatalogueIhm.Charger(CheminIhm);
             Recalculer();
         });
         OuvrirCatalogueVariateurs = new Commande(() => OuvrirCatalogueUtilisateur(CheminVariateurs, CatalogueVariateurs.TexteEmbarque(),
@@ -148,6 +169,7 @@ public class ModeleVuePrincipal : Observable
         {
             _catalogue = CatalogueAutomates.Charger(CheminCatalogue);
             _cartes = CatalogueCartesEs.Charger(CheminCartes);
+            _ihm = CatalogueIhm.Charger(CheminIhm);
             _cpus = ListerCpus(_catalogue);
             Recalculer();
         });
@@ -165,6 +187,39 @@ public class ModeleVuePrincipal : Observable
     public Commande AjouterPrise { get; }
     public Commande AjouterGenerique { get; }
     public Commande AjouterAlimentation { get; }
+    public Commande AjouterTransformateur { get; }
+    public Commande BasculerNote { get; }
+    public Commande AfficherBilanPuissance { get; }
+    public Commande AjouterPupitre { get; }
+    public Commande SupprimerPupitre { get; }
+    public Commande ApercuDevis { get; }
+    public Commande ApercuRapport { get; }
+    public Commande OuvrirCatalogueAlimentations { get; }
+    public Commande OuvrirCatalogueIhm { get; }
+
+    /// <summary>Panneau de la note de calcul : masqué par défaut pour laisser la place à la saisie.</summary>
+    public bool NoteVisible
+    {
+        get => _noteVisible;
+        set { _noteVisible = value; Signaler(); }
+    }
+
+    /// <summary>Étapes et tableau du bilan de puissance expliqué.</summary>
+    public IReadOnlyList<EtapeBilan> EtapesBilan => ExplicationBilan.Etapes(Resultat);
+    public IReadOnlyList<LigneBilan> LignesBilan => ExplicationBilan.Lignes(Resultat);
+
+    /// <summary>Lignes de la demande de devis, pour l'aperçu.</summary>
+    public IReadOnlyList<LigneDevis> LignesDevis => ListeDevis.Generer(Resultat);
+
+    /// <summary>Rapport HTML du projet, pour l'aperçu avant PDF.</summary>
+    public string RapportHtmlApercu => RapportHtml.Generer(Resultat);
+
+    /// <summary>IHM de la marque de l'automate, pour le choix manuel d'une référence.</summary>
+    public IReadOnlyList<ChoixCpu> IhmDisponibles => _ihm
+        .Where(m => m.Fabricant.Equals(_projet.Automate.Marque.ToString(), StringComparison.OrdinalIgnoreCase))
+        .Select(m => new ChoixCpu(m.Reference, $"{m.Gamme} – {m.Libelle}"))
+        .Prepend(new ChoixCpu("", "Automatique, selon la diagonale et la gamme"))
+        .ToList();
     public Commande Supprimer { get; }
     public Commande Rapport { get; }
     public Commande ExporterExcel { get; }
@@ -185,7 +240,6 @@ public class ModeleVuePrincipal : Observable
     public Commande AfficherSelectivite { get; }
     public Commande AfficherReferences { get; }
     public Commande OuvrirVueArmoire { get; }
-    public Commande OuvrirUnifilaire { get; }
     public Commande OuvrirOrganigramme { get; }
     public Commande OuvrirCarte { get; }
     public Commande DeplacerAppareil { get; }
@@ -223,7 +277,6 @@ public class ModeleVuePrincipal : Observable
             }
     }
     public Commande ExporterDevis { get; }
-    public Commande ExporterUnifilaire { get; }
     public Commande ExporterOrganigramme { get; }
     public Commande OuvrirCatalogueReferences { get; }
     public Commande RechargerCatalogueReferences { get; }
@@ -242,7 +295,7 @@ public class ModeleVuePrincipal : Observable
             .ToList();
 
     ResultatProjet CalculerProjet() =>
-        CalculProjet.Calculer(_projet, _catalogue, _references, _variateurs, _enveloppes, _securite, _cartes);
+        CalculProjet.Calculer(_projet, _catalogue, _references, _variateurs, _enveloppes, _securite, _cartes, _alimentations, _ihm);
     public Commande RechargerCatalogue { get; }
     public Commande Forcer { get; }
     public Commande AnnulerForcage { get; }
@@ -311,6 +364,7 @@ public class ModeleVuePrincipal : Observable
         PageThermique => "NOTE DE CALCUL – BILAN THERMIQUE",
         PageSelectivite => "NOTE DE CALCUL – SÉLECTIVITÉ",
         PageReferences => "RÉFÉRENCES DU MATÉRIEL",
+        PageBilanPuissance => "NOTE DE CALCUL – BILAN DE PUISSANCE",
         _ => "NOTE DE CALCUL – ARRIVÉE ET BILAN DE PUISSANCE",
     };
 
@@ -323,7 +377,49 @@ public class ModeleVuePrincipal : Observable
     {
         _modifie = true;
         Resultat = CalculerProjet();
+        if (_projet.AjoutAutomatiqueSources && Resultat.SourcesManquantes.Count > 0)
+        {
+            var ajoutees = SourcesCommande.Completer(_projet, Resultat.Consommateurs24V, ChoisirSource, _sourcesIgnorees);
+            // Un besoin sans ajout (refusé) ou rattaché à un transformateur existant demande aussi un recalcul.
+            Resultat = CalculerProjet();
+            if (ajoutees.Count > 0)
+                MessageBox.Show("Ajouté automatiquement : " + string.Join(", ", ajoutees.Select(a => $"D{a.Numero:00} {a.Designation}")) +
+                                ".\nIl est dimensionné sur les consommateurs du projet ; vous pouvez changer sa marque, sa technologie ou le supprimer.",
+                    "Sources de commande", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
         SignalerTout();
+    }
+
+    /// <summary>Technologie d'une source 24 V DC à ajouter : préférence du projet, ou question à l'utilisateur.</summary>
+    SourceAlimentation? ChoisirSource(BesoinSource besoin)
+    {
+        switch (_projet.PreferenceSource)
+        {
+            case PreferenceSource.Decoupage: return SourceAlimentation.Decoupage;
+            case PreferenceSource.Transformateur: return SourceAlimentation.Transformateur;
+        }
+        var reponse = MessageBox.Show($"{besoin.Raison}\n\nOui : alimentation à découpage 24 V DC\nNon : transformateur + redresseur\n" +
+                                      "Annuler : ne rien ajouter (la préférence se règle dans « Projet et réseau »).",
+            "Ajouter une source 24 V DC", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+        switch (reponse)
+        {
+            case MessageBoxResult.Yes: return SourceAlimentation.Decoupage;
+            case MessageBoxResult.No: return SourceAlimentation.Transformateur;
+            default:
+                _sourcesIgnorees.Add(besoin.Tension);
+                return null;
+        }
+    }
+
+    static DepartAlimentation24V NouveauTransformateur(TensionCommande sortie)
+    {
+        var t = new DepartAlimentation24V
+        {
+            Source = SourceAlimentation.Transformateur, Sortie = sortie, Alimentation = TypeAlimentation.Bi400,
+            Differentiel = SensibiliteDifferentiel.Aucun,
+        };
+        t.Designation = DepartAlimentation24V.Libelle(sortie, true, t.Alimentation);
+        return t;
     }
 
     void Modifier(Action action)
@@ -348,6 +444,9 @@ public class ModeleVuePrincipal : Observable
         if (MessageBox.Show($"Supprimer le départ D{d.Numero:00} « {d.Designation} » ?", "Supprimer un départ",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         _projet.Departs.Remove(d);
+        // Une source supprimée n'est pas rajoutée aussitôt : l'alerte de la note de l'arrivée reste.
+        if (d is DepartAlimentation24V source && !_projet.Departs.OfType<DepartAlimentation24V>().Any(a => a.Sortie == source.Sortie))
+            _sourcesIgnorees.Add(source.Sortie);
         _selection = _projet;
         Recalculer();
     }
@@ -425,6 +524,7 @@ public class ModeleVuePrincipal : Observable
     {
         _projet = projet;
         _chemin = chemin;
+        _sourcesIgnorees.Clear();
         _selection = projet;
         if (chemin is not null) MemoriserRecent(chemin);
         Resultat = CalculerProjet();
@@ -465,7 +565,7 @@ public class ModeleVuePrincipal : Observable
         foreach (var r in _recents.Lire()) Recents.Add(r);
     }
 
-    async void GenererRapport()
+    public async void GenererRapport()
     {
         var chemin = DemanderChemin("Rapport PDF (*.pdf)|*.pdf", $"{NomFichier(_projet.Nom)}-rapport-{NomFichier(_projet.Indice)}.pdf");
         if (chemin is null) return;
@@ -557,7 +657,7 @@ public class ModeleVuePrincipal : Observable
         }
     }
 
-    void EnregistrerDevis()
+    public void EnregistrerDevis()
     {
         var chemin = DemanderChemin("Classeur Excel (*.xlsx)|*.xlsx", $"{NomFichier(_projet.Nom)}-demande-de-devis-{NomFichier(_projet.Indice)}.xlsx");
         if (chemin is null) return;
@@ -610,7 +710,7 @@ public class ModeleVuePrincipal : Observable
         }
         Selection = carte.Chaine.FirstOrDefault()?.Element.Famille switch
         {
-            "Automate" or "Entrées/sorties" or "Accessoire automate" => _projet.Automate,
+            "Automate" or "Entrées/sorties" or "Accessoire automate" or "IHM" => _projet.Automate,
             "Sécurité" => _projet.Securite,
             _ => _projet,
         };

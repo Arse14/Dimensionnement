@@ -106,9 +106,86 @@ public class DepartGenerique : Depart
 /// Alimentation 24 V DC des circuits de commande : dimensionnée sur les consommateurs 24 V du projet
 /// (automates, E/S, relais de sécurité, consommateurs déclarés) avec une réserve.
 /// </summary>
+/// <summary>Partie de la commande qu'une alimentation 24 V dessert.</summary>
+public enum UsageAlimentation24V
+{
+    /// <summary>Toute la commande qu'aucune autre alimentation ne dessert.</summary>
+    Commande,
+    Automate,
+    Securite,
+    Actionneurs,
+}
+
+/// <summary>Marque de l'alimentation 24 V : celle du projet (Siemens, sinon Schneider), ou une marque imposée.</summary>
+public enum MarqueAlimentation { Projet, Siemens, Schneider }
+
+/// <summary>Technologie de la source de commande.</summary>
+public enum SourceAlimentation
+{
+    /// <summary>Alimentation à découpage.</summary>
+    Decoupage,
+    /// <summary>Transformateur de commande (suivi d'un redresseur filtré pour une sortie continue).</summary>
+    Transformateur,
+}
+
+/// <summary>Tension d'un circuit de commande : sortie d'une source, bobines de contacteurs, consommateur.</summary>
+public enum TensionCommande
+{
+    Continu24,
+    Alternatif24,
+    Alternatif230,
+}
+
+/// <summary>Préférence du projet pour les sources ajoutées automatiquement.</summary>
+public enum PreferenceSource
+{
+    /// <summary>Le logiciel demande à chaque ajout.</summary>
+    Demander,
+    Decoupage,
+    Transformateur,
+}
+
 public class DepartAlimentation24V : Depart
 {
-    /// <summary>Rendement de l'alimentation à découpage.</summary>
+    public MarqueAlimentation Marque { get; set; } = MarqueAlimentation.Projet;
+
+    /// <summary>Alimentation saisie à la main quand le catalogue n'a rien qui convienne ; ses caractéristiques sont vérifiées.</summary>
+    public bool Manuelle { get; set; }
+    public string FabricantManuel { get; set; } = "";
+    public string ReferenceManuelle { get; set; } = "";
+    public double CourantManuel { get; set; } = 10;
+    public double LargeurManuelle { get; set; } = 60;
+    public double HauteurManuelle { get; set; } = 125;
+    public double ProfondeurManuelle { get; set; } = 125;
+
+    /// <summary>Alimentation à découpage ou transformateur.</summary>
+    public SourceAlimentation Source { get; set; } = SourceAlimentation.Decoupage;
+
+    /// <summary>Tension de sortie : 24 V DC, 24 V AC ou 230 V AC.</summary>
+    public TensionCommande Sortie { get; set; } = TensionCommande.Continu24;
+
+    /// <summary>Départs 230 V alimentés par un transformateur 400/230 V (numéros des départs).</summary>
+    public List<int> DepartsAlimentes { get; set; } = new();
+
+    /// <summary>Départs alimentés saisis sous la forme « 3, 5, 7 ».</summary>
+    [JsonIgnore]
+    public string DepartsAlimentesTexte
+    {
+        get => string.Join(", ", DepartsAlimentes);
+        set => DepartsAlimentes = (value ?? "").Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(t => int.TryParse(t, out var n) ? n : 0).Where(n => n > 0).Distinct().ToList();
+    }
+
+    /// <summary>Ajoutée par le logiciel parce qu'un élément du projet en avait besoin.</summary>
+    public bool AjoutAutomatique { get; set; }
+
+    /// <summary>La source est un transformateur (une sortie alternative impose un transformateur).</summary>
+    [JsonIgnore] public bool EstTransformateur => Source == SourceAlimentation.Transformateur || Sortie != TensionCommande.Continu24;
+
+    /// <summary>Partie de la commande desservie ; plusieurs alimentations de même usage se partagent la charge.</summary>
+    public UsageAlimentation24V Usage { get; set; } = UsageAlimentation24V.Commande;
+
+    /// <summary>Rendement de l'alimentation saisie à la main (celui du catalogue sinon).</summary>
     public double Rendement { get; set; } = 0.9;
 
     /// <summary>Réserve appliquée sur la consommation, en % (25 % par défaut).</summary>
@@ -121,14 +198,30 @@ public class DepartAlimentation24V : Depart
         Designation = "Alimentation 24 V DC";
     }
 
-    public override string TypeLibelle => "Alimentation 24 V DC";
-    public override string PrefixeRecepteur => "G";
+    public override string TypeLibelle => Libelle(Sortie, EstTransformateur, Alimentation);
+    public override string PrefixeRecepteur => EstTransformateur ? "T" : "G";
+
+    /// <summary>Libellé d'une source de commande : « Alimentation 24 V DC », « Transformateur 400/24 V AC »…</summary>
+    public static string Libelle(TensionCommande sortie, bool transformateur, TypeAlimentation primaire)
+    {
+        var u = primaire == TypeAlimentation.Mono230 ? "230" : "400";
+        return (sortie, transformateur) switch
+        {
+            (TensionCommande.Continu24, false) => "Alimentation 24 V DC",
+            (TensionCommande.Continu24, true) => $"Transformateur {u}/24 V + redresseur 24 V DC",
+            (TensionCommande.Alternatif24, _) => $"Transformateur {u}/24 V AC",
+            _ => $"Transformateur {u}/230 V AC",
+        };
+    }
 }
 
 /// <summary>Consommateur raccordé au 24 V DC (capteurs, voyants, pupitre, électrovannes…).</summary>
 public class Consommateur24V
 {
     public string Designation { get; set; } = "";
+
+    /// <summary>Tension du consommateur : 24 V DC par défaut, 24 V AC ou 230 V AC de commande.</summary>
+    public TensionCommande Tension { get; set; } = TensionCommande.Continu24;
 
     /// <summary>Courant unitaire, en mA.</summary>
     public double CourantMa { get; set; }

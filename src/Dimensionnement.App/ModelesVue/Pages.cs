@@ -19,3 +19,6 @@ public record PageSelectivite(Projet Projet);
 
 /// <summary>Page des références fabricants du matériel.</summary>
 public record PageReferences(Projet Projet);
+
+/// <summary>Page du bilan de puissance expliqué pas à pas.</summary>
+public record PageBilanPuissance(Projet Projet);

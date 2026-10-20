@@ -46,8 +46,13 @@ note de calcul traçable.
 | Bilan thermique | Pertes des appareils au courant de service, surface effective IEC TR 60890, ventilateur à filtre, climatiseur ou résistance anticondensation |
 | Sélectivité | Rapport des calibres et des seuils magnétiques entre le général et chaque départ, comparés à l'Icc |
 | Références | Schneider, ABB, Siemens ou Legrand pour la puissance (catalogue indicatif modifiable, repli sur un autre fabricant si la gamme manque), saisie manuelle possible |
-| Demande de devis | Liste exhaustive en Excel pour le fournisseur : enveloppe, thermique, appareillage regroupé par référence, accessoires, borniers, rails, goulottes, filerie, câbles en mètres, presse-étoupes |
-| Schéma unifilaire | Généré en SVG, affiché dans l'application, exportable et repris dans le rapport PDF |
+| Demande de devis | Liste exhaustive en Excel pour le fournisseur : enveloppe, thermique, appareillage regroupé par référence, accessoires, borniers, rails, goulottes, filerie, câbles en mètres, presse-étoupes || Automate | Cartes d'E/S standard ajoutées au fil des voies (S7-1200, S7-1500, ET200SP, TM3, X80), option compacte ET200SP, CPU imposable, stations déportées ET200SP / TM3 comptées dans la charge de communication |
+| Câblage | Estimation des fils par section et des goulottes ; rails DIN et goulottes ajoutés à la main dans la vue d'armoire, zones propre / intermédiaire / sale recalculées |
+| Sources de commande | Alimentations à découpage Siemens / Schneider, transformateurs 400/24 V et 230/24 V (AC, ou DC par redresseur) et 400/230 V ; chaque source est dimensionnée sur ce qui lui est raccordé (automate, IHM, sécurité, bobines, capteurs) ; saisie manuelle vérifiée ; ajout automatique de la source qui manque, selon la préférence du projet |
+| Bobines | Tension des bobines de contacteurs (24 V DC, 24 V AC, 230 V AC) : consommation sur la bonne source et références adaptées |
+| IHM | Pupitres Siemens (Basic, Unified Comfort) et Schneider (Harmony ST6, GTO, GTU) choisis selon la diagonale, comptés en connexions et au bilan 24 V |
+| Bilan de puissance | Onglet dédié qui explique chaque étape, du récepteur au câble d'arrivée |
+| Aperçus | Demande de devis et rapport visibles avant l'export Excel ou PDF ; marques imposables pour les disjoncteurs et les contacteurs, caractéristiques complètes au devis même sans référence |
 
 ## Organisation
 

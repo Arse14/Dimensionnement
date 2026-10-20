@@ -67,7 +67,9 @@ public static class CatalogueReferences
     public static ResultatReferences Appliquer(ElementMateriel arbre, ConfigurationReferences config, IReadOnlyList<ReferenceCatalogue> catalogue)
     {
         var note = new NoteDeCalcul("REF");
-        note.Info("Fabricant retenu", $"{config.Fabricant} pour la puissance et les protections.");
+        note.Info("Fabricant retenu", $"{config.Fabricant} pour la puissance et les protections" +
+            (config.MarqueDisjoncteurs != MarqueFamille.Projet ? $", {config.MarqueDisjoncteurs} pour les disjoncteurs" : "") +
+            (config.MarqueContacteurs != MarqueFamille.Projet ? $", {config.MarqueContacteurs} pour les contacteurs" : "") + ".");
         var completees = 0;
         var replis = new List<string>();
         var sans = new List<string>();
@@ -78,7 +80,7 @@ public static class CatalogueReferences
             if (config.Forcees.TryGetValue(e.Repere, out var forcee) && forcee.Length > 0)
             {
                 e.Reference = forcee;
-                if (e.Fabricant.Length == 0) e.Fabricant = config.Fabricant.ToString();
+                if (e.Fabricant.Length == 0) e.Fabricant = config.FabricantDe(e.Famille).ToString();
                 completees++;
                 continue;
             }
@@ -91,10 +93,11 @@ public static class CatalogueReferences
                 continue;
             }
 
-            var trouve = Chercher(e, config.Fabricant, catalogue);
-            var fabricant = config.Fabricant;
+            var voulu = config.FabricantDe(e.Famille);
+            var trouve = Chercher(e, voulu, catalogue);
+            var fabricant = voulu;
             if (trouve is null)
-                foreach (var f in Repli.Where(f => f != config.Fabricant))
+                foreach (var f in Repli.Where(f => f != voulu))
                     if (Chercher(e, f, catalogue) is { } r)
                     {
                         trouve = r;
@@ -139,6 +142,25 @@ public static class CatalogueReferences
             .Where(r => r.Classe.Length == 0 || r.Classe == classe)
             .OrderBy(r => r.Max).ThenByDescending(r => r.Min)
             .FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Adapte la référence d'un contacteur à la tension de sa bobine : suffixe BD / B7 / P7 chez Schneider,
+    /// 1BB4x / 1AB0x / 1AP0x chez Siemens, bobine -13 (24-60 V AC/DC) ou -14 (100-250 V AC/DC) chez ABB.
+    /// </summary>
+    public static string Bobine(string reference, TensionCommande tension)
+    {
+        if (string.IsNullOrEmpty(reference) || tension == TensionCommande.Continu24) return reference;
+        var ac24 = tension == TensionCommande.Alternatif24;
+        if (reference.StartsWith("LC1D") && reference.EndsWith("BD"))
+            return reference[..^2] + (ac24 ? "B7" : "P7");
+        if (reference.StartsWith("3RT20") && reference.Contains("-1BB4"))
+            return reference.Replace("-1BB4", ac24 ? "-1AB0" : "-1AP0");
+        if (reference.StartsWith("AF") && reference.EndsWith("-13"))
+            return ac24 ? reference : reference[..^3] + "-14";
+        if (reference.Contains("bobine 24 V DC"))
+            return reference.Replace("bobine 24 V DC", ac24 ? "bobine 24 V AC" : "bobine 230 V AC");
+        return reference;
     }
 
     static string Classe(string designation) =>

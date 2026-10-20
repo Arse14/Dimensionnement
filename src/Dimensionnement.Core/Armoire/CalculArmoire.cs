@@ -306,7 +306,7 @@ public static class CalculArmoire
         // L'alimentation 24 V est dans l'armoire : son câble ne passe pas par le bornier.
         foreach (var d in r.Departs.Where(d => d.Depart is not DepartAlimentation24V))
         {
-            var actifs = d.Depart.Alimentation switch { TypeAlimentation.Mono230 => 2, TypeAlimentation.Tri400 => 3, _ => 4 };
+            var actifs = d.Depart.Alimentation switch { TypeAlimentation.Mono230 or TypeAlimentation.Bi400 => 2, TypeAlimentation.Tri400 => 3, _ => 4 };
             if (d.Depart is DepartMoteur { Demarrage: ModeDemarrage.EtoileTriangle }) actifs = 6;
             var nombre = actifs + 1;
             yield return (nombre, d.Section, nombre * Encombrements.LargeurBorne(d.Section));

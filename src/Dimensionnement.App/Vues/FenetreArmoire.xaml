@@ -4,6 +4,7 @@
         xmlns:inf="clr-namespace:Dimensionnement.App.Infrastructure"
         xmlns:calc="clr-namespace:Dimensionnement.Core.Calculs;assembly=Dimensionnement.Core"
         Title="Vue d'armoire" Width="1200" Height="900" MinWidth="800" MinHeight="600"
+        Icon="/Ressources/icone.ico"
         WindowStartupLocation="CenterOwner" Background="{StaticResource Fond}"
         Foreground="{StaticResource Texte}" FontFamily="Segoe UI" FontSize="13">
 

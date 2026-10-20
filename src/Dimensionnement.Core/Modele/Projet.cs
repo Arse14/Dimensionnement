@@ -31,6 +31,18 @@ public class Projet
     /// <summary>Consommateurs 24 V DC déclarés à la main, en plus de ceux que le projet déduit.</summary>
     public ObservableCollection<Consommateur24V> Consommateurs24V { get; set; } = new();
 
+    /// <summary>Ajoute au bilan 24 V les bobines de contacteurs, capteurs et actionneurs estimés d'après le projet.</summary>
+    public bool EstimerPeripherie24V { get; set; } = true;
+
+    /// <summary>Tension des bobines de contacteurs : elle détermine la source de commande qui les alimente.</summary>
+    public TensionCommande TensionBobines { get; set; } = TensionCommande.Continu24;
+
+    /// <summary>Source ajoutée quand un élément du projet a besoin d'une tension que rien ne fournit encore.</summary>
+    public PreferenceSource PreferenceSource { get; set; } = PreferenceSource.Demander;
+
+    /// <summary>Ajoute automatiquement l'alimentation ou le transformateur qui manque.</summary>
+    public bool AjoutAutomatiqueSources { get; set; } = true;
+
     /// <summary>Valeurs forcées de l'arrivée (simultanéité, calibres de tête, section d'arrivée).</summary>
     public Dictionary<string, Forcage> ForcagesArrivee { get; set; } = new();
 

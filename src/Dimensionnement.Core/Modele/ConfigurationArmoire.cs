@@ -89,9 +89,30 @@ public class ConfigurationArmoire
 }
 
 /// <summary>Choix des références de matériel.</summary>
+/// <summary>Marque d'une famille d'appareils : celle du projet, ou une marque imposée.</summary>
+public enum MarqueFamille { Projet, Schneider, ABB, Siemens, Legrand }
+
 public class ConfigurationReferences
 {
     public FabricantMateriel Fabricant { get; set; } = FabricantMateriel.Schneider;
+
+    /// <summary>Marque des contacteurs et de leurs relais thermiques.</summary>
+    public MarqueFamille MarqueContacteurs { get; set; } = MarqueFamille.Projet;
+
+    /// <summary>Marque des disjoncteurs, disjoncteurs moteurs et interrupteurs-sectionneurs.</summary>
+    public MarqueFamille MarqueDisjoncteurs { get; set; } = MarqueFamille.Projet;
+
+    /// <summary>Fabricant retenu pour une famille d'appareils.</summary>
+    public FabricantMateriel FabricantDe(string famille)
+    {
+        var choix = famille switch
+        {
+            "Contacteur" or "Relais thermique" => MarqueContacteurs,
+            "Disjoncteur" or "Disjoncteur moteur" or "Interrupteur-sectionneur" => MarqueDisjoncteurs,
+            _ => MarqueFamille.Projet,
+        };
+        return choix == MarqueFamille.Projet ? Fabricant : Enum.Parse<FabricantMateriel>(choix.ToString());
+    }
 
     /// <summary>Références saisies à la main, par repère ; elles remplacent celles du catalogue.</summary>
     public Dictionary<string, string> Forcees { get; set; } = new();

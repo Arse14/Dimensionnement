@@ -235,15 +235,9 @@ public class Version3Tests
     }
 
     [Fact]
-    public void Schema_unifilaire_et_vue_d_armoire_en_SVG_valide()
+    public void Vue_d_armoire_en_SVG_valide()
     {
         var r = CalculProjet.Calculer(ProjetMachine());
-
-        var unifilaire = XDocument.Parse(SchemaUnifilaire.Svg(r));
-        var textes = unifilaire.Descendants().Where(e => e.Name.LocalName == "text").Select(e => e.Value).ToList();
-        foreach (var repere in new[] { "QS0", "QG", "Q1", "U1", "M1", "KM2", "KM3.1", "R4", "G5", "D05" })
-            Assert.Contains(repere, textes);
-        Assert.Contains(textes, t => t.Contains("KM3.2"));
 
         var armoire = XDocument.Parse(SchemaArmoire.Svg(r.Armoire!));
         Assert.Contains(armoire.Descendants().Where(e => e.Name.LocalName == "text").Select(e => e.Value), t => t == "API1");

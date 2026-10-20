@@ -40,6 +40,7 @@ public class LibelleEnum : IValueConverter
     public static string Libelle(object? valeur) => valeur switch
     {
         TypeAlimentation.Mono230 => "Monophasé 230 V (1P+N)",
+        TypeAlimentation.Bi400 => "Biphasé 400 V entre phases (2P)",
         TypeAlimentation.Tri400 => "Triphasé 400 V (3P)",
         TypeAlimentation.Tetra400 => "Tétrapolaire 400 V (3P+N)",
         SchemaLiaisonTerre.TT => "TT",
@@ -81,6 +82,25 @@ public class LibelleEnum : IValueConverter
         MateriauEnveloppe.Polyester => "Polyester (k = 3,5)",
         InstallationEnveloppe i => Core.Armoire.CalculThermique.LibelleInstallation(i) is var l ? char.ToUpper(l[0]) + l[1..] : "",
         FabricantMateriel.Schneider => "Schneider Electric",
+        MarqueFamille.Projet => "Fabricant du projet",
+        MarqueFamille.Schneider => "Schneider Electric",
+        MarqueAlimentation.Projet => "Selon le projet (Siemens, sinon Schneider)",
+        MarqueAlimentation.Schneider => "Schneider Electric (Phaseo)",
+        MarqueAlimentation.Siemens => "Siemens (SITOP)",
+        UsageAlimentation24V.Commande => "Toute la commande",
+        UsageAlimentation24V.Automate => "Automate et ses E/S",
+        UsageAlimentation24V.Securite => "Sécurité",
+        UsageAlimentation24V.Actionneurs => "Actionneurs et bobines",
+        SourceAlimentation.Decoupage => "Alimentation à découpage",
+        SourceAlimentation.Transformateur => "Transformateur",
+        TensionCommande.Continu24 => "24 V DC",
+        TensionCommande.Alternatif24 => "24 V AC",
+        TensionCommande.Alternatif230 => "230 V AC",
+        PreferenceSource.Demander => "Me demander à chaque fois",
+        PreferenceSource.Decoupage => "Alimentation à découpage",
+        PreferenceSource.Transformateur => "Transformateur + redresseur",
+        GammeIhm.Standard => "Standard (Basic Panel, Harmony ST6)",
+        GammeIhm.Confort => "Confort (Unified Comfort, Harmony GTO / GTU)",
         Core.Calculs.NiveauSelectivite n => Core.Calculs.CalculSelectivite.Libelle(n),
         ZoneCem.Sale => "Zone CEM « sale »",
         ZoneCem.Intermediaire => "Zone CEM intermédiaire",
@@ -137,5 +157,14 @@ public static class Listes
     public static FabricantMateriel[] FabricantsMateriel { get; } = Enum.GetValues<FabricantMateriel>();
     public static MarqueVariateur[] MarquesVariateur { get; } = Enum.GetValues<MarqueVariateur>();
     public static MarqueEnveloppe[] MarquesEnveloppe { get; } = Enum.GetValues<MarqueEnveloppe>();
+    public static MarqueFamille[] MarquesFamille { get; } = Enum.GetValues<MarqueFamille>();
+    public static MarqueAlimentation[] MarquesAlimentation { get; } = Enum.GetValues<MarqueAlimentation>();
+    public static UsageAlimentation24V[] Usages24V { get; } = Enum.GetValues<UsageAlimentation24V>();
+    public static SourceAlimentation[] SourcesAlimentation { get; } = Enum.GetValues<SourceAlimentation>();
+    public static TensionCommande[] TensionsCommande { get; } = Enum.GetValues<TensionCommande>();
+    /// <summary>Tensions d'un consommateur déclaré à la main.</summary>
+    public static TensionCommande[] TensionsConsommateur { get; } = { TensionCommande.Continu24, TensionCommande.Alternatif24, TensionCommande.Alternatif230 };
+    public static PreferenceSource[] PreferencesSource { get; } = Enum.GetValues<PreferenceSource>();
+    public static GammeIhm[] GammesIhm { get; } = Enum.GetValues<GammeIhm>();
     public static string[] Rubriques { get; } = { "Puissance", "Commande", "Auxiliaires", "Distribution", "Sécurité" };
 }

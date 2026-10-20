@@ -99,7 +99,7 @@ public static class CalculCablage
         var section = depart?.Section ?? r.SectionArrivee;
         var conducteurs = (depart?.Depart.Alimentation ?? r.Projet.Reseau.Alimentation) switch
         {
-            TypeAlimentation.Mono230 => 2, TypeAlimentation.Tri400 => 3, _ => 4,
+            TypeAlimentation.Mono230 or TypeAlimentation.Bi400 => 2, TypeAlimentation.Tri400 => 3, _ => 4,
         };
         var poles = e.Poles > 0 ? e.Poles : conducteurs;
         void Ajouter(double s, int n, string usage) { if (n > 0) fils.Add(new FilsSection(s, n, usage)); }

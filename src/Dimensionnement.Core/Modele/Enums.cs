@@ -5,6 +5,8 @@ public enum TypeAlimentation
 {
     /// <summary>Monophasé 230 V, phase + neutre.</summary>
     Mono230,
+    /// <summary>Biphasé 400 V entre deux phases (2P) : transformateur ou alimentation de commande.</summary>
+    Bi400,
     /// <summary>Triphasé 400 V sans neutre (3P).</summary>
     Tri400,
     /// <summary>Triphasé 400 V avec neutre (3P+N).</summary>

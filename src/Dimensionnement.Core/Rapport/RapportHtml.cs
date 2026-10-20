@@ -126,10 +126,6 @@ public static class RapportHtml
             sb.Append($"<tr><th>Total</th><th>{A(r.Consommation24V)}</th></tr></table>");
         }
 
-        sb.Append("<h2>Schéma unifilaire</h2><div class=\"schema\">");
-        sb.Append(SchemaUnifilaire.Svg(r));
-        sb.Append("</div>");
-
         sb.Append("<h2>Organigramme du matériel</h2><div class=\"schema\">");
         sb.Append(SchemaOrganigramme.Svg(r));
         sb.Append("</div>");

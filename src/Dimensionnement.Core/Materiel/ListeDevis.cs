@@ -86,10 +86,12 @@ public static class ListeDevis
         var articles = r.Nomenclature
             .Where(e => e.Famille is not ("Câble" or "Moteur" or "Récepteur"))
             .GroupBy(e => e.Reference.Length > 0 ? $"{e.Fabricant}|{e.Reference}" : $"|{e.Designation}|{e.Calibre}");
+        var elementsArbre = r.Arbre.Parcourir().ToList();
         foreach (var g in articles)
         {
             var e = g.First();
-            l.Add(new(Appareillage, e.Designation, e.Calibre, e.Fabricant, e.Reference, g.Sum(x => x.Quantite), "u",
+            var source = elementsArbre.FirstOrDefault(x => x.Repere == e.Repere.Split(", ")[0]) ?? e;
+            l.Add(new(Appareillage, e.Designation, Caracteristiques(source, r), e.Fabricant, e.Reference, g.Sum(x => x.Quantite), "u",
                 string.Join(", ", g.Select(x => x.Repere)), e.Reference.Length == 0 ? "Référence à compléter" : ""));
         }
 
@@ -124,6 +126,40 @@ public static class ListeDevis
                 Remarque: "Selon catégorie CEM C2 / C3 visée"));
             l.Add(new(Accessoires, "Collier de reprise de blindage à 360°", "pour câble moteur blindé", fabricant, "", 2 * variateurs, "u"));
         }
+    }
+
+    /// <summary>
+    /// Caractéristiques d'un appareil pour le fournisseur, suffisantes pour chiffrer sans référence :
+    /// calibre, pôles, courbe, plage de réglage, puissance du récepteur, tension de bobine.
+    /// </summary>
+    public static string Caracteristiques(ElementMateriel e, ResultatProjet r)
+    {
+        var parts = new List<string>();
+        if (e.Calibre.Length > 0) parts.Add(e.Calibre);
+        if (e.Poles > 0 && !System.Text.RegularExpressions.Regex.IsMatch(e.Calibre, @"\dP"))
+            parts.Add($"{e.Poles}P");
+        if (e.Courbe.Length > 0 && !e.Calibre.Contains("courbe")) parts.Add($"courbe {e.Courbe}");
+        if (e.PlageMax > 0 && !e.Calibre.Contains('–')) parts.Add($"réglage {N(e.PlageMin)}–{N(e.PlageMax)} A");
+        if (e.TailleFusible.Length > 0 && !e.Calibre.Contains(e.TailleFusible)) parts.Add($"taille {e.TailleFusible}");
+        var depart = e.DepartId is { } id ? r.Departs.FirstOrDefault(d => d.Depart.Id == id)?.Depart : null;
+        if (e.Famille is "Contacteur" or "Disjoncteur moteur" or "Relais thermique" or "Variateur" or "Démarreur progressif" or "Disjoncteur")
+        {
+            var u = depart?.Alimentation switch { TypeAlimentation.Mono230 => "230 V", null => "", _ => "400 V" };
+            switch (depart)
+            {
+                case DepartMoteur m:
+                    parts.Add($"moteur {N(m.PuissanceKw)} kW {u}");
+                    break;
+                case DepartResistif rs:
+                    parts.Add($"charge résistive {N(rs.PuissanceKw)} kW {u}");
+                    break;
+            }
+        }
+        if (e.Famille == "Contacteur" && !e.Designation.Contains("bobine"))
+            parts.Add($"bobine {SourcesCommande.Libelle(r.Projet.TensionBobines)}");
+        if (e.Famille is "Alimentation" or "Variateur" or "Démarreur progressif" && e.PuissanceKw > 0 && !string.Join(" ", parts).Contains("kW"))
+            parts.Add($"{N(e.PuissanceKw)} kW");
+        return string.Join(", ", parts.Select(p => p.Trim()).Where(p => p.Length > 0).Distinct());
     }
 
     static void BorniersEtMontage(ResultatProjet r, List<LigneDevis> l, string fabricant)
@@ -212,7 +248,7 @@ public static class ListeDevis
         }
     }
 
-    static int Conducteurs(TypeAlimentation a) => a switch { TypeAlimentation.Mono230 => 3, TypeAlimentation.Tri400 => 4, _ => 5 };
+    static int Conducteurs(TypeAlimentation a) => a switch { TypeAlimentation.Mono230 or TypeAlimentation.Bi400 => 3, TypeAlimentation.Tri400 => 4, _ => 5 };
 
     /// <summary>Taille de presse-étoupe usuelle d'un câble multiconducteur selon sa section.</summary>
     public static string PresseEtoupe(double section) => section switch

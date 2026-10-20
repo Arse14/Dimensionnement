@@ -7,6 +7,7 @@
         xmlns:calc="clr-namespace:Dimensionnement.Core.Calculs;assembly=Dimensionnement.Core"
         xmlns:mv="clr-namespace:Dimensionnement.App.ModelesVue"
         Title="{Binding Titre}" Width="1440" Height="880" MinWidth="1100" MinHeight="640"
+        Icon="/Ressources/icone.ico"
         WindowStartupLocation="CenterScreen" Background="{StaticResource Fond}"
         Foreground="{StaticResource Texte}" FontFamily="Segoe UI" FontSize="13"
         Closing="Fermeture">
@@ -15,7 +16,7 @@
         <KeyBinding Key="N" Modifiers="Control" Command="{Binding Nouveau}"/>
         <KeyBinding Key="O" Modifiers="Control" Command="{Binding Ouvrir}"/>
         <KeyBinding Key="S" Modifiers="Control" Command="{Binding Enregistrer}"/>
-        <KeyBinding Key="P" Modifiers="Control" Command="{Binding Rapport}"/>
+        <KeyBinding Key="P" Modifiers="Control" Command="{Binding ApercuRapport}"/>
         <KeyBinding Key="Delete" Command="{Binding Supprimer}"/>
     </Window.InputBindings>
 
@@ -126,6 +127,38 @@
 
                 <TextBlock Text="Câble d'arrivée" Style="{StaticResource Section}"/>
                 <ContentControl Content="{Binding Reseau.CableArrivee}" ContentTemplate="{StaticResource ChampsCable}"/>
+
+                <TextBlock Text="Circuits de commande" Style="{StaticResource Section}"/>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Tension des bobines de contacteurs" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.TensionsCommande}" SelectedItem="{inf:Lien TensionBobines}"
+                              ToolTip="Les bobines sont comptées sur la source de cette tension ; les références des contacteurs suivent (BD, B7, P7…)."/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Ajouter automatiquement les sources" Style="{StaticResource Etiquette}"/>
+                    <CheckBox IsChecked="{inf:Lien AjoutAutomatiqueSources}"
+                              ToolTip="Quand un élément demande une tension qu'aucune source ne fournit (24 V DC, 24 V AC, 230 V sans neutre), l'alimentation ou le transformateur est ajouté."/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Source 24 V DC préférée" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.PreferencesSource}" SelectedItem="{inf:Lien PreferenceSource}"/>
+                </DockPanel>
+
+                <TextBlock Text="Marques du matériel" Style="{StaticResource Section}"/>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Fabricant du projet" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.FabricantsMateriel}" SelectedItem="{inf:Lien References.Fabricant}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Disjoncteurs" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.MarquesFamille}" SelectedItem="{inf:Lien References.MarqueDisjoncteurs}"
+                              ToolTip="Disjoncteurs, disjoncteurs moteurs et interrupteurs-sectionneurs."/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Contacteurs" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.MarquesFamille}" SelectedItem="{inf:Lien References.MarqueContacteurs}"
+                              ToolTip="Contacteurs et relais thermiques."/>
+                </DockPanel>
             </StackPanel>
         </DataTemplate>
 
@@ -241,21 +274,71 @@
         <DataTemplate DataType="{x:Type mod:DepartAlimentation24V}">
             <StackPanel>
                 <TextBlock Style="{StaticResource TitrePanneau}">
-                    <Run Text="ALIMENTATION 24 V DC D"/><Run Text="{Binding Numero, Mode=OneWay, StringFormat={}{0:00}}"/>
+                    <Run Text="{Binding TypeLibelle, Mode=OneWay}"/><Run Text=" – D"/><Run Text="{Binding Numero, Mode=OneWay, StringFormat={}{0:00}}"/>
                 </TextBlock>
-                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8">
-                    <Run Text="Dimensionnée sur le bilan 24 V du projet :"/>
-                    <Run Text="{Binding DataContext.Resultat.Consommation24V, Mode=OneWay, RelativeSource={RelativeSource AncestorType=Window}, StringFormat={}{0:0.00} A}" FontWeight="SemiBold"/>
-                    <Run Text="(page « Bilan 24 V » pour déclarer les consommateurs)."/>
-                </TextBlock>
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
+                           Text="Dimensionnée sur les consommateurs de la commande raccordés à cette source (automate, IHM, sécurité, bobines, capteurs, consommateurs déclarés) : voir la note de calcul et la page « Bilan 24 V »."/>
                 <DockPanel Style="{StaticResource Ligne}">
-                    <TextBlock Text="Rendement de l'alimentation" Style="{StaticResource Etiquette}"/>
-                    <TextBox Text="{inf:Lien Rendement}"/>
+                    <TextBlock Text="Technologie" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.SourcesAlimentation}" SelectedItem="{inf:Lien Source}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Tension de sortie" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.TensionsCommande}" SelectedItem="{inf:Lien Sortie}"
+                              ToolTip="24 V AC et 230 V AC imposent un transformateur ; 24 V DC par transformateur ajoute un redresseur filtré."/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Marque" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.MarquesAlimentation}" SelectedItem="{inf:Lien Marque}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Partie de la commande desservie" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.Usages24V}" SelectedItem="{inf:Lien Usage}"
+                              ToolTip="Plusieurs sources de même usage et de même tension se partagent la charge."/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Départs 230 V alimentés (n°)" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien DepartsAlimentesTexte}"
+                             ToolTip="Transformateur 400/230 V : numéros des départs qu'il alimente, séparés par des virgules (ex. 3, 5, 7). Ils sont comptés au primaire."/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Réserve (%)" Style="{StaticResource Etiquette}"/>
                     <TextBox Text="{inf:Lien ReservePourcent}"/>
                 </DockPanel>
+
+                <TextBlock Text="Saisie manuelle" Style="{StaticResource Section}"/>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Modèle saisi à la main" Style="{StaticResource Etiquette}"/>
+                    <CheckBox IsChecked="{inf:Lien Manuelle}" ToolTip="Quand le catalogue n'a rien qui convienne : ses caractéristiques sont vérifiées contre le besoin."/>
+                </DockPanel>
+                <StackPanel Visibility="{Binding Manuelle, Converter={StaticResource VraiVisible}}">
+                    <DockPanel Style="{StaticResource Ligne}">
+                        <TextBlock Text="Fabricant" Style="{StaticResource Etiquette}"/>
+                        <TextBox Text="{inf:Lien FabricantManuel}"/>
+                    </DockPanel>
+                    <DockPanel Style="{StaticResource Ligne}">
+                        <TextBlock Text="Référence" Style="{StaticResource Etiquette}"/>
+                        <TextBox Text="{inf:Lien ReferenceManuelle}"/>
+                    </DockPanel>
+                    <DockPanel Style="{StaticResource Ligne}">
+                        <TextBlock Text="Courant de sortie (A)" Style="{StaticResource Etiquette}"/>
+                        <TextBox Text="{inf:Lien CourantManuel}"/>
+                    </DockPanel>
+                    <DockPanel Style="{StaticResource Ligne}">
+                        <TextBlock Text="Rendement" Style="{StaticResource Etiquette}"/>
+                        <TextBox Text="{inf:Lien Rendement}"/>
+                    </DockPanel>
+                    <DockPanel Style="{StaticResource Ligne}">
+                        <TextBlock Text="Largeur × hauteur × profondeur (mm)" Style="{StaticResource Etiquette}"/>
+                        <UniformGrid Rows="1">
+                            <TextBox Text="{inf:Lien LargeurManuelle}"/>
+                            <TextBox Text="{inf:Lien HauteurManuelle}" Margin="4,0"/>
+                            <TextBox Text="{inf:Lien ProfondeurManuelle}"/>
+                        </UniformGrid>
+                    </DockPanel>
+                </StackPanel>
+                <Button Content="Catalogue des alimentations et transformateurs" HorizontalAlignment="Left" Margin="0,6,0,0"
+                        Command="{Binding DataContext.OuvrirCatalogueAlimentations, RelativeSource={RelativeSource AncestorType=Window}}"/>
                 <TextBlock Text="Départ" Style="{StaticResource Section}"/>
                 <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ChampsDepart}"/>
             </StackPanel>
@@ -264,28 +347,35 @@
         <!-- Bilan 24 V DC -->
         <DataTemplate DataType="{x:Type mv:PageBilan24V}">
             <StackPanel>
-                <TextBlock Text="BILAN 24 V DC" Style="{StaticResource TitrePanneau}"/>
+                <TextBlock Text="BILAN DE LA COMMANDE (24 V DC, 24 V AC, 230 V AC)" Style="{StaticResource TitrePanneau}"/>
                 <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
-                           Text="Consommateurs déclarés à la main ; les automates et la logique de sécurité sont ajoutés automatiquement."/>
+                           Text="Consommateurs déclarés à la main ; l'automate, ses cartes, les IHM et la logique de sécurité sont ajoutés automatiquement."/>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Estimer bobines, capteurs et actionneurs" Style="{StaticResource Etiquette}"/>
+                    <CheckBox IsChecked="{inf:Lien Projet.EstimerPeripherie24V}"
+                              ToolTip="Bobines de contacteurs (selon leur tension), capteurs sur entrées et actionneurs sur sorties de l'automate."/>
+                </DockPanel>
                 <Grid Margin="0,0,0,4">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/><ColumnDefinition Width="90"/><ColumnDefinition Width="70"/><ColumnDefinition Width="34"/>
+                        <ColumnDefinition Width="*"/><ColumnDefinition Width="90"/><ColumnDefinition Width="90"/><ColumnDefinition Width="70"/><ColumnDefinition Width="34"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Désignation" Foreground="{StaticResource TexteSecondaire}"/>
-                    <TextBlock Grid.Column="1" Text="mA unitaire" Foreground="{StaticResource TexteSecondaire}" Margin="6,0,0,0"/>
-                    <TextBlock Grid.Column="2" Text="Quantité" Foreground="{StaticResource TexteSecondaire}" Margin="6,0,0,0"/>
+                    <TextBlock Grid.Column="1" Text="Tension" Foreground="{StaticResource TexteSecondaire}" Margin="6,0,0,0"/>
+                    <TextBlock Grid.Column="2" Text="mA unitaire" Foreground="{StaticResource TexteSecondaire}" Margin="6,0,0,0"/>
+                    <TextBlock Grid.Column="3" Text="Quantité" Foreground="{StaticResource TexteSecondaire}" Margin="6,0,0,0"/>
                 </Grid>
                 <ItemsControl ItemsSource="{Binding Projet.Consommateurs24V}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type mod:Consommateur24V}">
                             <Grid Margin="0,2">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/><ColumnDefinition Width="90"/><ColumnDefinition Width="70"/><ColumnDefinition Width="34"/>
+                                    <ColumnDefinition Width="*"/><ColumnDefinition Width="90"/><ColumnDefinition Width="90"/><ColumnDefinition Width="70"/><ColumnDefinition Width="34"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox Text="{inf:Lien Designation}"/>
-                                <TextBox Grid.Column="1" Margin="6,0,0,0" Text="{inf:Lien CourantMa}"/>
-                                <TextBox Grid.Column="2" Margin="6,0,0,0" Text="{inf:Lien Quantite}"/>
-                                <Button Grid.Column="3" Margin="6,0,0,0" Style="{StaticResource BoutonPetit}" ToolTip="Retirer"
+                                <ComboBox Grid.Column="1" Margin="6,0,0,0" ItemsSource="{x:Static inf:Listes.TensionsConsommateur}" SelectedItem="{inf:Lien Tension}"/>
+                                <TextBox Grid.Column="2" Margin="6,0,0,0" Text="{inf:Lien CourantMa}"/>
+                                <TextBox Grid.Column="3" Margin="6,0,0,0" Text="{inf:Lien Quantite}"/>
+                                <Button Grid.Column="4" Margin="6,0,0,0" Style="{StaticResource BoutonPetit}" ToolTip="Retirer"
                                         Command="{Binding DataContext.SupprimerConsommateur, RelativeSource={RelativeSource AncestorType=Window}}"
                                         CommandParameter="{Binding}">
                                     <TextBlock FontFamily="{StaticResource Icones}" Text="&#xE711;"/>
@@ -303,6 +393,7 @@
                         <DataTemplate>
                             <DockPanel Margin="0,2">
                                 <TextBlock DockPanel.Dock="Right" Text="{Binding Courant, StringFormat={}{0:0.000} A}" FontFamily="Consolas, Segoe UI"/>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding Tension, Converter={StaticResource LibelleEnum}}" Width="70" Foreground="{StaticResource TexteSecondaire}"/>
                                 <TextBlock Text="{Binding Designation}" Foreground="{StaticResource TexteSecondaire}"/>
                             </DockPanel>
                         </DataTemplate>
@@ -313,6 +404,66 @@
                                Text="{Binding DataContext.Resultat.Consommation24V, RelativeSource={RelativeSource AncestorType=Window}, StringFormat={}{0:0.000} A}"/>
                     <TextBlock Text="Total 24 V DC" FontWeight="SemiBold"/>
                 </DockPanel>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- Bilan de puissance expliqué -->
+        <DataTemplate DataType="{x:Type mv:PageBilanPuissance}">
+            <StackPanel>
+                <TextBlock Text="BILAN DE PUISSANCE" Style="{StaticResource TitrePanneau}"/>
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
+                           Text="Du récepteur au câble d'arrivée : chaque étape dit ce qui est calculé, pourquoi, avec quelle formule, et le résultat pour ce projet."/>
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/><ColumnDefinition Width="64"/><ColumnDefinition Width="64"/><ColumnDefinition Width="44"/><ColumnDefinition Width="70"/><ColumnDefinition Width="70"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Départ" Foreground="{StaticResource TexteSecondaire}"/>
+                    <TextBlock Grid.Column="1" Text="P (kW)" TextAlignment="Right" Foreground="{StaticResource TexteSecondaire}"/>
+                    <TextBlock Grid.Column="2" Text="Q (kvar)" TextAlignment="Right" Foreground="{StaticResource TexteSecondaire}"/>
+                    <TextBlock Grid.Column="3" Text="ku" TextAlignment="Right" Foreground="{StaticResource TexteSecondaire}"/>
+                    <TextBlock Grid.Column="4" Text="P × ku" TextAlignment="Right" Foreground="{StaticResource TexteSecondaire}"/>
+                    <TextBlock Grid.Column="5" Text="Q × ku" TextAlignment="Right" Foreground="{StaticResource TexteSecondaire}"/>
+                </Grid>
+                <ItemsControl ItemsSource="{Binding DataContext.LignesBilan, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border BorderBrush="{StaticResource Bordure}" BorderThickness="0,0,0,1" Padding="0,3">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/><ColumnDefinition Width="64"/><ColumnDefinition Width="64"/><ColumnDefinition Width="44"/><ColumnDefinition Width="70"/><ColumnDefinition Width="70"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Depart}" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding Remarque}" FontSize="11" Foreground="{StaticResource TexteSecondaire}" TextWrapping="Wrap"
+                                                   Visibility="{Binding Remarque, Converter={StaticResource VideMasque}}"/>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" Text="{Binding P, StringFormat={}{0:0.00}}" TextAlignment="Right" FontFamily="Consolas, Segoe UI"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding Q, StringFormat={}{0:0.00}}" TextAlignment="Right" FontFamily="Consolas, Segoe UI"/>
+                                    <TextBlock Grid.Column="3" Text="{Binding Ku, StringFormat={}{0:0.##}}" TextAlignment="Right" FontFamily="Consolas, Segoe UI"/>
+                                    <TextBlock Grid.Column="4" Text="{Binding PUtilisee, StringFormat={}{0:0.00}}" TextAlignment="Right" FontFamily="Consolas, Segoe UI"/>
+                                    <TextBlock Grid.Column="5" Text="{Binding QUtilisee, StringFormat={}{0:0.00}}" TextAlignment="Right" FontFamily="Consolas, Segoe UI"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <ItemsControl ItemsSource="{Binding DataContext.EtapesBilan, RelativeSource={RelativeSource AncestorType=Window}}" Margin="0,12,0,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{StaticResource PanneauClair}" CornerRadius="4" Padding="12,10" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock FontWeight="SemiBold" FontSize="14">
+                                        <Run Text="Étape"/> <Run Text="{Binding Numero, Mode=OneWay}"/><Run Text=" – "/><Run Text="{Binding Titre, Mode=OneWay}"/>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Pourquoi}" TextWrapping="Wrap" Margin="0,6,0,0" Foreground="{StaticResource TexteSecondaire}"/>
+                                    <TextBlock Text="{Binding Formule}" TextWrapping="Wrap" Margin="0,6,0,0" FontFamily="Consolas, Segoe UI"/>
+                                    <TextBlock Text="{Binding Resultat}" TextWrapping="Wrap" Margin="0,6,0,0" FontWeight="SemiBold" Foreground="{StaticResource Accent}"/>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </StackPanel>
         </DataTemplate>
 
@@ -488,8 +639,8 @@
                     <TextBox Text="{inf:Lien VariateursBus}"/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
-                    <TextBlock Text="Pupitres IHM" Style="{StaticResource Etiquette}"/>
-                    <TextBox Text="{inf:Lien Ihm}"/>
+                    <TextBlock Text="Autres IHM (sans modèle choisi)" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien Ihm}" ToolTip="Pupitres comptés en connexions et en consommation estimée ; ceux de la section IHM s'y ajoutent."/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Clients OPC UA / supervision" Style="{StaticResource Etiquette}"/>
@@ -535,6 +686,60 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+
+                <TextBlock Text="IHM" Style="{StaticResource Section}"/>
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
+                           Text="Pupitres de la marque de l'automate : chacun compte une connexion sur la CPU et sa consommation sur le 24 V DC."/>
+                <ItemsControl ItemsSource="{Binding Pupitres}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type mod:PupitreIhm}">
+                            <Border Background="{StaticResource PanneauClair}" CornerRadius="4" Padding="10" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <DockPanel Style="{StaticResource Ligne}">
+                                        <Button DockPanel.Dock="Right" Margin="6,0,0,0" Style="{StaticResource BoutonPetit}" ToolTip="Supprimer l'IHM"
+                                                Command="{Binding DataContext.SupprimerPupitre, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}">
+                                            <TextBlock FontFamily="{StaticResource Icones}" Text="&#xE74D;"/>
+                                        </Button>
+                                        <TextBlock Text="Nom" Style="{StaticResource Etiquette}"/>
+                                        <TextBox Text="{inf:Lien Nom}"/>
+                                    </DockPanel>
+                                    <DockPanel Style="{StaticResource Ligne}">
+                                        <TextBlock Text="Gamme" Style="{StaticResource Etiquette}"/>
+                                        <ComboBox ItemsSource="{x:Static inf:Listes.GammesIhm}" SelectedItem="{inf:Lien Gamme}"/>
+                                    </DockPanel>
+                                    <DockPanel Style="{StaticResource Ligne}">
+                                        <TextBlock Text="Diagonale souhaitée (pouces)" Style="{StaticResource Etiquette}"/>
+                                        <TextBox Text="{inf:Lien Diagonale}"/>
+                                    </DockPanel>
+                                    <DockPanel Style="{StaticResource Ligne}">
+                                        <TextBlock Text="Modèle" Style="{StaticResource Etiquette}"/>
+                                        <ComboBox ItemsSource="{Binding DataContext.IhmDisponibles, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                  SelectedValuePath="Reference" SelectedValue="{inf:Lien ReferenceImposee}">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Libelle}"/>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                    </DockPanel>
+                                    <DockPanel Style="{StaticResource Ligne}">
+                                        <TextBlock Text="Quantité" Style="{StaticResource Etiquette}"/>
+                                        <TextBox Text="{inf:Lien Quantite}"/>
+                                    </DockPanel>
+                                    <DockPanel Style="{StaticResource Ligne}">
+                                        <TextBlock Text="En porte d'armoire" Style="{StaticResource Etiquette}"/>
+                                        <CheckBox IsChecked="{inf:Lien EnPorte}" ToolTip="Décochée : pupitre sur la machine, alimenté par l'armoire."/>
+                                    </DockPanel>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                    <Button Content="Ajouter une IHM" Command="{Binding DataContext.AjouterPupitre, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <Button Content="Catalogue des IHM" Command="{Binding DataContext.OuvrirCatalogueIhm, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                </StackPanel>
 
                 <TextBlock Text="Stations d'E/S déportées" Style="{StaticResource Section}"/>
                 <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
@@ -937,6 +1142,8 @@
             <!-- Les boutons passent à la ligne quand la fenêtre est étroite. -->
             <WrapPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,0,16,0">
+                    <Image Source="/Ressources/logo-256.png" Width="24" Height="24" VerticalAlignment="Center" Margin="2,0,0,0"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
                     <TextBlock Text="DIMENSIONNEMENT" FontWeight="Bold" Foreground="{StaticResource Accent}"
                                VerticalAlignment="Center" Margin="4,0,18,0" FontSize="14"/>
                     <Button Style="{StaticResource BoutonOutil}" Command="{Binding Nouveau}" ToolTip="Nouveau projet (Ctrl+N)">
@@ -969,6 +1176,9 @@
                                 <MenuItem Header="Autre charge" Command="{Binding AjouterGenerique}"/>
                                 <Separator/>
                                 <MenuItem Header="Alimentation 24 V DC" Command="{Binding AjouterAlimentation}"/>
+                                <MenuItem Header="Transformateur 400/24 V AC" Command="{Binding AjouterTransformateur}" CommandParameter="{x:Static mod:TensionCommande.Alternatif24}"/>
+                                <MenuItem Header="Transformateur + redresseur 24 V DC" Command="{Binding AjouterTransformateur}" CommandParameter="{x:Static mod:TensionCommande.Continu24}"/>
+                                <MenuItem Header="Transformateur 400/230 V" Command="{Binding AjouterTransformateur}" CommandParameter="{x:Static mod:TensionCommande.Alternatif230}"/>
                             </ContextMenu>
                         </Button.ContextMenu>
                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE710;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Ajouter"/><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE70D;" FontSize="9" Margin="6,0,0,0" VerticalAlignment="Center"/></StackPanel>
@@ -981,17 +1191,14 @@
                     <Button Command="{Binding OuvrirVueArmoire}" ToolTip="Vue de face de l'armoire, zones CEM et champs ; déplacement des appareils à la souris">
                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE80F;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Armoire"/></StackPanel>
                     </Button>
-                    <Button Command="{Binding OuvrirUnifilaire}" ToolTip="Schéma unifilaire de puissance">
-                        <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE8A1;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Unifilaire"/></StackPanel>
-                    </Button>
-                    <Button Command="{Binding ExporterDevis}" ToolTip="Liste exhaustive du matériel à envoyer au fournisseur pour un devis (Excel)">
+                    <Button Command="{Binding ApercuDevis}" ToolTip="Aperçu de la liste exhaustive du matériel à envoyer au fournisseur, puis export Excel">
                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE719;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Demande de devis"/></StackPanel>
                     </Button>
                     <Button Command="{Binding ExporterExcel}" ToolTip="Nomenclature, départs, notes de calcul et contrôles au format Excel">
                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE80A;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Excel"/></StackPanel>
                     </Button>
-                    <Button Style="{StaticResource BoutonAccent}" Command="{Binding Rapport}" Margin="0"
-                            ToolTip="Générer le rapport complet du projet en PDF (Ctrl+P)">
+                    <Button Style="{StaticResource BoutonAccent}" Command="{Binding ApercuRapport}" Margin="0"
+                            ToolTip="Aperçu du rapport complet du projet, puis génération du PDF (Ctrl+P)">
                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE749;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Rapport PDF"/></StackPanel>
                     </Button>
                 </StackPanel>
@@ -1056,9 +1263,9 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="4*" MinWidth="320"/>
                 <ColumnDefinition Width="6"/>
-                <ColumnDefinition Width="4*" MinWidth="380"/>
-                <ColumnDefinition Width="6"/>
-                <ColumnDefinition Width="4*" MinWidth="360"/>
+                <ColumnDefinition Width="5*" MinWidth="380"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <Border Style="{StaticResource CadrePanneau}">
@@ -1067,6 +1274,7 @@
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Projet et réseau" Command="{Binding AfficherProjet}"/>
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Sécurité machine" Command="{Binding AfficherSecurite}"/>
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Automate" Command="{Binding AfficherAutomate}"/>
+                        <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Bilan de puissance" Command="{Binding AfficherBilanPuissance}"/>
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Bilan 24 V" Command="{Binding AfficherBilan24V}"/>
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Contrôles CEM / BT" Command="{Binding AfficherControles}"/>
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Armoire" Command="{Binding AfficherArmoire}"/>
@@ -1092,16 +1300,39 @@
             <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch" Background="Transparent"/>
 
             <Border Grid.Column="2" Style="{StaticResource CadrePanneau}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <ContentControl Content="{Binding Selection}" Binding.SourceUpdated="ModificationSaisie"/>
-                </ScrollViewer>
+                <DockPanel>
+                    <!-- La note de calcul s'ouvre à la demande pour laisser la place à la saisie. -->
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                        <ToggleButton DockPanel.Dock="Right" IsChecked="{Binding NoteVisible}" Padding="10,4"
+                                      ToolTip="Afficher ou masquer la note de calcul de l'élément édité">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock FontFamily="{StaticResource Icones}" Text="&#xE8EF;" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Note de calcul"/>
+                            </StackPanel>
+                        </ToggleButton>
+                        <Ellipse Width="12" Height="12" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                 Fill="{Binding Note.StatutGlobal, Converter={StaticResource StatutCouleur}}"
+                                 ToolTip="État de la note de calcul de l'élément édité"/>
+                    </DockPanel>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ContentControl Content="{Binding Selection}" Binding.SourceUpdated="ModificationSaisie"/>
+                    </ScrollViewer>
+                </DockPanel>
             </Border>
 
-            <GridSplitter Grid.Column="3" Width="6" HorizontalAlignment="Stretch" Background="Transparent"/>
+            <GridSplitter Grid.Column="3" Width="6" HorizontalAlignment="Stretch" Background="Transparent"
+                          Visibility="{Binding NoteVisible, Converter={StaticResource VraiVisible}}"/>
 
-            <Border Grid.Column="4" Style="{StaticResource CadrePanneau}">
+            <Border Grid.Column="4" Style="{StaticResource CadrePanneau}" Width="440"
+                    Visibility="{Binding NoteVisible, Converter={StaticResource VraiVisible}}">
                 <DockPanel>
-                    <TextBlock DockPanel.Dock="Top" Text="{Binding TitreNote}" Style="{StaticResource TitrePanneau}" TextWrapping="Wrap"/>
+                    <DockPanel DockPanel.Dock="Top">
+                        <Button DockPanel.Dock="Right" Style="{StaticResource BoutonPetit}" Command="{Binding BasculerNote}" ToolTip="Fermer la note de calcul"
+                                VerticalAlignment="Top">
+                            <TextBlock FontFamily="{StaticResource Icones}" Text="&#xE711;"/>
+                        </Button>
+                        <TextBlock Text="{Binding TitreNote}" Style="{StaticResource TitrePanneau}" TextWrapping="Wrap"/>
+                    </DockPanel>
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding Note.Lignes}" ItemTemplate="{StaticResource LigneNote}"/>
                     </ScrollViewer>

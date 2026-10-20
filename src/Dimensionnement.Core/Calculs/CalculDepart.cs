@@ -28,6 +28,13 @@ public class ResultatDepart
     public required ElementMateriel Materiel { get; init; }
 }
 
+/// <summary>Charge d'un transformateur 400/230 V : départs qu'il alimente, en kW et kvar.</summary>
+public record ChargeAval(double P, double Q)
+{
+    public IReadOnlyList<string> Departs { get; init; } = Array.Empty<string>();
+    public double S => Math.Sqrt(P * P + Q * Q);
+}
+
 /// <summary>Dimensionne un départ : courant d'emploi, protection, contacteur(s), câble.</summary>
 public static class CalculDepart
 {
@@ -38,9 +45,14 @@ public static class CalculDepart
     /// <param name="fabricant">Fabricant du projet, marque des variateurs laissés au choix du projet.</param>
     /// <param name="variateurs">Catalogue des variateurs ; le catalogue embarqué par défaut.</param>
     public static ResultatDepart Calculer(Depart depart, Reseau reseau, double chuteAmont = 0, double consommation24V = 0,
-        FabricantMateriel fabricant = FabricantMateriel.Schneider, IReadOnlyList<ModeleVariateur>? variateurs = null) => depart switch
+        FabricantMateriel fabricant = FabricantMateriel.Schneider, IReadOnlyList<ModeleVariateur>? variateurs = null,
+        IReadOnlyList<ConsommationCommande>? postes24V = null, IReadOnlyList<ModeleAlimentation>? alimentations = null,
+        ChargeAval? chargeAval = null) => depart switch
     {
-        DepartAlimentation24V a => Alimentation24V(a, reseau, chuteAmont, consommation24V),
+        DepartAlimentation24V { EstTransformateur: true } t => Transformateur(t, reseau, chuteAmont, consommation24V, postes24V, fabricant,
+            alimentations ?? CatalogueAlimentations.Charger(), chargeAval),
+        DepartAlimentation24V a => Alimentation24V(a, reseau, chuteAmont, consommation24V, postes24V, fabricant,
+            alimentations ?? CatalogueAlimentations.Charger()),
         DepartMoteur m => Moteur(m, reseau, chuteAmont, fabricant, variateurs ?? CatalogueVariateurs.Charger()),
         DepartResistif r => Resistif(r, reseau, chuteAmont),
         DepartPrise p => Prise(p, reseau, chuteAmont),
@@ -49,9 +61,9 @@ public static class CalculDepart
     };
 
     static double Tension(TypeAlimentation a) => a == TypeAlimentation.Mono230 ? 230 : 400;
-    static double Racine(TypeAlimentation a) => a == TypeAlimentation.Mono230 ? 1 : Math.Sqrt(3);
+    static double Racine(TypeAlimentation a) => a is TypeAlimentation.Mono230 or TypeAlimentation.Bi400 ? 1 : Math.Sqrt(3);
     static string FormuleCourant(TypeAlimentation a, string suffixe) =>
-        a == TypeAlimentation.Mono230 ? $"I = P / (U{suffixe})" : $"I = P / (√3 × U{suffixe})";
+        a is TypeAlimentation.Mono230 or TypeAlimentation.Bi400 ? $"I = P / (U{suffixe})" : $"I = P / (√3 × U{suffixe})";
 
     static NoteDeCalcul NouvelleNote(Depart d) => new($"D{d.Numero:00}", d.Forcages);
 
@@ -181,7 +193,7 @@ public static class CalculDepart
                 : Contacteurs(m, note, ib, avalProtection);
         }
         Differentiel(m, note, m.Demarrage == ModeDemarrage.Variateur
-            ? (m.Alimentation == TypeAlimentation.Mono230 ? "F" : "B")
+            ? (m.Alimentation is TypeAlimentation.Mono230 or TypeAlimentation.Bi400 ? "F" : "B")
             : "A");
         note.Info("Pouvoir de coupure", $"Pouvoir de coupure ≥ {N(reseau.IccKiloAmperes)} kA (Icc à l'arrivée).", RefProtection);
 
@@ -192,7 +204,7 @@ public static class CalculDepart
             m.CosPhi, reseau, chuteAmont);
         var w = avalProtection.Ajouter(ElementCable(n, m, cable, et ? 2 : 1));
         w.Ajouter(Element($"M{n}", "Moteur", m.Designation is { Length: > 0 } d ? d : "Moteur",
-            $"{N(m.PuissanceKw)} kW, In {A(ib)}").Avec(ib, m.Alimentation == TypeAlimentation.Mono230 ? 2 : 3, m.PuissanceKw));
+            $"{N(m.PuissanceKw)} kW, In {A(ib)}").Avec(ib, m.Alimentation is TypeAlimentation.Mono230 or TypeAlimentation.Bi400 ? 2 : 3, m.PuissanceKw));
 
         return Resultat(m, note, ib, calibreProtection, cable, pAbsorbee, q, protection);
     }
@@ -225,6 +237,7 @@ public static class CalculDepart
         var cartouches = d.Alimentation switch
         {
             TypeAlimentation.Mono230 => 1,
+            TypeAlimentation.Bi400 => 2,
             _ => 3,
         };
         note.Info("Porte-fusibles", $"Sectionneur porte-fusibles taille {taille}, {poles} ; {cartouches} cartouche(s) {classe} {A(calibre)}.",
@@ -331,32 +344,179 @@ public static class CalculDepart
     /// <summary>Facteur de puissance d'une alimentation à découpage avec correction (PFC).</summary>
     const double CosPhiAlimentation = 0.95;
 
-    static ResultatDepart Alimentation24V(DepartAlimentation24V a, Reseau reseau, double chuteAmont, double consommation)
+    static ResultatDepart Alimentation24V(DepartAlimentation24V a, Reseau reseau, double chuteAmont, double consommation,
+        IReadOnlyList<ConsommationCommande>? postes, FabricantMateriel fabricant, IReadOnlyList<ModeleAlimentation> catalogue)
     {
         var note = NouvelleNote(a);
+        if (postes is { Count: > 0 })
+            foreach (var g in postes.GroupBy(p => p.Poste))
+                note.Info($"Raccordés : {g.Key}", string.Join(" ; ", g.Select(p => $"{p.Designation} {A(p.Courant)}")) + $" ; total {A(g.Sum(p => p.Courant))}.",
+                    "Bilan 24 V DC du projet");
         var besoin = consommation * (1 + a.ReservePourcent / 100);
+        var primaire = CatalogueAlimentations.Primaire(a.Alimentation);
+        var marque = CatalogueAlimentations.Marque(a.Marque, fabricant);
+        var modele = a.Manuelle
+            ? new ModeleAlimentation
+            {
+                Fabricant = a.FabricantManuel.Length > 0 ? a.FabricantManuel : "Saisie manuelle", Gamme = "saisie manuelle",
+                Reference = a.ReferenceManuelle, Courant = a.CourantManuel, Rendement = a.Rendement,
+                Largeur = a.LargeurManuelle, Hauteur = a.HauteurManuelle, Profondeur = a.ProfondeurManuelle,
+            }
+            : CatalogueAlimentations.Choisir(marque, besoin, primaire, catalogue);
+        var proposee = modele?.Courant ?? Calibres.Superieur(Calibres.Alimentations24V, besoin) ?? besoin;
         var assigne = note.Valeur(CodesCalcul.CalibreAlimentation24V, "Courant assigné de l'alimentation 24 V", besoin,
-            Calibres.Superieur(Calibres.Alimentations24V, besoin) ?? besoin, "A",
-            "I ≥ consommation 24 V × (1 + réserve)",
+            proposee, "A", "I ≥ consommation 24 V × (1 + réserve)",
             $"consommation {A(consommation)}, réserve {N(a.ReservePourcent)} %", "Bilan 24 V DC du projet");
-        if (Calibres.Superieur(Calibres.Alimentations24V, besoin) is null)
-            note.Verifier("Calibre d'alimentation", false,
-                "Consommation au-delà de 40 A : répartir sur plusieurs alimentations.", siEchec: StatutCalcul.Alerte);
+        if (a.Manuelle)
+            note.Verifier("Alimentation saisie à la main", modele!.Courant >= besoin - 1e-6,
+                $"{modele.Fabricant} {modele.Reference} : {A(modele.Courant)} pour {A(besoin)} nécessaires" +
+                (modele.Courant >= besoin - 1e-6 ? $", marge {N(100 * (modele.Courant / Math.Max(besoin, 1e-6) - 1), 0)} %."
+                    : " : courant insuffisant, choisir un modèle plus puissant ou répartir la charge sur une autre alimentation."),
+                "Bilan 24 V DC du projet");
+        else if (modele is null)
+            note.Verifier("Alimentation au catalogue", false,
+                $"Aucune alimentation {marque} de {A(besoin)} ou plus pour un primaire {CatalogueAlimentations.LibellePrimaire(primaire)} au catalogue : " +
+                "ajouter une seconde alimentation (usage réparti), changer de marque ou saisir une alimentation à la main.",
+                "Catalogue des alimentations 24 V", StatutCalcul.Alerte);
+        else
+            note.Verifier("Alimentation retenue", modele.Verifie,
+                $"{modele.Fabricant} {modele.Gamme} {modele.Reference} : {A(modele.Courant)}, primaire {CatalogueAlimentations.LibellePrimaire(primaire)}, " +
+                $"rendement {N(modele.Rendement * 100, 0)} %, {N(modele.Largeur, 0)} × {N(modele.Hauteur, 0)} × {N(modele.Profondeur, 0)} mm" +
+                (modele.Verifie ? "." : " (valeurs indicatives, à vérifier)."), "Catalogue des alimentations 24 V", StatutCalcul.Alerte);
 
+        var rendement = modele?.Rendement > 0 ? modele.Rendement : a.Rendement;
         var u = Tension(a.Alimentation);
-        var puissance = 24 * assigne / a.Rendement / 1000;
+        var puissance = 24 * assigne / rendement / 1000;
         var calcule = puissance * 1000 / (Racine(a.Alimentation) * u * CosPhiAlimentation);
         var ib = note.Valeur(CodesCalcul.CourantEmploi, "Courant absorbé au primaire", calcule, calcule, "A",
             FormuleCourant(a.Alimentation, " × cos φ") + ", P = 24 V × I assigné / η",
-            $"η = {N(a.Rendement)}, cos φ = {N(CosPhiAlimentation)}");
+            $"η = {N(rendement)}, cos φ = {N(CosPhiAlimentation)}");
         note.Info("Appel de courant", "Les alimentations à découpage ont un fort courant d'appel : disjoncteur courbe C au minimum, D si plusieurs alimentations.",
             "Documentation fabricant");
         var (courantCable, calibre, protection, aval) = Protection(a, note, reseau, ib, CourbeDisjoncteur.C, "appel des alimentations à découpage");
         var cable = CalculCable.Dimensionner(note, a.Cable, a.Alimentation, courantCable, ib, CosPhiAlimentation, reseau, chuteAmont);
-        aval.Ajouter(ElementCable(a.Numero, a, cable, 1))
-            .Ajouter(Element($"G{a.Numero}", "Alimentation", "Alimentation 24 V DC", $"{N(assigne)} A, {N(24 * assigne)} W")
-                .Avec(assigne, puissanceKw: 24 * assigne / 1000));
+        var alimentation = Element($"G{a.Numero}", "Alimentation", "Alimentation 24 V DC", $"{N(assigne)} A, {N(24 * assigne)} W")
+            .Avec(assigne, puissanceKw: 24 * assigne / 1000);
+        if (modele is not null)
+        {
+            alimentation.Fabricant = modele.Fabricant;
+            alimentation.Reference = modele.Reference;
+            alimentation.LargeurMm = modele.Largeur;
+            alimentation.HauteurMm = modele.Hauteur;
+            alimentation.ProfondeurMm = modele.Profondeur;
+            alimentation.PertesW = 24 * assigne * (1 / rendement - 1);
+        }
+        aval.Ajouter(ElementCable(a.Numero, a, cable, 1)).Ajouter(alimentation);
         return Resultat(a, note, ib, calibre, cable, puissance, puissance * Math.Tan(Math.Acos(CosPhiAlimentation)), protection);
+    }
+
+    /// <summary>Facteur de dimensionnement d'un transformateur suivi d'un redresseur filtré (courant crête des condensateurs).</summary>
+    public const double FacteurRedresseur = 1.8;
+
+    /// <summary>
+    /// Transformateur de commande 400/24 V ou 230/24 V (sortie alternative, ou continue par redresseur filtré)
+    /// et transformateur 400/230 V qui alimente des départs monophasés et les bobines 230 V AC.
+    /// </summary>
+    static ResultatDepart Transformateur(DepartAlimentation24V t, Reseau reseau, double chuteAmont, double consommation,
+        IReadOnlyList<ConsommationCommande>? postes, FabricantMateriel fabricant, IReadOnlyList<ModeleAlimentation> catalogue,
+        ChargeAval? aval)
+    {
+        const string Ref = "NF EN 61558-2-2 ; NF EN 60204-1, 7.2.7 et 9.1.1";
+        var note = NouvelleNote(t);
+        var sortie = t.Sortie;
+        var usec = sortie == TensionCommande.Alternatif230 ? 230.0 : 24.0;
+        if (postes is { Count: > 0 })
+            foreach (var g in postes.GroupBy(p => p.Poste))
+                note.Info($"Raccordés : {g.Key}", string.Join(" ; ", g.Select(p => $"{p.Designation} {A(p.Courant)}")) + $" ; total {A(g.Sum(p => p.Courant))}.",
+                    "Bilan de la commande du projet");
+        if (t.Source == SourceAlimentation.Decoupage && sortie != TensionCommande.Continu24)
+            note.Verifier("Technologie", false, "Une alimentation à découpage ne fournit que du 24 V DC : une sortie alternative impose un transformateur.", Ref, StatutCalcul.Alerte);
+        if (sortie == TensionCommande.Alternatif24 && postes is not null
+            && postes.Any(p => p.Poste is ConsommationCommande.Automate or ConsommationCommande.Securite))
+            note.Verifier("Automate et sécurité en 24 V AC", false,
+                "L'automate et les relais de sécurité demandent du 24 V DC : les raccorder à une alimentation 24 V DC.",
+                "Documentation fabricant", StatutCalcul.Alerte);
+
+        var charge = aval ?? new ChargeAval(0, 0);
+        if (charge.Departs.Count > 0)
+            note.Info("Départs alimentés", string.Join(" ; ", charge.Departs) + $" : {N(charge.S * 1000, 0)} VA (P = {N(charge.P)} kW, Q = {N(charge.Q)} kvar).",
+                "Bilan de puissance du projet");
+        var facteur = sortie == TensionCommande.Continu24 ? FacteurRedresseur : 1;
+        var sCommande = usec * consommation * facteur;
+        var sBesoin = (sCommande + charge.S * 1000) * (1 + t.ReservePourcent / 100);
+        var detail = $"commande {N(usec, 0)} V × {A(consommation)}" + (facteur > 1 ? $" × {N(facteur)} (redresseur filtré)" : "") +
+                     (charge.S > 0 ? $" + départs {N(charge.S * 1000, 0)} VA" : "") + $", réserve {N(t.ReservePourcent)} %";
+        note.Info("Puissance nécessaire", $"S = (U × I commande × k + S départs) × (1 + réserve) = {N(sBesoin, 0)} VA ({detail}).", Ref);
+
+        var primaire = CatalogueAlimentations.Primaire(t.Alimentation);
+        if (t.Alimentation is TypeAlimentation.Tri400 or TypeAlimentation.Tetra400)
+            note.Verifier("Primaire", false, "Un transformateur de commande est monophasé : le raccorder entre deux phases (400 V 2P) ou en 230 V.", Ref, StatutCalcul.Alerte);
+        var marque = CatalogueAlimentations.Marque(t.Marque, fabricant);
+        var secondaire = CatalogueAlimentations.Secondaire(sortie, true);
+        var modele = t.Manuelle
+            ? new ModeleAlimentation
+            {
+                Fabricant = t.FabricantManuel.Length > 0 ? t.FabricantManuel : "Saisie manuelle", Gamme = "saisie manuelle",
+                Reference = t.ReferenceManuelle, Va = t.CourantManuel * usec, Courant = t.CourantManuel, Rendement = t.Rendement,
+                Type = ModeleAlimentation.Transformateur, Secondaire = secondaire,
+                Largeur = t.LargeurManuelle, Hauteur = t.HauteurManuelle, Profondeur = t.ProfondeurManuelle,
+            }
+            : CatalogueAlimentations.ChoisirTransformateur(marque, secondaire, sBesoin, primaire, catalogue);
+        var va = note.Valeur(CodesCalcul.CalibreAlimentation24V, "Puissance assignée du transformateur", sBesoin,
+            modele?.Va ?? Calibres.Superieur(Calibres.Transformateurs, sBesoin) ?? sBesoin, "VA", "S assignée ≥ S nécessaire",
+            detail, Ref);
+        if (t.Manuelle)
+            note.Verifier("Transformateur saisi à la main", modele!.Va >= sBesoin - 1e-6,
+                $"{modele.Fabricant} {modele.Reference} : {N(modele.Va, 0)} VA ({A(modele.Courant)} sous {N(usec, 0)} V) pour {N(sBesoin, 0)} VA nécessaires" +
+                (modele.Va >= sBesoin - 1e-6 ? "." : " : puissance insuffisante."), Ref);
+        else if (modele is null)
+            note.Verifier("Transformateur au catalogue", false,
+                $"Aucun transformateur {marque} {secondaire} de {N(sBesoin, 0)} VA ou plus pour un primaire {CatalogueAlimentations.LibellePrimaire(primaire)} : " +
+                "changer de marque, répartir la charge ou saisir le transformateur à la main.", "Catalogue des alimentations", StatutCalcul.Alerte);
+        else
+            note.Verifier("Transformateur retenu", modele.Verifie && modele.Reference.Length > 0,
+                $"{modele.Fabricant} {modele.Gamme} {(modele.Reference.Length > 0 ? modele.Reference : "(référence à compléter)")} : {N(modele.Va, 0)} VA, " +
+                $"{CatalogueAlimentations.LibellePrimaire(primaire)} / {secondaire}, {N(modele.Largeur, 0)} × {N(modele.Hauteur, 0)} × {N(modele.Profondeur, 0)} mm" +
+                (modele.Verifie ? "." : " (valeurs indicatives, à vérifier)."), "Catalogue des alimentations", StatutCalcul.Alerte);
+        if (sortie == TensionCommande.Continu24)
+            note.Info("Redresseur", "Pont redresseur et condensateur de filtrage en aval : secondaire à choisir pour obtenir 24 V DC filtré " +
+                "(Udc ≈ 1,35 × Ueff à vide), ondulation ≤ 5 % pour l'électronique.", "NF EN 61131-2");
+        if (sortie == TensionCommande.Alternatif24 || sortie == TensionCommande.Alternatif230)
+            note.Info("Appel des bobines", "Les bobines AC appellent 6 à 10 fois leur puissance de maintien à la fermeture : " +
+                "vérifier la puissance instantanée admissible du transformateur si plusieurs contacteurs ferment ensemble.", "Documentation fabricant");
+        note.Info("Circuit de commande", "Un pôle du secondaire relié au conducteur de protection, l'autre protégé ; " +
+            "transformateur obligatoire pour plus d'un démarreur ou d'un appareil de commande extérieur.", "NF EN 60204-1, 9.1.1 et 9.4.3");
+
+        var rendement = modele?.Rendement > 0 ? modele.Rendement : t.Rendement;
+        var u = Tension(t.Alimentation);
+        var calcule = va / (u * rendement);
+        var ib = note.Valeur(CodesCalcul.CourantEmploi, "Courant absorbé au primaire", calcule, calcule, "A",
+            "I = S assignée / (U × η)", $"S = {N(va, 0)} VA, U = {N(u, 0)} V, η = {N(rendement)}");
+        note.Info("Appel de courant", "Un transformateur appelle 10 à 25 fois son courant nominal à la mise sous tension : courbe D.",
+            "NF C 15-100, 533 ; documentation fabricant");
+        var (courantCable, calibre, protection, avalElement) = Protection(t, note, reseau, ib, CourbeDisjoncteur.D, "appel du transformateur");
+        var cosPhi = 0.9;
+        var cable = CalculCable.Dimensionner(note, t.Cable, t.Alimentation, courantCable, ib, cosPhi, reseau, chuteAmont);
+        var transfo = Element($"T{t.Numero}", "Alimentation", DepartAlimentation24V.Libelle(sortie, true, t.Alimentation),
+                $"{N(va, 0)} VA, {CatalogueAlimentations.LibellePrimaire(primaire)} / {secondaire}")
+            .Avec(va / usec, 2, puissanceKw: va / 1000);
+        transfo.PertesW = va * (1 / rendement - 1);
+        if (modele is not null)
+        {
+            transfo.Fabricant = modele.Fabricant;
+            transfo.Reference = modele.Reference;
+            transfo.LargeurMm = modele.Largeur;
+            transfo.HauteurMm = modele.Hauteur;
+            transfo.ProfondeurMm = modele.Profondeur;
+        }
+        avalElement = avalElement.Ajouter(ElementCable(t.Numero, t, cable, 1)).Ajouter(transfo);
+        if (sortie == TensionCommande.Continu24)
+            transfo.Ajouter(Element($"V{t.Numero}", "Redresseur", "Pont redresseur + condensateur de filtrage", $"24 V DC, {A(consommation * (1 + t.ReservePourcent / 100))}")
+                .Avec(consommation * (1 + t.ReservePourcent / 100), 2));
+        // Puissance vue du réseau : celle réellement appelée par la commande et les départs alimentés, augmentée des pertes.
+        var p = (usec * consommation * 0.9 / 1000 + charge.P) / rendement;
+        var q = usec * consommation * 0.44 / 1000 + charge.Q;
+        return Resultat(t, note, ib, calibre, cable, p, q, protection);
     }
 
     /// <summary>
@@ -406,7 +566,7 @@ public static class CalculDepart
     /// <summary>Nombre de pôles de l'appareil (1P+N compte pour 2 pôles d'encombrement).</summary>
     public static int NombrePoles(TypeAlimentation alimentation, SchemaLiaisonTerre slt) => alimentation switch
     {
-        TypeAlimentation.Mono230 => 2,
+        TypeAlimentation.Mono230 or TypeAlimentation.Bi400 => 2,
         TypeAlimentation.Tri400 => 3,
         _ => slt == SchemaLiaisonTerre.TNC ? 3 : 4,
     };
@@ -415,6 +575,7 @@ public static class CalculDepart
     public static string Poles(TypeAlimentation alimentation, SchemaLiaisonTerre slt) => alimentation switch
     {
         TypeAlimentation.Mono230 => slt == SchemaLiaisonTerre.IT ? "2P (neutre protégé)" : "1P+N",
+        TypeAlimentation.Bi400 => "2P",
         TypeAlimentation.Tri400 => "3P",
         _ => slt switch
         {
@@ -431,7 +592,7 @@ public static class CalculDepart
     {
         var conducteurs = d.Alimentation switch
         {
-            TypeAlimentation.Mono230 => 3,
+            TypeAlimentation.Mono230 or TypeAlimentation.Bi400 => 3,
             TypeAlimentation.Tri400 => 4,
             _ => 5,
         };

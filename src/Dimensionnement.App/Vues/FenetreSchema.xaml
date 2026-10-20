@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         Title="Schéma" Width="1200" Height="850" MinWidth="700" MinHeight="500"
+        Icon="/Ressources/icone.ico"
         WindowStartupLocation="CenterOwner" Background="{StaticResource Fond}"
         Foreground="{StaticResource Texte}" FontFamily="Segoe UI" FontSize="13">
     <DockPanel Margin="10">

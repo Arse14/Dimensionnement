@@ -56,7 +56,10 @@ public static class CalculAutomate
     const double ConsommationCarte = 0.05;
 
     public static int Peripheriques(ConfigurationAutomate c) => c.PeripheriquesReseau + c.VariateursBus + c.Stations.Count;
-    public static int Connexions(ConfigurationAutomate c) => c.Ihm + c.ClientsOpcUa + c.EchangesAutomates + ConnexionsReservees;
+    public static int Connexions(ConfigurationAutomate c) => NombreIhm(c) + c.ClientsOpcUa + c.EchangesAutomates + ConnexionsReservees;
+
+    /// <summary>Pupitres IHM : ceux choisis au catalogue et ceux déclarés sans modèle.</summary>
+    public static int NombreIhm(ConfigurationAutomate c) => c.Ihm + c.Pupitres.Sum(p => Math.Max(0, p.Quantite));
 
     public static int Voies(ConfigurationAutomate c, string type) => type switch
     {
@@ -71,8 +74,8 @@ public static class CalculAutomate
     public static int Requises(int voies, double reserve) => voies <= 0 ? 0 : (int)Math.Ceiling(voies * reserve - 1e-9);
 
     public static IReadOnlyList<ConsommationCommande> Consommations(ConfigurationAutomate c, IReadOnlyList<CpuAutomate>? catalogue = null,
-        IReadOnlyList<CarteEs>? cartes = null) =>
-        c.Actif ? Calculer(c, catalogue ?? CatalogueAutomates.Charger(), cartes).Consommations : Array.Empty<ConsommationCommande>();
+        IReadOnlyList<CarteEs>? cartes = null, IReadOnlyList<ModeleIhm>? ihm = null) =>
+        c.Actif ? Calculer(c, catalogue ?? CatalogueAutomates.Charger(), cartes, ihm).Consommations : Array.Empty<ConsommationCommande>();
 
     /// <summary>
     /// Cartes d'un type pour couvrir un nombre de voies : la plus grande carte standard tant qu'il en reste plus qu'elle
@@ -178,7 +181,8 @@ public static class CalculAutomate
         return new PlanCartes(cpu, famille, tete, chassis, alimentation, besoins, capacite, manquantes);
     }
 
-    public static ResultatAutomate Calculer(ConfigurationAutomate c, IReadOnlyList<CpuAutomate> catalogue, IReadOnlyList<CarteEs>? cartes = null)
+    public static ResultatAutomate Calculer(ConfigurationAutomate c, IReadOnlyList<CpuAutomate> catalogue, IReadOnlyList<CarteEs>? cartes = null,
+        IReadOnlyList<ModeleIhm>? ihm = null)
     {
         var note = new NoteDeCalcul("API");
         if (!c.Actif) return new ResultatAutomate { Note = note, Appareils = Array.Empty<ElementMateriel>() };
@@ -192,7 +196,7 @@ public static class CalculAutomate
         note.Info("Charge de communication",
             $"{peripheriques} périphérique(s) réseau ({c.Stations.Count} station(s) déportée(s) + {c.PeripheriquesReseau} autre(s) esclave(s) " +
             $"+ {c.VariateursBus} variateur(s)) ; " +
-            $"{connexions} connexion(s) ({c.Ihm} IHM + {c.ClientsOpcUa} OPC UA / supervision + {c.EchangesAutomates} échange(s) " +
+            $"{connexions} connexion(s) ({NombreIhm(c)} IHM + {c.ClientsOpcUa} OPC UA / supervision + {c.EchangesAutomates} échange(s) " +
             $"entre automates + {ConnexionsReservees} programmation et diagnostic).");
         note.Info("Besoin avec réserve", $"Réserve {N(c.ReservePourcent)} % : ≥ {peripheriquesRequis} périphérique(s) et ≥ {connexionsRequises} connexion(s).");
 
@@ -251,7 +255,9 @@ public static class CalculAutomate
             note.Verifier("Choix de la CPU", false,
                 $"Aucune CPU {c.Marque} du catalogue ne couvre ce besoin (communication et cartes d'E/S) : répartir sur plusieurs " +
                 "automates, passer en cartes compactes ou compléter le catalogue.", Ref);
-            return new ResultatAutomate { Note = note, Appareils = appareils, Consommations = Estimation(c) };
+            var estimation = Estimation(c);
+            Pupitres(c, c.Marque.ToString(), ihm ?? CatalogueIhm.Charger(), note, appareils, estimation);
+            return new ResultatAutomate { Note = note, Appareils = appareils, Consommations = estimation };
         }
 
         var nom = c.SecuriteIntegree && choix.Marque == "Siemens" ? $"{choix.Cpu} F" : choix.Cpu;
@@ -396,8 +402,54 @@ public static class CalculAutomate
         if (stations.Any(x => !x.Station.DansArmoire))
             note.Info("Stations en coffret", "Les stations hors armoire sont reprises au devis mais pas sur la plaque ni au bilan 24 V de l'armoire : " +
                 "prévoir leur coffret, leur alimentation et le câble réseau.");
-        note.Info("Consommation 24 V", $"{A(consommations.Sum(x => x.Courant))} pour la CPU et ses cartes, hors capteurs et actionneurs.");
+        Pupitres(c, marque, ihm ?? CatalogueIhm.Charger(), note, appareils, consommations);
+        note.Info("Consommation 24 V", $"{A(consommations.Sum(x => x.Courant))} pour la CPU, ses cartes et les IHM, hors capteurs et actionneurs.");
         return new ResultatAutomate { Note = note, Cpu = choix, Plan = plan, Stations = stations, Appareils = appareils, Consommations = consommations };
+    }
+
+    /// <summary>Consommation indicative d'un pupitre IHM sans modèle, en A sur le 24 V DC.</summary>
+    public const double ConsommationIhm = 0.5;
+
+    /// <summary>Pupitres IHM : modèle retenu, consommation sur le 24 V DC et découpe de porte.</summary>
+    static void Pupitres(ConfigurationAutomate c, string marque, IReadOnlyList<ModeleIhm> catalogue, NoteDeCalcul note,
+        List<ElementMateriel> appareils, List<ConsommationCommande> consommations)
+    {
+        const string RefIhm = "Fiches techniques des pupitres Siemens / Schneider";
+        if (c.Ihm > 0)
+            consommations.Add(new($"IHM sans modèle choisi × {c.Ihm} (estimation)", ConsommationIhm * c.Ihm));
+        var n = 0;
+        foreach (var p in c.Pupitres.Where(p => p.Quantite > 0))
+        {
+            var modele = CatalogueIhm.Choisir(p, marque, catalogue);
+            if (modele is null)
+            {
+                note.Verifier($"IHM {p.Nom}", false, p.ReferenceImposee.Length > 0
+                    ? $"Référence {p.ReferenceImposee} absente du catalogue des IHM."
+                    : $"Aucun pupitre {marque} de gamme {p.Gamme} au catalogue.", RefIhm, StatutCalcul.Alerte);
+                consommations.Add(new($"IHM {p.Nom} × {p.Quantite} (estimation)", ConsommationIhm * p.Quantite));
+                continue;
+            }
+            note.Verifier($"IHM {p.Nom}", modele.Verifie,
+                $"{p.Quantite} × {modele.Gamme} {modele.Libelle}, {modele.Interface} ; façade {N(modele.Largeur, 0)} × {N(modele.Hauteur, 0)} mm, " +
+                $"découpe {N(modele.DecoupeLargeur, 0)} × {N(modele.DecoupeHauteur, 0)} mm, {A(modele.Consommation)} sur le 24 V DC" +
+                (p.EnPorte ? ", en porte d'armoire." : ", sur pupitre machine.") + (modele.Verifie ? "" : " Valeurs indicatives, à vérifier."),
+                RefIhm, StatutCalcul.Alerte);
+            if (modele.Diagonale + 0.3 < p.Diagonale && p.ReferenceImposee.Length == 0)
+                note.Verifier($"Diagonale de {p.Nom}", false, $"{N(p.Diagonale)}\" demandés, {N(modele.Diagonale)}\" au plus dans la gamme.", RefIhm, StatutCalcul.Alerte);
+            consommations.Add(new($"IHM {modele.Designation} × {p.Quantite}", modele.Consommation * p.Quantite));
+            for (var k = 0; k < p.Quantite; k++)
+            {
+                n++;
+                appareils.Add(new ElementMateriel
+                {
+                    Repere = $"HMI{n}", Famille = "IHM", Designation = $"{p.Nom} – {modele.Designation}",
+                    Calibre = $"{N(modele.Diagonale)}\", {modele.Interface}" + (p.EnPorte ? ", en porte" : ", pupitre machine"),
+                    Fabricant = modele.Fabricant, Reference = modele.Reference,
+                    LargeurMm = modele.Largeur, HauteurMm = modele.Hauteur, ProfondeurMm = modele.Profondeur,
+                    PertesW = 24 * modele.Consommation, HorsArmoire = true,
+                });
+            }
+        }
     }
 
     static List<ConsommationCommande> Estimation(ConfigurationAutomate c)
