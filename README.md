@@ -53,6 +53,7 @@ note de calcul traçable.
 | IHM | Pupitres Siemens (Basic, Unified Comfort) et Schneider (Harmony ST6, GTO, GTU) choisis selon la diagonale, comptés en connexions et au bilan 24 V |
 | Bilan de puissance | Onglet dédié qui explique chaque étape, du récepteur au câble d'arrivée |
 | Aperçus | Demande de devis et rapport visibles avant l'export Excel ou PDF ; marques imposables pour les disjoncteurs et les contacteurs, caractéristiques complètes au devis même sans référence |
+| Catalogues | Navigateur commun aux 8 catalogues (automates, cartes d'E/S, IHM, alimentations et transformateurs, variateurs, sécurité, enveloppes, références) : tableau filtrable par marque, gamme et valeur minimale, fiche technique avec chiffres clés, encombrement à l'échelle, photos, fiches PDF et plans, usage dans le projet et historique ; valeurs manquantes signalées et complétées à la main, article marqué « vérifié » une fois contrôlé ; les modifications vont dans `%AppData%\Dimensionnement` et le catalogue livré reste récupérable |
 
 ## Organisation
 

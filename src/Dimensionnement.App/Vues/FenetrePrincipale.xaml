@@ -1188,6 +1188,9 @@
                     </Button>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal">
+                    <Button Command="{Binding OuvrirCatalogues}" ToolTip="Catalogues du matériel : tableau filtrable, fiches techniques, photos et documents ; complétez les valeurs manquantes">
+                        <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE8F1;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Catalogues"/></StackPanel>
+                    </Button>
                     <Button Command="{Binding OuvrirVueArmoire}" ToolTip="Vue de face de l'armoire, zones CEM et champs ; déplacement des appareils à la souris">
                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE80F;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Armoire"/></StackPanel>
                     </Button>

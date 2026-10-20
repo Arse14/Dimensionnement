@@ -194,3 +194,62 @@ public class Version4Tests
         Assert.Equal(r.PuissanceActive / r.CoefficientSimultaneite, ExplicationBilan.Lignes(r).Sum(l => l.PUtilisee), 3);
     }
 }
+
+public class NavigateurCatalogueTests
+{
+    [Fact]
+    public void Chaque_catalogue_se_relit_apres_reecriture_par_le_navigateur()
+    {
+        foreach (var f in BibliothequeCatalogues.Familles)
+        {
+            var articles = BibliothequeCatalogues.Lire(f.TexteEmbarque());
+            Assert.NotEmpty(articles);
+            articles[0][BibliothequeCatalogues.Photos] = new System.Text.Json.Nodes.JsonArray("C:/photos/a.jpg");
+            BibliothequeCatalogues.Tracer(articles[0], "ArseniK");
+            var texte = BibliothequeCatalogues.Ecrire(f, articles);
+            Assert.Equal(articles.Count, BibliothequeCatalogues.Lire(texte).Count);
+            f.LireType(texte);
+        }
+    }
+
+    [Fact]
+    public void Saisie_manuelle_d_un_champ_et_controle()
+    {
+        var f = BibliothequeCatalogues.Familles.Single(x => x.Id == "ihm");
+        var catalogue = BibliothequeCatalogues.Lire(f.TexteEmbarque());
+        var a = new System.Text.Json.Nodes.JsonObject { ["fabricant"] = "Siemens" };
+
+        Assert.Null(BibliothequeCatalogues.Saisir(a, f.Champ("diagonale")!, "7,5"));
+        Assert.NotNull(BibliothequeCatalogues.Saisir(a, f.Champ("largeur")!, "abc"));
+        Assert.Equal("7,5 \"", BibliothequeCatalogues.Texte(a, f.Champ("diagonale")!));
+
+        var points = BibliothequeCatalogues.Controler(f, a, catalogue);
+        Assert.Contains("Référence à compléter", points);
+        Assert.Contains(points, p => p.StartsWith("Largeur"));
+    }
+
+    [Fact]
+    public void Filtre_par_marque_et_valeur_minimale()
+    {
+        var f = BibliothequeCatalogues.Familles.Single(x => x.Id == "alimentations");
+        var articles = BibliothequeCatalogues.Lire(f.TexteEmbarque());
+
+        var r = BibliothequeCatalogues.Filtrer(f, articles, "", "Siemens", null, 20, false).ToList();
+
+        Assert.NotEmpty(r);
+        Assert.All(r, a => Assert.True(BibliothequeCatalogues.Nombre(a, "courant") >= 20));
+        Assert.All(r, a => Assert.Equal("Siemens", BibliothequeCatalogues.Marque(a)));
+    }
+
+    [Fact]
+    public void Enregistrement_refuse_un_catalogue_illisible_par_les_calculs()
+    {
+        var f = BibliothequeCatalogues.Familles.Single(x => x.Id == "cartes");
+        var articles = BibliothequeCatalogues.Lire(f.TexteEmbarque());
+        articles[0]["voies"] = 16.5;
+        var fichier = Path.Combine(Path.GetTempPath(), $"cartes-{Guid.NewGuid():N}.json");
+
+        Assert.Throws<InvalidDataException>(() => BibliothequeCatalogues.Enregistrer(f, fichier, articles));
+        Assert.False(File.Exists(fichier));
+    }
+}

@@ -168,3 +168,71 @@ public static class Listes
     public static GammeIhm[] GammesIhm { get; } = Enum.GetValues<GammeIhm>();
     public static string[] Rubriques { get; } = { "Puissance", "Commande", "Auxiliaires", "Distribution", "Sécurité" };
 }
+
+/// <summary>Image d'un fichier local (photo d'article), chargée sans verrouiller le fichier ; rien si absent ou illisible.</summary>
+public class CheminImage : IValueConverter
+{
+    public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not string { Length: > 0 } chemin || !System.IO.File.Exists(chemin)) return null;
+        try
+        {
+            var image = new System.Windows.Media.Imaging.BitmapImage();
+            image.BeginInit();
+            image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+            image.CreateOptions = System.Windows.Media.Imaging.BitmapCreateOptions.IgnoreImageCache;
+            image.UriSource = new Uri(chemin, UriKind.Absolute);
+            if (parameter is string largeur && int.TryParse(largeur, out var l)) image.DecodePixelWidth = l;
+            image.EndInit();
+            image.Freeze();
+            return image;
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or NotSupportedException or UriFormatException or InvalidOperationException)
+        {
+            return null;
+        }
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>Nom du fichier d'un chemin, ou l'adresse telle quelle pour un lien.</summary>
+public class NomFichier : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        value is string s && !s.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? System.IO.Path.GetFileName(s) : value ?? "";
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>Visible quand la valeur est fausse ou qu'une liste est vide ; masqué sinon.</summary>
+public class FauxVisible : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        value is false or System.Collections.ICollection { Count: 0 } ? Visibility.Visible : Visibility.Collapsed;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>Visible quand une liste contient au moins un élément.</summary>
+public class NonNulVisible : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        value is System.Collections.ICollection { Count: > 0 } ? Visibility.Visible : Visibility.Collapsed;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>Texte en majuscules (titres de filtres).</summary>
+public class Majuscules : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        (value as string ?? "").ToUpper(culture);
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}

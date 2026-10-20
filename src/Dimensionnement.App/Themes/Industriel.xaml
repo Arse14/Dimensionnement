@@ -18,6 +18,11 @@
     <inf:LibelleEnum x:Key="LibelleEnum"/>
     <inf:VideMasque x:Key="VideMasque"/>
     <BooleanToVisibilityConverter x:Key="VraiVisible"/>
+    <inf:CheminImage x:Key="CheminImage"/>
+    <inf:NomFichier x:Key="NomFichier"/>
+    <inf:FauxVisible x:Key="FauxVisible"/>
+    <inf:NonNulVisible x:Key="NonNulVisible"/>
+    <inf:Majuscules x:Key="Majuscules"/>
     <inf:MemeDepart x:Key="MemeDepart"/>
     <FontFamily x:Key="Icones">Segoe MDL2 Assets</FontFamily>
 

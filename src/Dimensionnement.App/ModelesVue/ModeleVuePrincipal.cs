@@ -86,10 +86,9 @@ public class ModeleVuePrincipal : Observable
         SupprimerPupitre = new Commande(p => Modifier(() => _projet.Automate.Pupitres.Remove((PupitreIhm)p!)), p => p is PupitreIhm);
         ApercuDevis = new Commande(() => Afficher(new FenetreApercuDevis(this)));
         ApercuRapport = new Commande(() => Afficher(new FenetreApercuRapport(this)));
-        OuvrirCatalogueAlimentations = new Commande(() => OuvrirCatalogueUtilisateur(CheminAlimentations, CatalogueAlimentations.TexteEmbarque(),
-            "Impossible d'ouvrir le catalogue des alimentations"));
-        OuvrirCatalogueIhm = new Commande(() => OuvrirCatalogueUtilisateur(CheminIhm, CatalogueIhm.TexteEmbarque(),
-            "Impossible d'ouvrir le catalogue des IHM"));
+        OuvrirCatalogueAlimentations = new Commande(() => OuvrirNavigateur("alimentations"));
+        OuvrirCatalogueIhm = new Commande(() => OuvrirNavigateur("ihm"));
+        OuvrirCatalogues = new Commande(p => OuvrirNavigateur(p as string ?? "alimentations"));
         Supprimer = new Commande(SupprimerDepart, () => Selection is Depart);
         Rapport = new Commande(GenererRapport);
         ExporterExcel = new Commande(EnregistrerExcel);
@@ -144,35 +143,14 @@ public class ModeleVuePrincipal : Observable
         ModifierArmoire = new Commande(p => Modifier(() => AppliquerAction((ActionArmoire)p!)), p => p is ActionArmoire);
         ExporterDevis = new Commande(EnregistrerDevis);
         ExporterOrganigramme = new Commande(() => EnregistrerSvg("organigramme", SchemaOrganigramme.Svg(Resultat), "Impossible d'enregistrer l'organigramme"));
-        OuvrirCatalogueReferences = new Commande(() => OuvrirCatalogueUtilisateur(CheminReferences, CatalogueReferences.TexteEmbarque(),
-            "Impossible d'ouvrir le catalogue des références"));
-        RechargerCatalogueReferences = new Commande(() =>
-        {
-            _references = CatalogueReferences.Charger(CheminReferences);
-            _variateurs = CatalogueVariateurs.Charger(CheminVariateurs);
-            _enveloppes = CatalogueEnveloppes.Charger(CheminEnveloppes);
-            _securite = CatalogueSecurite.Charger(CheminSecurite);
-            _alimentations = CatalogueAlimentations.Charger(CheminAlimentations);
-            _ihm = CatalogueIhm.Charger(CheminIhm);
-            Recalculer();
-        });
-        OuvrirCatalogueVariateurs = new Commande(() => OuvrirCatalogueUtilisateur(CheminVariateurs, CatalogueVariateurs.TexteEmbarque(),
-            "Impossible d'ouvrir le catalogue des variateurs"));
-        OuvrirCatalogueEnveloppes = new Commande(() => OuvrirCatalogueUtilisateur(CheminEnveloppes, CatalogueEnveloppes.TexteEmbarque(),
-            "Impossible d'ouvrir le catalogue des enveloppes"));
-        OuvrirCatalogueSecurite = new Commande(() => OuvrirCatalogueUtilisateur(CheminSecurite, CatalogueSecurite.TexteEmbarque(),
-            "Impossible d'ouvrir le catalogue de sécurité"));
-        OuvrirCatalogueCartes = new Commande(() => OuvrirCatalogueUtilisateur(CheminCartes, CatalogueCartesEs.TexteEmbarque(),
-            "Impossible d'ouvrir le catalogue des cartes d'E/S"));
-        OuvrirCatalogue = new Commande(OuvrirCatalogueAutomates);
-        RechargerCatalogue = new Commande(() =>
-        {
-            _catalogue = CatalogueAutomates.Charger(CheminCatalogue);
-            _cartes = CatalogueCartesEs.Charger(CheminCartes);
-            _ihm = CatalogueIhm.Charger(CheminIhm);
-            _cpus = ListerCpus(_catalogue);
-            Recalculer();
-        });
+        OuvrirCatalogueReferences = new Commande(() => OuvrirNavigateur("references"));
+        RechargerCatalogueReferences = new Commande(RechargerCatalogues);
+        OuvrirCatalogueVariateurs = new Commande(() => OuvrirNavigateur("variateurs"));
+        OuvrirCatalogueEnveloppes = new Commande(() => OuvrirNavigateur("enveloppes"));
+        OuvrirCatalogueSecurite = new Commande(() => OuvrirNavigateur("securite"));
+        OuvrirCatalogueCartes = new Commande(() => OuvrirNavigateur("cartes"));
+        OuvrirCatalogue = new Commande(() => OuvrirNavigateur("automates"));
+        RechargerCatalogue = new Commande(RechargerCatalogues);
         Forcer = new Commande(p => ForcerValeur(p as LigneCalcul), p => p is LigneCalcul { Forcable: true });
         AnnulerForcage = new Commande(p => AnnulerValeur(p as LigneCalcul), p => p is LigneCalcul { Forcage: not null });
         Recents = new ObservableCollection<string>(_recents.Lire());
@@ -196,6 +174,7 @@ public class ModeleVuePrincipal : Observable
     public Commande ApercuRapport { get; }
     public Commande OuvrirCatalogueAlimentations { get; }
     public Commande OuvrirCatalogueIhm { get; }
+    public Commande OuvrirCatalogues { get; }
 
     /// <summary>Panneau de la note de calcul : masqué par défaut pour laisser la place à la saisie.</summary>
     public bool NoteVisible
@@ -636,25 +615,24 @@ public class ModeleVuePrincipal : Observable
         }
     }
 
-    void OuvrirCatalogueAutomates() =>
-        OuvrirCatalogueUtilisateur(CheminCatalogue, CatalogueAutomates.TexteEmbarque(), "Impossible d'ouvrir le catalogue des automates");
+    /// <summary>Ouvre le navigateur de catalogues (tableau filtrable et fiche technique) sur une famille.</summary>
+    void OuvrirNavigateur(string idFamille) => Afficher(new FenetreCatalogue(this, idFamille));
 
-    /// <summary>Copie le catalogue livré dans le dossier de l'utilisateur à la première ouverture, puis l'ouvre dans le Bloc-notes.</summary>
-    static void OuvrirCatalogueUtilisateur(string chemin, string contenuInitial, string erreur)
+    /// <summary>Relit tous les catalogues après une modification, puis recalcule le projet.</summary>
+    public void RechargerCatalogues()
     {
-        try
-        {
-            if (!File.Exists(chemin))
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(chemin)!);
-                File.WriteAllText(chemin, contenuInitial);
-            }
-            Process.Start(new ProcessStartInfo("notepad.exe", $"\"{chemin}\"") { UseShellExecute = true });
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
-        {
-            Erreur(erreur, ex);
-        }
+        _catalogue = CatalogueAutomates.Charger(CheminCatalogue);
+        _references = CatalogueReferences.Charger(CheminReferences);
+        _variateurs = CatalogueVariateurs.Charger(CheminVariateurs);
+        _enveloppes = CatalogueEnveloppes.Charger(CheminEnveloppes);
+        _securite = CatalogueSecurite.Charger(CheminSecurite);
+        _cartes = CatalogueCartesEs.Charger(CheminCartes);
+        _alimentations = CatalogueAlimentations.Charger(CheminAlimentations);
+        _ihm = CatalogueIhm.Charger(CheminIhm);
+        _cpus = ListerCpus(_catalogue);
+        Signaler(nameof(CpusDisponibles));
+        Signaler(nameof(IhmDisponibles));
+        Recalculer();
     }
 
     public void EnregistrerDevis()
