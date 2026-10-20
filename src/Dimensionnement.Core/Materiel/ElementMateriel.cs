@@ -33,6 +33,12 @@ public class ElementMateriel
 
     /// <summary>Taille de cartouche d'un porte-fusibles (10×38, NH00…) ; vide si sans objet.</summary>
     public string TailleFusible { get; set; } = "";
+
+    /// <summary>Encombrement en mm et pertes en W du modèle choisi au catalogue ; 0 = estimation moyenne par famille.</summary>
+    public double LargeurMm { get; set; }
+    public double HauteurMm { get; set; }
+    public double ProfondeurMm { get; set; }
+    public double PertesW { get; set; }
     public StatutCalcul Statut { get; set; } = StatutCalcul.Info;
 
     /// <summary>Départ auquel l'appareil appartient ; null pour l'arrivée.</summary>
@@ -41,7 +47,7 @@ public class ElementMateriel
     /// <summary>Zone CEM de l'armoire où l'appareil doit être implanté.</summary>
     public ZoneCem Zone => Famille switch
     {
-        "Variateur" or "Contacteur" or "Relais thermique" => ZoneCem.Sale,
+        "Variateur" or "Démarreur progressif" or "Contacteur" or "Relais thermique" => ZoneCem.Sale,
         "Câble" or "Moteur" or "Récepteur" or "Prise de courant" or "Réseau" => ZoneCem.HorsArmoire,
         "Automate" or "Entrées/sorties" or "Sécurité" => ZoneCem.Propre,
         _ => ZoneCem.Intermediaire,

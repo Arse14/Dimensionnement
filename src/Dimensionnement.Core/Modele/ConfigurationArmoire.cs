@@ -17,6 +17,12 @@ public enum InstallationEnveloppe
 /// <summary>Fabricant retenu pour le matériel de puissance et de protection.</summary>
 public enum FabricantMateriel { Schneider, ABB, Siemens, Legrand }
 
+/// <summary>Fabricant des enveloppes et plaques de montage.</summary>
+public enum MarqueEnveloppe { Rittal, Legrand, Schneider }
+
+/// <summary>Marque du variateur d'un départ : celle du projet, ou une marque imposée.</summary>
+public enum MarqueVariateur { Projet, ABB, Siemens, Schneider }
+
 /// <summary>Position d'un appareil déplacé à la main sur la plaque de montage, en mm depuis le coin haut gauche.</summary>
 public class PositionManuelle
 {
@@ -29,6 +35,15 @@ public class ConfigurationArmoire
 {
     /// <summary>Place libre à garder sur les rails pour les évolutions, en %.</summary>
     public double ReservePourcent { get; set; } = 25;
+
+    public MarqueEnveloppe Marque { get; set; } = MarqueEnveloppe.Rittal;
+
+    /// <summary>Taille d'armoire bloquée par l'utilisateur : l'implantation doit y tenir, sinon une alerte est levée.</summary>
+    public bool TailleImposee { get; set; }
+    public double LargeurImposee { get; set; } = 800;
+    public double HauteurImposee { get; set; } = 1200;
+    public double ProfondeurImposee { get; set; } = 300;
+    public int CellulesImposees { get; set; } = 1;
 
     public MateriauEnveloppe Materiau { get; set; } = MateriauEnveloppe.AcierPeint;
     public InstallationEnveloppe Installation { get; set; } = InstallationEnveloppe.AdosseeAuMur;

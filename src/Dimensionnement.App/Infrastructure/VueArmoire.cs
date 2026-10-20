@@ -64,8 +64,13 @@ public class VueArmoire : Border
         _plan.Height = a.Hauteur + 2 * Marge;
 
         for (var c = 0; c < a.Cellules; c++)
-            Placer(new Rectangle { Width = a.Largeur, Height = a.Hauteur, Fill = Pinceau("#ECEDEA"), Stroke = Pinceau("#5B6670"), StrokeThickness = 6 },
-                c * a.Largeur, 0);
+        {
+            Placer(new Rectangle { Width = a.Largeur, Height = a.Hauteur, Fill = Pinceau("#C9CED3"), Stroke = Pinceau("#5B6670"), StrokeThickness = 6,
+                ToolTip = $"{a.Marque} {a.Gamme} : {a.Reference}" }, c * a.Largeur, 0);
+            if (a.PlaqueLargeur > 0)
+                Placer(new Rectangle { Width = a.PlaqueLargeur, Height = a.PlaqueHauteur, Fill = Pinceau("#ECEDEA"), Stroke = Pinceau("#9AA5B1"), StrokeThickness = 2,
+                    ToolTip = $"Plaque de montage {a.ReferencePlaque} : {a.PlaqueLargeur:0} × {a.PlaqueHauteur:0} mm utiles" }, c * a.Largeur + a.PlaqueX, a.PlaqueY);
+        }
 
         foreach (var b in a.Bandes)
         {
@@ -82,7 +87,8 @@ public class VueArmoire : Border
                     Placer(new Rectangle { Width = b.Largeur - 16, Height = b.Hauteur, RadiusX = 6, RadiusY = 6, Fill = Hachures, IsHitTestVisible = false },
                         b.X + 8, b.Y);
                 // Nom de la zone à la verticale dans la marge gauche de la bande, hors des appareils.
-                Placer(new TextBlock
+                if (b.Rail)
+                    Placer(new TextBlock
                 {
                     Text = SchemaArmoire.NomZone(b.Zone), Width = b.Hauteur, TextAlignment = TextAlignment.Center,
                     FontSize = Math.Min(16, b.Hauteur / 7), FontWeight = FontWeights.Bold, Foreground = trait,
@@ -169,9 +175,11 @@ public class VueArmoire : Border
                 Data = geometrie, Stroke = trait, StrokeThickness = 4, StrokeStartLineCap = PenLineCap.Round,
                 StrokeEndLineCap = PenLineCap.Round, ToolTip = libelle,
             }, 0, 0);
-            if (ChampMagnetique.PointEtiquette(segments, a.LargeurTotale, a.Hauteur, etiquettes) is { } p)
+            if (ChampMagnetique.PointEtiquette(segments, a.LargeurTotale, a.Hauteur, etiquettes, a.Appareils) is { } p)
                 Placer(new Border
                 {
+                    // Au-dessus des appareils, dessinés après le champ.
+                    Tag = "Etiquette",
                     Background = new SolidColorBrush(Color.FromArgb(220, 255, 255, 255)), CornerRadius = new CornerRadius(3),
                     Padding = new Thickness(3, 0, 3, 0), IsHitTestVisible = false,
                     Child = new TextBlock { Text = $"{niveau:0} A/m", FontSize = 16, FontWeight = FontWeights.Bold, Foreground = trait },
@@ -181,6 +189,7 @@ public class VueArmoire : Border
 
     void Placer(UIElement element, double x, double y)
     {
+        if (element is Border { Tag: "Etiquette" }) Panel.SetZIndex(element, 50);
         Canvas.SetLeft(element, x + Marge);
         Canvas.SetTop(element, y + Marge);
         _plan.Children.Add(element);

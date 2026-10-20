@@ -51,6 +51,9 @@ public class DepartMoteur : Depart
     public double RapportId { get; set; } = 7;
     public ModeDemarrage Demarrage { get; set; } = ModeDemarrage.Direct;
 
+    /// <summary>Marque du variateur (démarrage par variateur seulement).</summary>
+    public MarqueVariateur MarqueVariateur { get; set; } = MarqueVariateur.Projet;
+
     public override string TypeLibelle => Demarrage switch
     {
         ModeDemarrage.Direct => "Moteur, démarrage direct",

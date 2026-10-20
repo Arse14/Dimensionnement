@@ -29,6 +29,14 @@ public class ModeleVuePrincipal : Observable
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueReferences.NomFichier);
     IReadOnlyList<ReferenceCatalogue> _references = CatalogueReferences.Charger(CheminReferences);
 
+    /// <summary>Catalogues des variateurs et des enveloppes modifiables par l'utilisateur.</summary>
+    static readonly string CheminVariateurs = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueVariateurs.NomFichier);
+    static readonly string CheminEnveloppes = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueEnveloppes.NomFichier);
+    IReadOnlyList<ModeleVariateur> _variateurs = CatalogueVariateurs.Charger(CheminVariateurs);
+    IReadOnlyList<ModeleEnveloppe> _enveloppes = CatalogueEnveloppes.Charger(CheminEnveloppes);
+
     Projet _projet = new();
     string? _chemin;
     bool _modifie;
@@ -37,7 +45,7 @@ public class ModeleVuePrincipal : Observable
     public ModeleVuePrincipal()
     {
         _selection = _projet;
-        Resultat = CalculProjet.Calculer(_projet, _catalogue, _references);
+        Resultat = CalculProjet.Calculer(_projet, _catalogue, _references, _variateurs, _enveloppes);
 
         Nouveau = new Commande(NouveauProjet);
         Ouvrir = new Commande(OuvrirProjet);
@@ -90,8 +98,14 @@ public class ModeleVuePrincipal : Observable
         RechargerCatalogueReferences = new Commande(() =>
         {
             _references = CatalogueReferences.Charger(CheminReferences);
+            _variateurs = CatalogueVariateurs.Charger(CheminVariateurs);
+            _enveloppes = CatalogueEnveloppes.Charger(CheminEnveloppes);
             Recalculer();
         });
+        OuvrirCatalogueVariateurs = new Commande(() => OuvrirCatalogueUtilisateur(CheminVariateurs, CatalogueVariateurs.TexteEmbarque(),
+            "Impossible d'ouvrir le catalogue des variateurs"));
+        OuvrirCatalogueEnveloppes = new Commande(() => OuvrirCatalogueUtilisateur(CheminEnveloppes, CatalogueEnveloppes.TexteEmbarque(),
+            "Impossible d'ouvrir le catalogue des enveloppes"));
         OuvrirCatalogue = new Commande(OuvrirCatalogueAutomates);
         RechargerCatalogue = new Commande(() =>
         {
@@ -140,6 +154,8 @@ public class ModeleVuePrincipal : Observable
     public Commande ExporterOrganigramme { get; }
     public Commande OuvrirCatalogueReferences { get; }
     public Commande RechargerCatalogueReferences { get; }
+    public Commande OuvrirCatalogueVariateurs { get; }
+    public Commande OuvrirCatalogueEnveloppes { get; }
     public Commande OuvrirCatalogue { get; }
     public Commande RechargerCatalogue { get; }
     public Commande Forcer { get; }
@@ -175,7 +191,8 @@ public class ModeleVuePrincipal : Observable
 
     /// <summary>Résumé de l'armoire et de sa thermique, pour les bandeaux.</summary>
     public string ResumeArmoire => Resultat.Armoire is { } a
-        ? $"{a.Type} {a.Largeur:0} × {a.Hauteur:0} × {a.Profondeur:0} mm{(a.Cellules > 1 ? $", {a.Cellules} cellules" : "")} – " +
+        ? $"{a.Type} {a.Marque} {a.Gamme} {a.Largeur:0} × {a.Hauteur:0} × {a.Profondeur:0} mm{(a.Cellules > 1 ? $", {a.Cellules} cellules" : "")}" +
+          $"{(a.TailleImposee ? " (imposée)" : "")} – " +
           $"plaque occupée à {a.Occupation:0} % – {Resultat.Thermique?.PuissanceDissipee:0} W dissipés"
         : "";
 
@@ -219,7 +236,7 @@ public class ModeleVuePrincipal : Observable
     public void Recalculer()
     {
         _modifie = true;
-        Resultat = CalculProjet.Calculer(_projet, _catalogue, _references);
+        Resultat = CalculProjet.Calculer(_projet, _catalogue, _references, _variateurs, _enveloppes);
         SignalerTout();
     }
 
@@ -324,7 +341,7 @@ public class ModeleVuePrincipal : Observable
         _chemin = chemin;
         _selection = projet;
         if (chemin is not null) MemoriserRecent(chemin);
-        Resultat = CalculProjet.Calculer(_projet, _catalogue, _references);
+        Resultat = CalculProjet.Calculer(_projet, _catalogue, _references, _variateurs, _enveloppes);
         _modifie = false;
         SignalerTout();
     }

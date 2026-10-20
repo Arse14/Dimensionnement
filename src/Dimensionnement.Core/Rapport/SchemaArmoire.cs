@@ -48,7 +48,11 @@ public static class SchemaArmoire
         s.Append($"<g transform=\"translate({F(marge)},{F(marge)})\">");
 
         for (var c = 0; c < a.Cellules; c++)
-            s.Append($"<rect x=\"{F(c * a.Largeur)}\" y=\"0\" width=\"{F(a.Largeur)}\" height=\"{F(a.Hauteur)}\" fill=\"#f7f7f5\" stroke=\"#37414b\" stroke-width=\"4\"/>");
+        {
+            s.Append($"<rect x=\"{F(c * a.Largeur)}\" y=\"0\" width=\"{F(a.Largeur)}\" height=\"{F(a.Hauteur)}\" fill=\"#d5d9dd\" stroke=\"#37414b\" stroke-width=\"4\"/>");
+            if (a.PlaqueLargeur > 0)
+                s.Append($"<rect x=\"{F(c * a.Largeur + a.PlaqueX)}\" y=\"{F(a.PlaqueY)}\" width=\"{F(a.PlaqueLargeur)}\" height=\"{F(a.PlaqueHauteur)}\" fill=\"#f7f7f5\" stroke=\"#9aa5b1\" stroke-width=\"2\"/>");
+        }
         foreach (var b in a.Bandes)
         {
             var trait = TraitZone(b.Zone);
@@ -58,13 +62,15 @@ public static class SchemaArmoire
                 s.Append($"<rect x=\"{F(b.X + 8)}\" y=\"{F(b.Y)}\" width=\"{F(b.Largeur - 16)}\" height=\"{F(b.Hauteur)}\" fill=\"url(#hachures)\" rx=\"6\"/>");
             var rail = b.Y + b.Hauteur / 2;
             s.Append($"<line x1=\"{F(b.X + CalculArmoire.MargeLaterale)}\" y1=\"{F(rail)}\" x2=\"{F(b.X + b.Largeur - CalculArmoire.MargeLaterale)}\" y2=\"{F(rail)}\" stroke=\"#9aa5b1\" stroke-width=\"6\"/>");
+            if (!b.Rail) continue;
             // Nom de la zone à la verticale dans la marge gauche de la bande, hors des appareils.
             var cx = b.X + 8 + (CalculArmoire.MargeLaterale - 8) / 2;
             s.Append($"<text x=\"{F(cx)}\" y=\"{F(rail)}\" transform=\"rotate(-90 {F(cx)} {F(rail)})\" font-size=\"{F(Math.Min(16, b.Hauteur / 7))}\" " +
                      $"font-weight=\"bold\" fill=\"{trait}\" text-anchor=\"middle\" dominant-baseline=\"middle\" letter-spacing=\"1\">{NomZone(b.Zone)}</text>");
         }
+        var etiquettes = new StringBuilder();
         if (champs && a.Sources.Count > 0)
-            CarteChamp(s, a);
+            CarteChamp(s, etiquettes, a);
         foreach (var e in a.Appareils)
         {
             var bord = e.Manuel ? "#f5a623" : "#37414b";
@@ -74,10 +80,13 @@ public static class SchemaArmoire
                      $"font-weight=\"bold\" fill=\"#1d232a\">{SecurityElement.Escape(e.Repere)}</text>");
         }
 
+        s.Append(etiquettes);
         var y = a.Hauteur + 36;
         const double x = 0;
         s.Append($"<text x=\"{F(x)}\" y=\"{F(y)}\" font-size=\"22\" font-weight=\"bold\" dominant-baseline=\"middle\" fill=\"#1d232a\">" +
-                 $"{F(a.Largeur)} × {F(a.Hauteur)} × {F(a.Profondeur)} mm{(a.Cellules > 1 ? $" × {a.Cellules} cellules" : "")}</text>");
+                 $"{SecurityElement.Escape(a.Marque)} {SecurityElement.Escape(a.Reference)}" +
+                 (a.Reference.Contains('×') ? "" : $" – {F(a.Largeur)} × {F(a.Hauteur)} × {F(a.Profondeur)} mm") +
+                 $"{(a.Cellules > 1 ? $" × {a.Cellules} cellules" : "")}</text>");
         y += 34;
         foreach (var zone in new[] { ZoneCem.Propre, ZoneCem.Intermediaire, ZoneCem.Sale })
         {
@@ -102,7 +111,7 @@ public static class SchemaArmoire
     }
 
     /// <summary>Isolignes du champ magnétique, tracées par-dessus les zones sans les masquer.</summary>
-    static void CarteChamp(StringBuilder s, ResultatArmoire a)
+    static void CarteChamp(StringBuilder s, StringBuilder textes, ResultatArmoire a)
     {
         var grille = ChampMagnetique.Grille(a.Sources, a.LargeurTotale, a.Hauteur, PasChamp);
         var etiquettes = new List<(double X, double Y)>();
@@ -114,8 +123,8 @@ public static class SchemaArmoire
                 d.Append($"M{F(x1)} {F(y1)}L{F(x2)} {F(y2)}");
             if (d.Length > 0)
                 s.Append($"<path d=\"{d}\" fill=\"none\" stroke=\"{couleur}\" stroke-width=\"4\" stroke-linecap=\"round\"/>");
-            if (ChampMagnetique.PointEtiquette(segments, a.LargeurTotale, a.Hauteur, etiquettes) is { } p)
-                s.Append($"<text x=\"{F(p.X + 6)}\" y=\"{F(p.Y)}\" font-size=\"17\" font-weight=\"bold\" fill=\"{couleur}\" dominant-baseline=\"middle\" " +
+            if (ChampMagnetique.PointEtiquette(segments, a.LargeurTotale, a.Hauteur, etiquettes, a.Appareils) is { } p)
+                textes.Append($"<text x=\"{F(p.X + 6)}\" y=\"{F(p.Y)}\" font-size=\"17\" font-weight=\"bold\" fill=\"{couleur}\" dominant-baseline=\"middle\" " +
                          $"stroke=\"#ffffff\" stroke-width=\"4\" paint-order=\"stroke\">{F(niveau)} A/m</text>");
         }
     }

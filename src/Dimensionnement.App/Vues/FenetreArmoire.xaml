@@ -37,6 +37,14 @@
             </WrapPanel>
         </Border>
 
+        <Border DockPanel.Dock="Top" Background="#3A1F22" BorderBrush="#F85149" BorderThickness="1" CornerRadius="3" Padding="10,8" Margin="0,0,0,8"
+                Visibility="{Binding Resultat.Armoire.Alerte, Converter={StaticResource VideMasque}}">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Left" FontFamily="{StaticResource Icones}" Text="&#xE7BA;" Foreground="#F85149" FontSize="16" Margin="0,0,8,0"/>
+                <TextBlock TextWrapping="Wrap" FontWeight="SemiBold" Text="{Binding Resultat.Armoire.Alerte}"/>
+            </DockPanel>
+        </Border>
+
         <Border DockPanel.Dock="Right" Width="360" Style="{StaticResource CadrePanneau}" Margin="8,0,0,0">
             <DockPanel>
                 <TextBlock DockPanel.Dock="Top" Text="CONTRÔLES DE L'IMPLANTATION" Style="{StaticResource TitrePanneau}"/>

@@ -42,10 +42,13 @@ public static class ListeDevis
     {
         if (r.Armoire is not { } a) return;
         var sol = a.Type == "Armoire au sol";
+        // L'enveloppe et ses accessoires viennent du fabricant d'enveloppes retenu (Rittal, Legrand ou Schneider).
+        var marque = a.Marque.Length > 0 ? $"{a.Marque} – {a.Gamme}" : fabricant;
+        fabricant = a.Marque.Length > 0 ? a.Marque : fabricant;
         l.Add(new(Enveloppe, sol ? "Armoire électrique au sol" : "Coffret électrique mural",
             $"{N(a.Largeur)} × {N(a.Hauteur)} × {N(a.Profondeur)} mm, {CalculThermique.LibelleMateriau(r.Projet.Armoire.Materiau)}, IP55",
-            fabricant, "", a.Cellules, "u", Remarque: a.Cellules > 1 ? "Cellules juxtaposables" : ""));
-        l.Add(new(Enveloppe, "Plaque de montage", $"pour enveloppe {N(a.Largeur)} × {N(a.Hauteur)} mm", fabricant, "", a.Cellules, "u"));
+            marque, a.Reference, a.Cellules, "u", Remarque: a.Cellules > 1 ? "Cellules juxtaposables" : ""));
+        l.Add(new(Enveloppe, "Plaque de montage", $"surface utile {N(a.PlaqueLargeur)} × {N(a.PlaqueHauteur)} mm", marque, a.ReferencePlaque, a.Cellules, "u"));
         if (sol)
         {
             l.Add(new(Enveloppe, "Socle", $"hauteur 100 mm, largeur {N(a.Largeur)} mm", fabricant, "", a.Cellules, "u"));

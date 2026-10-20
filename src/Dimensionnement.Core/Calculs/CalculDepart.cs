@@ -35,10 +35,13 @@ public static class CalculDepart
     const string RefContacteur = "NF EN 60947-4-1, catégories d'emploi";
 
     /// <param name="consommation24V">Consommation 24 V DC du projet, en A, pour les départs d'alimentation 24 V.</param>
-    public static ResultatDepart Calculer(Depart depart, Reseau reseau, double chuteAmont = 0, double consommation24V = 0) => depart switch
+    /// <param name="fabricant">Fabricant du projet, marque des variateurs laissés au choix du projet.</param>
+    /// <param name="variateurs">Catalogue des variateurs ; le catalogue embarqué par défaut.</param>
+    public static ResultatDepart Calculer(Depart depart, Reseau reseau, double chuteAmont = 0, double consommation24V = 0,
+        FabricantMateriel fabricant = FabricantMateriel.Schneider, IReadOnlyList<ModeleVariateur>? variateurs = null) => depart switch
     {
         DepartAlimentation24V a => Alimentation24V(a, reseau, chuteAmont, consommation24V),
-        DepartMoteur m => Moteur(m, reseau, chuteAmont),
+        DepartMoteur m => Moteur(m, reseau, chuteAmont, fabricant, variateurs ?? CatalogueVariateurs.Charger()),
         DepartResistif r => Resistif(r, reseau, chuteAmont),
         DepartPrise p => Prise(p, reseau, chuteAmont),
         DepartGenerique g => Generique(g, reseau, chuteAmont),
@@ -52,7 +55,7 @@ public static class CalculDepart
 
     static NoteDeCalcul NouvelleNote(Depart d) => new($"D{d.Numero:00}", d.Forcages);
 
-    static ResultatDepart Moteur(DepartMoteur m, Reseau reseau, double chuteAmont)
+    static ResultatDepart Moteur(DepartMoteur m, Reseau reseau, double chuteAmont, FabricantMateriel fabricant, IReadOnlyList<ModeleVariateur> variateurs)
     {
         var note = NouvelleNote(m);
         var u = Tension(m.Alimentation);
@@ -100,8 +103,28 @@ public static class CalculDepart
             note.Info("Variateur", $"Courant de sortie assigné ≥ {A(ib)} en service normal ; vérifier la surcharge nécessaire au process.");
             note.Info("CEM", "Câble moteur blindé, blindage repris à 360° aux deux extrémités, filtre CEM côté réseau.",
                 "Directive 2014/30/UE ; NF EN 61800-3");
-            avalProtection = avalProtection.Ajouter(Element($"U{n}", "Variateur", "Variateur de fréquence",
-                $"{N(m.PuissanceKw)} kW, sortie ≥ {A(ib)}").Avec(ib, puissanceKw: m.PuissanceKw));
+            var marque = CatalogueVariateurs.Marque(m.MarqueVariateur, fabricant);
+            var modele = CatalogueVariateurs.Choisir(marque, m.PuissanceKw, ib, variateurs);
+            var variateur = Element($"U{n}", "Variateur", "Variateur de fréquence",
+                modele is null ? $"{N(m.PuissanceKw)} kW, sortie ≥ {A(ib)}" : $"{N(modele.Kw)} kW, {A(modele.Courant)}, {modele.Taille}")
+                .Avec(modele?.Courant ?? ib, puissanceKw: m.PuissanceKw);
+            if (modele is not null)
+            {
+                variateur.Fabricant = $"{marque} – {modele.Gamme}";
+                variateur.Reference = modele.Reference;
+                variateur.LargeurMm = modele.Largeur;
+                variateur.HauteurMm = modele.Hauteur;
+                variateur.ProfondeurMm = modele.Profondeur;
+                variateur.PertesW = modele.Pertes;
+            }
+            note.Verifier("Variateur retenu", modele is not null,
+                modele is null
+                    ? $"Aucun variateur {marque} du catalogue ne couvre {N(m.PuissanceKw)} kW et {A(ib)} : choisir une autre marque ou compléter le catalogue."
+                    : $"{marque} {modele.Gamme}, taille {modele.Taille} : {modele.Reference}, {N(modele.Kw)} kW, {A(modele.Courant)} ; " +
+                      $"{N(modele.Largeur)} × {N(modele.Hauteur)} × {N(modele.Profondeur)} mm (L × H × P), pertes ≈ {N(modele.Pertes)} W" +
+                      (modele.Verifie ? "." : " (indicatif, à vérifier sur la fiche du fabricant)."),
+                "Catalogues ABB, Siemens, Schneider ; NF EN 61800-2", StatutCalcul.Alerte);
+            avalProtection = avalProtection.Ajouter(variateur);
         }
         else if (m.Protection == TypeProtection.Fusibles)
         {

@@ -35,8 +35,11 @@ public class Version3Tests
     {
         var a = CalculProjet.Calculer(ProjetMachine()).Armoire!;
 
-        Assert.Equal((600, 1400, 400, 1), (a.Largeur, a.Hauteur, a.Profondeur, a.Cellules));
+        // Plus petit coffret Rittal AX dont la plaque de montage reçoit le matériel avec 25 % de réserve.
+        Assert.Equal((800, 1200, 300, 1), (a.Largeur, a.Hauteur, a.Profondeur, a.Cellules));
         Assert.Equal("Coffret mural", a.Type);
+        Assert.Equal("AX 800 × 1200 × 300", a.Reference);
+        Assert.Equal((740, 1140), (a.PlaqueLargeur, a.PlaqueHauteur));
         Assert.DoesNotContain(a.Note.Lignes, l => l.Statut is StatutCalcul.Alerte or StatutCalcul.NonConforme);
         var basPropre = a.Appareils.Where(x => x.Zone == ZoneCem.Propre).Max(x => x.Y + x.Hauteur);
         var hautSale = a.Appareils.Where(x => x.Zone == ZoneCem.Sale).Min(x => x.Y);
@@ -44,7 +47,8 @@ public class Version3Tests
         Assert.Contains(a.Appareils, x => x.Repere == "X1");
         Assert.Contains(a.Appareils, x => x.Repere == "X2");
         Assert.DoesNotContain(a.Appareils, x => x.Famille is "Moteur" or "Câble" or "Fusible");
-        Assert.All(a.Appareils, x => Assert.True(x.X + x.Largeur <= a.Largeur - CalculArmoire.MargeLaterale + 0.1));
+        Assert.All(a.Appareils, x => Assert.True(x.X >= a.PlaqueX + CalculArmoire.MargeLaterale - 0.1
+                                                 && x.X + x.Largeur <= a.PlaqueX + a.PlaqueLargeur - CalculArmoire.MargeLaterale + 0.1));
     }
 
     [Fact]
@@ -109,9 +113,10 @@ public class Version3Tests
 
         var t = CalculProjet.Calculer(projet).Thermique!;
 
-        // Évacué par l'enveloppe : 5,5 × 2,52 × 5 = 69,3 W ; V = 3,1 × (500 − 69,3) / 5 = 267 m³/h ; × 1,3 = 347 → 550 m³/h.
+        // Coffret 800 × 1200 × 300 adossé : Ae = 1,4 × 0,8 × 1,5 + 1,8 × 0,3 × 1,2 = 2,328 m².
+        // Évacué par l'enveloppe : 5,5 × 2,328 × 5 = 64 W ; V = 3,1 × (500 − 64) / 5 = 270 m³/h ; × 1,3 = 351 → 550 m³/h.
         Assert.Equal(SolutionThermique.Ventilation, t.Solution);
-        Assert.Equal(267, t.DebitNecessaire, 0);
+        Assert.Equal(270.3, t.DebitNecessaire, 1);
         Assert.Equal(550, t.Ventilateur);
         Assert.Equal(75, t.Resistance);
     }
@@ -138,8 +143,8 @@ public class Version3Tests
 
         // Q2 : disjoncteur moteur 4–6,3 A réglé à 4,9 A ; pertes nominales 1,5 + 0,2 × 6,3 W, charge (4,9 / 4,9)² = 1.
         Assert.Equal(1.5 + 0.2 * 6.3, postes.Single(p => p.Repere == "Q2").PuissanceW, 2);
-        // U1 : variateur 7,5 kW, 15 + 30 × 7,5 = 240 W.
-        Assert.Equal(240, postes.Single(p => p.Repere == "U1").PuissanceW, 1);
+        // U1 : ATV320 7,5 kW du catalogue des variateurs, pertes 25 + 28 × 7,5 = 235 W.
+        Assert.Equal(235, postes.Single(p => p.Repere == "U1").PuissanceW, 1);
     }
 
     [Fact]
@@ -204,7 +209,8 @@ public class Version3Tests
         var elements = r.Arbre.Parcourir().ToList();
         Assert.StartsWith("Schneider", elements.Single(e => e.Repere == "U1").Fabricant);
         Assert.Equal("REF-CLIENT-42", elements.Single(e => e.Repere == "KM2").Reference);
-        Assert.Contains(r.References!.Note.Lignes, l => l.Libelle == "Autre fabricant" && l.Message.Contains("U1"));
+        // Legrand ne fait pas de variateurs : le variateur est choisi chez Schneider.
+        Assert.Contains(r.Departs[0].Note.Lignes, l => l.Libelle == "Variateur retenu" && l.Message.Contains("ATV320"));
     }
 
     [Fact]
@@ -271,6 +277,103 @@ public class ChampMagnetiqueTests
         Assert.Equal(83.0, s.Rayon(30), 1);
         Assert.Equal(30, s.H(s.Rayon(30), 0), 6);
         Assert.Equal(s.H(25, 0), s.H(5, 0));
+    }
+
+    [Fact]
+    public void Variateur_choisi_par_marque_avec_son_encombrement()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        var d01 = (DepartMoteur)projet.Departs[0];
+        d01.MarqueVariateur = MarqueVariateur.ABB;
+
+        var r = CalculProjet.Calculer(projet);
+
+        var u1 = r.Arbre.Parcourir().Single(e => e.Repere == "U1");
+        Assert.StartsWith("ABB", u1.Fabricant);
+        Assert.StartsWith("ACS380", u1.Reference);
+        Assert.True(u1.LargeurMm > 0 && u1.HauteurMm > 0);
+        Assert.Equal(u1.LargeurMm, r.Armoire!.Appareils.Single(a => a.Repere == "U1").Largeur);
+    }
+
+    [Fact]
+    public void Variateurs_regroupes_cote_a_cote_dans_la_zone_sale()
+    {
+        var projet = new Projet();
+        for (var i = 0; i < 4; i++)
+            projet.Ajouter(new DepartMoteur { PuissanceKw = 4, Demarrage = ModeDemarrage.Variateur });
+        for (var i = 0; i < 3; i++)
+            projet.Ajouter(new DepartMoteur { PuissanceKw = 2.2 });
+
+        var a = CalculProjet.Calculer(projet).Armoire!;
+
+        var variateurs = a.Appareils.Where(x => x.Famille == "Variateur").ToList();
+        var contacteurs = a.Appareils.Where(x => x.Famille == "Contacteur").ToList();
+        // Côte à côte sur une même ligne, sans autre appareil intercalé : soit sur le côté, soit en rangée au bas de la zone sale.
+        Assert.Single(variateurs.Select(v => v.Y).Distinct());
+        Assert.DoesNotContain(a.Appareils.Except(variateurs), x =>
+            x.X < variateurs.Max(v => v.X + v.Largeur) && x.X + x.Largeur > variateurs.Min(v => v.X)
+            && x.Y < variateurs.Max(v => v.Y + v.Hauteur) && x.Y + x.Hauteur > variateurs.Min(v => v.Y));
+        Assert.True(variateurs.Min(v => v.Y) >= contacteurs.Min(c => c.Y) || variateurs.Min(v => v.X) > contacteurs.Max(c => c.X + c.Largeur));
+    }
+
+    [Fact]
+    public void Variateurs_sur_le_cote_droit_quand_la_place_le_permet()
+    {
+        var projet = new Projet();
+        projet.Ajouter(new DepartMoteur { PuissanceKw = 1.5, Demarrage = ModeDemarrage.Variateur });
+        projet.Ajouter(new DepartMoteur { PuissanceKw = 1.5, Demarrage = ModeDemarrage.Variateur });
+        for (var i = 0; i < 6; i++)
+            projet.Ajouter(new DepartMoteur { PuissanceKw = 2.2, Demarrage = ModeDemarrage.Inverseur });
+
+        var a = CalculProjet.Calculer(projet).Armoire!;
+
+        var variateurs = a.Appareils.Where(x => x.Famille == "Variateur").ToList();
+        var contacteurs = a.Appareils.Where(x => x.Famille == "Contacteur").ToList();
+        Assert.True(variateurs.Min(v => v.X) > contacteurs.Max(c => c.X + c.Largeur));
+        Assert.Contains(a.Bandes, b => !b.Rail && b.Zone == ZoneCem.Sale);
+    }
+
+    [Fact]
+    public void Taille_imposee_trop_petite_signalee_impossible()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        projet.Armoire.TailleImposee = true;
+        (projet.Armoire.LargeurImposee, projet.Armoire.HauteurImposee, projet.Armoire.ProfondeurImposee) = (400, 500, 250);
+
+        var a = CalculProjet.Calculer(projet).Armoire!;
+
+        Assert.False(a.Tient);
+        Assert.Contains("Impossible", a.Alerte);
+        Assert.Contains(a.Note.Lignes, l => l.Libelle == "Implantation" && l.Statut == StatutCalcul.NonConforme);
+    }
+
+    [Fact]
+    public void Taille_imposee_juste_reduit_la_reserve()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        var auto = CalculProjet.Calculer(projet).Armoire!;
+        projet.Armoire.ReservePourcent = 60;
+        projet.Armoire.TailleImposee = true;
+        (projet.Armoire.LargeurImposee, projet.Armoire.HauteurImposee, projet.Armoire.ProfondeurImposee) = (auto.Largeur, auto.Hauteur, auto.Profondeur);
+
+        var a = CalculProjet.Calculer(projet).Armoire!;
+
+        Assert.True(a.Tient);
+        Assert.True(a.ReserveEffective < 60);
+        Assert.Contains("réserve", a.Alerte);
+        Assert.Equal((auto.Largeur, auto.Hauteur), (a.Largeur, a.Hauteur));
+    }
+
+    [Fact]
+    public void Enveloppe_de_la_marque_choisie()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        projet.Armoire.Marque = MarqueEnveloppe.Schneider;
+
+        var a = CalculProjet.Calculer(projet).Armoire!;
+
+        Assert.StartsWith("NSYS3D", a.Reference);
+        Assert.StartsWith("NSYMM", a.ReferencePlaque);
     }
 
     [Fact]

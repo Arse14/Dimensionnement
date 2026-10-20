@@ -159,6 +159,22 @@
                     <TextBlock Text="Mode de démarrage" Style="{StaticResource Etiquette}"/>
                     <ComboBox ItemsSource="{x:Static inf:Listes.Demarrages}" SelectedItem="{inf:Lien Demarrage}"/>
                 </DockPanel>
+                <DockPanel>
+                    <DockPanel.Style>
+                        <Style TargetType="DockPanel" BasedOn="{StaticResource Ligne}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Demarrage}" Value="{x:Static mod:ModeDemarrage.Variateur}">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DockPanel.Style>
+                    <TextBlock Text="Marque du variateur" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.MarquesVariateur}" SelectedItem="{inf:Lien MarqueVariateur}"
+                              ItemTemplate="{StaticResource ModeleEnum}"
+                              ToolTip="Le modèle, sa taille et son encombrement sont donnés dans la note de calcul (ligne « Variateur retenu »)."/>
+                </DockPanel>
                 <TextBlock Text="Départ" Style="{StaticResource Section}"/>
                 <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ChampsDepart}"/>
             </StackPanel>
@@ -461,12 +477,44 @@
                 <TextBlock Text="ARMOIRE ET IMPLANTATION" Style="{StaticResource TitrePanneau}"/>
                 <TextBlock TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,8"
                            Text="{Binding DataContext.ResumeArmoire, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                <Border Background="#3A1F22" BorderBrush="#F85149" BorderThickness="1" CornerRadius="3" Padding="10,8" Margin="0,0,0,8"
+                        Visibility="{Binding DataContext.Resultat.Armoire.Alerte, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource VideMasque}}">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Left" FontFamily="{StaticResource Icones}" Text="&#xE7BA;" Foreground="#F85149" FontSize="16" Margin="0,0,8,0"/>
+                        <TextBlock TextWrapping="Wrap" FontWeight="SemiBold"
+                                   Text="{Binding DataContext.Resultat.Armoire.Alerte, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    </DockPanel>
+                </Border>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Marque des enveloppes" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.MarquesEnveloppe}" SelectedItem="{inf:Lien Projet.Armoire.Marque}"/>
+                </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Réserve de place sur les rails (%)" Style="{StaticResource Etiquette}"/>
                     <TextBox Text="{inf:Lien Projet.Armoire.ReservePourcent}"/>
                 </DockPanel>
+                <CheckBox x:Name="CaseTailleImposee" Content="Imposer la taille de l'armoire" IsChecked="{inf:Lien Projet.Armoire.TailleImposee}" Margin="0,8,0,4"
+                          ToolTip="L'implantation essaie de tout faire entrer dans cette taille, en réduisant la réserve si besoin ; une alerte signale si c'est impossible."/>
+                <StackPanel IsEnabled="{Binding IsChecked, ElementName=CaseTailleImposee}">
+                    <DockPanel Style="{StaticResource Ligne}">
+                        <TextBlock Text="Largeur d'une cellule (mm)" Style="{StaticResource Etiquette}"/>
+                        <TextBox Text="{inf:Lien Projet.Armoire.LargeurImposee}"/>
+                    </DockPanel>
+                    <DockPanel Style="{StaticResource Ligne}">
+                        <TextBlock Text="Hauteur (mm)" Style="{StaticResource Etiquette}"/>
+                        <TextBox Text="{inf:Lien Projet.Armoire.HauteurImposee}"/>
+                    </DockPanel>
+                    <DockPanel Style="{StaticResource Ligne}">
+                        <TextBlock Text="Profondeur (mm)" Style="{StaticResource Etiquette}"/>
+                        <TextBox Text="{inf:Lien Projet.Armoire.ProfondeurImposee}"/>
+                    </DockPanel>
+                    <DockPanel Style="{StaticResource Ligne}">
+                        <TextBlock Text="Nombre de cellules" Style="{StaticResource Etiquette}"/>
+                        <TextBox Text="{inf:Lien Projet.Armoire.CellulesImposees}"/>
+                    </DockPanel>
+                </StackPanel>
                 <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,4,0,8"
-                           Text="L'enveloppe est la plus petite taille normalisée qui reçoit le matériel. Ses dimensions se forcent depuis la note de calcul ; les appareils se déplacent à la souris dans la vue d'armoire."/>
+                           Text="Sans taille imposée, l'enveloppe est la plus petite du catalogue de la marque dont la plaque de montage reçoit le matériel. Les variateurs sont regroupés côte à côte dans la zone sale ; les appareils se déplacent à la souris dans la vue d'armoire."/>
                 <WrapPanel>
                     <Button Style="{StaticResource BoutonAccent}" Content="Ouvrir la vue d'armoire" Margin="0,0,6,6"
                             Command="{Binding DataContext.OuvrirVueArmoire, RelativeSource={RelativeSource AncestorType=Window}}"/>
@@ -597,7 +645,11 @@
                             Command="{Binding DataContext.ExporterDevis, RelativeSource={RelativeSource AncestorType=Window}}"/>
                     <Button Content="Ouvrir le catalogue" Margin="0,0,6,6"
                             Command="{Binding DataContext.OuvrirCatalogueReferences, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                    <Button Content="Recharger le catalogue" Margin="0,0,6,6"
+                    <Button Content="Catalogue des variateurs" Margin="0,0,6,6"
+                            Command="{Binding DataContext.OuvrirCatalogueVariateurs, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <Button Content="Catalogue des enveloppes" Margin="0,0,6,6"
+                            Command="{Binding DataContext.OuvrirCatalogueEnveloppes, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <Button Content="Recharger les catalogues" Margin="0,0,6,6"
                             Command="{Binding DataContext.RechargerCatalogueReferences, RelativeSource={RelativeSource AncestorType=Window}}"/>
                 </WrapPanel>
             </StackPanel>

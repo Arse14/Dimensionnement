@@ -73,15 +73,18 @@ public static class CalculProjet
     public static ResultatProjet Calculer(Projet projet) => Calculer(projet, CatalogueAutomates.Charger());
 
     public static ResultatProjet Calculer(Projet projet, IReadOnlyList<CpuAutomate> catalogue,
-        IReadOnlyList<ReferenceCatalogue>? references = null)
+        IReadOnlyList<ReferenceCatalogue>? references = null, IReadOnlyList<ModeleVariateur>? variateurs = null,
+        IReadOnlyList<ModeleEnveloppe>? enveloppes = null)
     {
         var reseau = projet.Reseau;
+        variateurs ??= CatalogueVariateurs.Charger();
+        var fabricant = projet.References.Fabricant;
 
         // Le bilan ne dépend pas des câbles : un premier passage donne les puissances, le second
         // recalcule les départs avec la chute de tension consommée par le câble d'arrivée.
         var consommateurs24V = Consommateurs24V(projet);
         var consommation24V = consommateurs24V.Sum(c => c.Courant);
-        var premierPassage = projet.Departs.Select(d => CalculDepart.Calculer(d, reseau, 0, consommation24V)).ToList();
+        var premierPassage = projet.Departs.Select(d => CalculDepart.Calculer(d, reseau, 0, consommation24V, fabricant, variateurs)).ToList();
 
         var note = new NoteDeCalcul("ARR", projet.ForcagesArrivee);
         var p = premierPassage.Sum(r => r.PuissanceActive * r.Depart.CoefficientUtilisation);
@@ -117,7 +120,7 @@ public static class CalculProjet
 
         var cable = CalculCable.Dimensionner(note, reseau.CableArrivee, reseau.Alimentation, qg, ib, cosPhi, reseau, 0);
 
-        var departs = projet.Departs.Select(d => CalculDepart.Calculer(d, reseau, cable.ChuteTension, consommation24V)).ToList();
+        var departs = projet.Departs.Select(d => CalculDepart.Calculer(d, reseau, cable.ChuteTension, consommation24V, fabricant, variateurs)).ToList();
         if (consommation24V > 0)
         {
             note.Info("Bilan 24 V DC", $"Consommation des circuits de commande : {A(consommation24V)}.", "Bilan 24 V DC du projet");
@@ -166,7 +169,7 @@ public static class CalculProjet
             Controles = ControlesConformite.Generer(projet), References = resultatReferences,
         };
         resultat.Selectivite = CalculSelectivite.Calculer(resultat);
-        resultat.Armoire = CalculArmoire.Calculer(resultat, projet);
+        resultat.Armoire = CalculArmoire.Calculer(resultat, projet, enveloppes);
         resultat.Thermique = CalculThermique.Calculer(resultat, resultat.Armoire, projet.Armoire);
         return resultat;
     }
