@@ -24,6 +24,18 @@ note de calcul traçable.
 | Rapport | Rapport complet HTML prêt à imprimer en PDF : garde, données, départs, arbre, notes, bilan, CEM / BT, nomenclature, révisions |
 | Projets | Fichier unique `.dimelec`, réouverture, « Enregistrer sous » pour dupliquer, liste des projets récents |
 
+## Ce qu'ajoute la version 2
+
+| Domaine | Contenu |
+| --- | --- |
+| Protection par fusibles | Sectionneur porte-fusibles et cartouches aM ou gR (avec relais thermique) pour les moteurs, gG pour les autres départs, taille 10×38 à NH |
+| Démarreur progressif | Mode de démarrage supplémentaire, avec contacteur de by-pass et point de contrôle CEM |
+| Alimentation 24 V | Bilan des consommateurs de commande (automate, sécurité, saisie libre), réserve de 25 %, calibre normalisé de l'alimentation et de sa protection |
+| Sécurité machine | Fonctions de sécurité avec PLr (NF EN ISO 13849-1), catégorie, redondance des contacteurs, STO des variateurs, relais Pilz / Schmersal / Siemens / Schneider ou automate de sécurité, export SISTEMA (CSV) |
+| Automate | Siemens et Schneider uniquement : cartes E/S avec réserve et choix de la CPU selon les périphériques et connexions réseau. Le catalogue est modifiable (`%AppData%\Dimensionnement\catalogue-automates.json`) ; ses valeurs sont indicatives et à vérifier sur les fiches constructeur |
+| Contrôles CEM / BT | Liste de points à cocher, enregistrée dans le projet et reprise dans le rapport |
+| Exports | Rapport PDF direct (WebView2, repli en HTML si indisponible), nomenclature et notes de calcul en Excel |
+
 ## Organisation
 
 ```

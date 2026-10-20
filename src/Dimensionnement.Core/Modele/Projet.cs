@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace Dimensionnement.Core.Modele;
 
 public class Projet
@@ -25,7 +27,7 @@ public class Projet
     public Dictionary<string, bool> Controles { get; set; } = new();
 
     /// <summary>Consommateurs 24 V DC déclarés à la main, en plus de ceux que le projet déduit.</summary>
-    public List<Consommateur24V> Consommateurs24V { get; set; } = new();
+    public ObservableCollection<Consommateur24V> Consommateurs24V { get; set; } = new();
 
     /// <summary>Valeurs forcées de l'arrivée (simultanéité, calibres de tête, section d'arrivée).</summary>
     public Dictionary<string, Forcage> ForcagesArrivee { get; set; } = new();

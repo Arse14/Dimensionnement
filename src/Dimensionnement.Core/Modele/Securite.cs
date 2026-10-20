@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 
 namespace Dimensionnement.Core.Modele;
@@ -53,5 +54,5 @@ public class ConfigurationSecurite
     /// <summary>Impose un automate de sécurité même pour peu de fonctions.</summary>
     public bool ImposerAutomate { get; set; }
 
-    public List<FonctionSecurite> Fonctions { get; set; } = new();
+    public ObservableCollection<FonctionSecurite> Fonctions { get; set; } = new();
 }

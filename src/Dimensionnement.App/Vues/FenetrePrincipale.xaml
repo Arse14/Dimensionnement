@@ -5,6 +5,7 @@
         xmlns:mod="clr-namespace:Dimensionnement.Core.Modele;assembly=Dimensionnement.Core"
         xmlns:mat="clr-namespace:Dimensionnement.Core.Materiel;assembly=Dimensionnement.Core"
         xmlns:calc="clr-namespace:Dimensionnement.Core.Calculs;assembly=Dimensionnement.Core"
+        xmlns:mv="clr-namespace:Dimensionnement.App.ModelesVue"
         Title="{Binding Titre}" Width="1440" Height="880" MinWidth="1100" MinHeight="640"
         WindowStartupLocation="CenterScreen" Background="{StaticResource Fond}"
         Foreground="{StaticResource Texte}" FontFamily="Segoe UI" FontSize="13"
@@ -60,6 +61,10 @@
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Protection différentielle" Style="{StaticResource Etiquette}"/>
                     <ComboBox ItemsSource="{x:Static inf:Listes.Differentiels}" SelectedItem="{inf:Lien Differentiel}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Protection contre les surintensités" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.Protections}" SelectedItem="{inf:Lien Protection}"/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Coefficient d'utilisation ku" Style="{StaticResource Etiquette}"/>
@@ -217,6 +222,239 @@
             </StackPanel>
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type mod:DepartAlimentation24V}">
+            <StackPanel>
+                <TextBlock Style="{StaticResource TitrePanneau}">
+                    <Run Text="ALIMENTATION 24 V DC D"/><Run Text="{Binding Numero, Mode=OneWay, StringFormat={}{0:00}}"/>
+                </TextBlock>
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8">
+                    <Run Text="Dimensionnée sur le bilan 24 V du projet :"/>
+                    <Run Text="{Binding DataContext.Resultat.Consommation24V, Mode=OneWay, RelativeSource={RelativeSource AncestorType=Window}, StringFormat={}{0:0.00} A}" FontWeight="SemiBold"/>
+                    <Run Text="(page « Bilan 24 V » pour déclarer les consommateurs)."/>
+                </TextBlock>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Rendement de l'alimentation" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien Rendement}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Réserve (%)" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien ReservePourcent}"/>
+                </DockPanel>
+                <TextBlock Text="Départ" Style="{StaticResource Section}"/>
+                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ChampsDepart}"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- Bilan 24 V DC -->
+        <DataTemplate DataType="{x:Type mv:PageBilan24V}">
+            <StackPanel>
+                <TextBlock Text="BILAN 24 V DC" Style="{StaticResource TitrePanneau}"/>
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
+                           Text="Consommateurs déclarés à la main ; les automates et la logique de sécurité sont ajoutés automatiquement."/>
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/><ColumnDefinition Width="90"/><ColumnDefinition Width="70"/><ColumnDefinition Width="34"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Désignation" Foreground="{StaticResource TexteSecondaire}"/>
+                    <TextBlock Grid.Column="1" Text="mA unitaire" Foreground="{StaticResource TexteSecondaire}" Margin="6,0,0,0"/>
+                    <TextBlock Grid.Column="2" Text="Quantité" Foreground="{StaticResource TexteSecondaire}" Margin="6,0,0,0"/>
+                </Grid>
+                <ItemsControl ItemsSource="{Binding Projet.Consommateurs24V}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type mod:Consommateur24V}">
+                            <Grid Margin="0,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/><ColumnDefinition Width="90"/><ColumnDefinition Width="70"/><ColumnDefinition Width="34"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{inf:Lien Designation}"/>
+                                <TextBox Grid.Column="1" Margin="6,0,0,0" Text="{inf:Lien CourantMa}"/>
+                                <TextBox Grid.Column="2" Margin="6,0,0,0" Text="{inf:Lien Quantite}"/>
+                                <Button Grid.Column="3" Margin="6,0,0,0" Style="{StaticResource BoutonPetit}" ToolTip="Retirer"
+                                        Command="{Binding DataContext.SupprimerConsommateur, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}">
+                                    <TextBlock FontFamily="{StaticResource Icones}" Text="&#xE711;"/>
+                                </Button>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button Content="Ajouter un consommateur" HorizontalAlignment="Left" Margin="0,8,0,0"
+                        Command="{Binding DataContext.AjouterConsommateur, RelativeSource={RelativeSource AncestorType=Window}}"/>
+
+                <TextBlock Text="Bilan retenu" Style="{StaticResource Section}"/>
+                <ItemsControl ItemsSource="{Binding DataContext.Resultat.Consommateurs24V, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel Margin="0,2">
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding Courant, StringFormat={}{0:0.000} A}" FontFamily="Consolas, Segoe UI"/>
+                                <TextBlock Text="{Binding Designation}" Foreground="{StaticResource TexteSecondaire}"/>
+                            </DockPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <DockPanel Margin="0,6,0,0">
+                    <TextBlock DockPanel.Dock="Right" FontWeight="SemiBold" Foreground="{StaticResource Accent}" FontFamily="Consolas, Segoe UI"
+                               Text="{Binding DataContext.Resultat.Consommation24V, RelativeSource={RelativeSource AncestorType=Window}, StringFormat={}{0:0.000} A}"/>
+                    <TextBlock Text="Total 24 V DC" FontWeight="SemiBold"/>
+                </DockPanel>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- Liste de contrôle CEM et basse tension -->
+        <DataTemplate DataType="{x:Type mv:PageControles}">
+            <StackPanel>
+                <TextBlock Text="LISTE DE CONTRÔLE CEM 2014/30/UE ET BASSE TENSION 2014/35/UE" Style="{StaticResource TitrePanneau}" TextWrapping="Wrap"/>
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
+                           Text="Cochez chaque point vérifié : l'état est enregistré dans le projet et repris dans le rapport."/>
+                <ItemsControl ItemsSource="{Binding DataContext.Resultat.Controles, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type calc:PointControle}">
+                            <Border BorderBrush="{StaticResource Bordure}" BorderThickness="0,0,0,1" Padding="0,6">
+                                <DockPanel>
+                                    <CheckBox DockPanel.Dock="Left" Margin="0,2,10,0" VerticalAlignment="Top" IsChecked="{inf:Lien Fait}"/>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Libelle}" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding Reference}" FontSize="11" FontStyle="Italic" Foreground="{StaticResource TexteSecondaire}"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- Sécurité machine -->
+        <DataTemplate DataType="{x:Type mod:ConfigurationSecurite}">
+            <StackPanel>
+                <TextBlock Text="SÉCURITÉ MACHINE – NF EN ISO 13849-1" Style="{StaticResource TitrePanneau}"/>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Fabricant de la logique de sécurité" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.FabricantsSecurite}" SelectedItem="{inf:Lien Fabricant}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Imposer un automate de sécurité" Style="{StaticResource Etiquette}"/>
+                    <CheckBox IsChecked="{inf:Lien ImposerAutomate}"/>
+                </DockPanel>
+
+                <TextBlock Text="Fonctions de sécurité" Style="{StaticResource Section}"/>
+                <ItemsControl ItemsSource="{Binding Fonctions}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type mod:FonctionSecurite}">
+                            <Border Background="{StaticResource PanneauClair}" CornerRadius="4" Padding="10" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <DockPanel Style="{StaticResource Ligne}">
+                                        <Button DockPanel.Dock="Right" Margin="6,0,0,0" Style="{StaticResource BoutonPetit}" ToolTip="Supprimer la fonction"
+                                                Command="{Binding DataContext.SupprimerFonction, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}">
+                                            <TextBlock FontFamily="{StaticResource Icones}" Text="&#xE74D;"/>
+                                        </Button>
+                                        <TextBlock Text="Nom" Style="{StaticResource Etiquette}"/>
+                                        <TextBox Text="{inf:Lien Nom}"/>
+                                    </DockPanel>
+                                    <DockPanel Style="{StaticResource Ligne}">
+                                        <TextBlock Text="Type de fonction" Style="{StaticResource Etiquette}"/>
+                                        <ComboBox ItemsSource="{x:Static inf:Listes.TypesFonction}" SelectedItem="{inf:Lien Type}"/>
+                                    </DockPanel>
+                                    <DockPanel Style="{StaticResource Ligne}">
+                                        <TextBlock Text="Niveau de performance requis" Style="{StaticResource Etiquette}"/>
+                                        <ComboBox ItemsSource="{x:Static inf:Listes.NiveauxPerformance}" SelectedItem="{inf:Lien PLr}"/>
+                                    </DockPanel>
+                                    <DockPanel Style="{StaticResource Ligne}">
+                                        <TextBlock Text="Nombre de capteurs / boutons" Style="{StaticResource Etiquette}"/>
+                                        <TextBox Text="{inf:Lien NombreCapteurs}"/>
+                                    </DockPanel>
+                                    <DockPanel Style="{StaticResource Ligne}">
+                                        <TextBlock Text="Départs coupés (ex. 1, 3, 4)" Style="{StaticResource Etiquette}"/>
+                                        <TextBox Text="{inf:Lien DepartsTexte}"/>
+                                    </DockPanel>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                    <Button Content="Ajouter une fonction"
+                            Command="{Binding DataContext.AjouterFonction, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <Button Content="Exporter pour SISTEMA (CSV)"
+                            Command="{Binding DataContext.ExporterSistema, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                </StackPanel>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- Automate -->
+        <DataTemplate DataType="{x:Type mod:ConfigurationAutomate}">
+            <StackPanel>
+                <TextBlock Text="AUTOMATE – CHOIX DE LA CPU" Style="{StaticResource TitrePanneau}"/>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Le projet comporte un automate" Style="{StaticResource Etiquette}"/>
+                    <CheckBox IsChecked="{inf:Lien Actif}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Marque" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.MarquesAutomate}" SelectedItem="{inf:Lien Marque}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Sécurité intégrée (CPU F / Safety)" Style="{StaticResource Etiquette}"/>
+                    <CheckBox IsChecked="{inf:Lien SecuriteIntegree}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Réserve (%)" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien ReservePourcent}"/>
+                </DockPanel>
+
+                <TextBlock Text="Charge de communication" Style="{StaticResource Section}"/>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Îlots d'E/S et esclaves réseau" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien PeripheriquesReseau}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Variateurs pilotés par bus" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien VariateursBus}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Pupitres IHM" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien Ihm}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Clients OPC UA / supervision" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien ClientsOpcUa}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Échanges avec d'autres automates" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien EchangesAutomates}"/>
+                </DockPanel>
+
+                <TextBlock Text="Entrées / sorties" Style="{StaticResource Section}"/>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Entrées TOR" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien EntreesTor}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Sorties TOR" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien SortiesTor}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Entrées analogiques" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien EntreesAnalogiques}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Sorties analogiques" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien SortiesAnalogiques}"/>
+                </DockPanel>
+
+                <TextBlock Text="Catalogue des CPU" Style="{StaticResource Section}"/>
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
+                           Text="Les capacités des CPU sont indicatives tant qu'elles ne sont pas validées : ouvrez le catalogue, complétez-le d'après les fiches techniques et passez « verifie » à true, puis rechargez."/>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="Ouvrir le catalogue"
+                            Command="{Binding DataContext.OuvrirCatalogue, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <Button Content="Recharger le catalogue"
+                            Command="{Binding DataContext.RechargerCatalogue, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                </StackPanel>
+            </StackPanel>
+        </DataTemplate>
+
         <!-- Arbre du matériel -->
         <HierarchicalDataTemplate DataType="{x:Type mat:ElementMateriel}" ItemsSource="{Binding Enfants}">
             <StackPanel Orientation="Horizontal" Margin="0,2"
@@ -317,14 +555,20 @@
                     <Button Style="{StaticResource BoutonOutil}" Command="{Binding AjouterResistif}" Content="Résistance"/>
                     <Button Style="{StaticResource BoutonOutil}" Command="{Binding AjouterPrise}" Content="Prise"/>
                     <Button Style="{StaticResource BoutonOutil}" Command="{Binding AjouterGenerique}" Content="Autre charge"/>
+                    <Button Style="{StaticResource BoutonOutil}" Command="{Binding AjouterAlimentation}" Content="Alim. 24 V"/>
                     <Button Style="{StaticResource BoutonOutil}" Command="{Binding Supprimer}" ToolTip="Supprimer le départ sélectionné (Suppr)">
                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE74D;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Supprimer"/></StackPanel>
                     </Button>
                 </StackPanel>
-                <Button DockPanel.Dock="Right" Style="{StaticResource BoutonAccent}" Command="{Binding Rapport}" HorizontalAlignment="Right"
-                        ToolTip="Générer le rapport complet du projet (Ctrl+P)">
-                    <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE749;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Rapport du projet"/></StackPanel>
-                </Button>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Command="{Binding ExporterExcel}" ToolTip="Nomenclature, départs, notes de calcul et contrôles au format Excel">
+                        <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE80A;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Excel"/></StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource BoutonAccent}" Command="{Binding Rapport}" Margin="0"
+                            ToolTip="Générer le rapport complet du projet en PDF (Ctrl+P)">
+                        <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE749;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Rapport PDF"/></StackPanel>
+                    </Button>
+                </StackPanel>
             </DockPanel>
         </Border>
 
@@ -393,11 +637,14 @@
 
             <Border Style="{StaticResource CadrePanneau}">
                 <DockPanel>
-                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,4">
-                        <Button DockPanel.Dock="Right" Style="{StaticResource BoutonPetit}" Content="Projet et réseau"
-                                Command="{Binding AfficherProjet}"/>
-                        <TextBlock Text="ARBRE DU MATÉRIEL" Style="{StaticResource TitrePanneau}"/>
-                    </DockPanel>
+                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                        <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Projet et réseau" Command="{Binding AfficherProjet}"/>
+                        <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Sécurité machine" Command="{Binding AfficherSecurite}"/>
+                        <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Automate" Command="{Binding AfficherAutomate}"/>
+                        <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Bilan 24 V" Command="{Binding AfficherBilan24V}"/>
+                        <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Contrôles CEM / BT" Command="{Binding AfficherControles}"/>
+                    </WrapPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="ARBRE DU MATÉRIEL" Style="{StaticResource TitrePanneau}"/>
                     <TextBlock DockPanel.Dock="Top" Foreground="{StaticResource TexteSecondaire}" TextWrapping="Wrap" Margin="0,0,0,8"
                                Text="De l'arrivée jusqu'à chaque récepteur. Cliquez un appareil pour éditer son départ."/>
                     <TreeView x:Name="ArbreMateriel" ItemsSource="{Binding Arbre}" SelectedItemChanged="ArbreSelection">

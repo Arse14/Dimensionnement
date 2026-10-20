@@ -7,6 +7,7 @@ using Dimensionnement.App.Vues;
 using Dimensionnement.Core.Calculs;
 using Dimensionnement.Core.Materiel;
 using Dimensionnement.Core.Modele;
+using Dimensionnement.Core.Normes;
 using Dimensionnement.Core.Persistance;
 using Dimensionnement.Core.Rapport;
 using Microsoft.Win32;
@@ -18,6 +19,11 @@ public class ModeleVuePrincipal : Observable
     const string Filtre = "Projet de dimensionnement (*.dimelec)|*.dimelec";
     readonly ProjetsRecents _recents = new();
 
+    /// <summary>Catalogue des CPU modifiable par l'utilisateur, à la place du catalogue livré.</summary>
+    static readonly string CheminCatalogue = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueAutomates.NomFichier);
+    IReadOnlyList<CpuAutomate> _catalogue = CatalogueAutomates.Charger(CheminCatalogue);
+
     Projet _projet = new();
     string? _chemin;
     bool _modifie;
@@ -26,7 +32,7 @@ public class ModeleVuePrincipal : Observable
     public ModeleVuePrincipal()
     {
         _selection = _projet;
-        Resultat = CalculProjet.Calculer(_projet);
+        Resultat = CalculProjet.Calculer(_projet, _catalogue);
 
         Nouveau = new Commande(NouveauProjet);
         Ouvrir = new Commande(OuvrirProjet);
@@ -38,9 +44,27 @@ public class ModeleVuePrincipal : Observable
         AjouterPrise = new Commande(() => AjouterDepart(new DepartPrise { Designation = "Prise de courant", Rubrique = "Auxiliaires" }));
         AjouterGenerique = new Commande(() => AjouterDepart(new DepartGenerique
             { Designation = "Charge", PuissanceKw = 1, Rubrique = "Auxiliaires", Alimentation = TypeAlimentation.Mono230 }));
+        AjouterAlimentation = new Commande(() => AjouterDepart(new DepartAlimentation24V()));
         Supprimer = new Commande(SupprimerDepart, () => Selection is Depart);
         Rapport = new Commande(GenererRapport);
+        ExporterExcel = new Commande(EnregistrerExcel);
+        ExporterSistema = new Commande(EnregistrerSistema, () => _projet.Securite.Fonctions.Count > 0);
         AfficherProjet = new Commande(() => Selection = _projet);
+        AfficherSecurite = new Commande(() => Selection = _projet.Securite);
+        AfficherAutomate = new Commande(() => Selection = _projet.Automate);
+        AfficherBilan24V = new Commande(() => Selection = new PageBilan24V(_projet));
+        AfficherControles = new Commande(() => Selection = new PageControles(_projet));
+        AjouterConsommateur = new Commande(() => Modifier(() => _projet.Consommateurs24V.Add(new Consommateur24V { Designation = "Consommateur", CourantMa = 100 })));
+        SupprimerConsommateur = new Commande(p => Modifier(() => _projet.Consommateurs24V.Remove((Consommateur24V)p!)), p => p is Consommateur24V);
+        AjouterFonction = new Commande(() => Modifier(() => _projet.Securite.Fonctions.Add(new FonctionSecurite
+            { Nom = $"Fonction {_projet.Securite.Fonctions.Count + 1}" })));
+        SupprimerFonction = new Commande(p => Modifier(() => _projet.Securite.Fonctions.Remove((FonctionSecurite)p!)), p => p is FonctionSecurite);
+        OuvrirCatalogue = new Commande(OuvrirCatalogueAutomates);
+        RechargerCatalogue = new Commande(() =>
+        {
+            _catalogue = CatalogueAutomates.Charger(CheminCatalogue);
+            Recalculer();
+        });
         Forcer = new Commande(p => ForcerValeur(p as LigneCalcul), p => p is LigneCalcul { Forcable: true });
         AnnulerForcage = new Commande(p => AnnulerValeur(p as LigneCalcul), p => p is LigneCalcul { Forcage: not null });
         Recents = new ObservableCollection<string>(_recents.Lire());
@@ -54,9 +78,22 @@ public class ModeleVuePrincipal : Observable
     public Commande AjouterResistif { get; }
     public Commande AjouterPrise { get; }
     public Commande AjouterGenerique { get; }
+    public Commande AjouterAlimentation { get; }
     public Commande Supprimer { get; }
     public Commande Rapport { get; }
+    public Commande ExporterExcel { get; }
+    public Commande ExporterSistema { get; }
     public Commande AfficherProjet { get; }
+    public Commande AfficherSecurite { get; }
+    public Commande AfficherAutomate { get; }
+    public Commande AfficherBilan24V { get; }
+    public Commande AfficherControles { get; }
+    public Commande AjouterConsommateur { get; }
+    public Commande SupprimerConsommateur { get; }
+    public Commande AjouterFonction { get; }
+    public Commande SupprimerFonction { get; }
+    public Commande OuvrirCatalogue { get; }
+    public Commande RechargerCatalogue { get; }
     public Commande Forcer { get; }
     public Commande AnnulerForcage { get; }
 
@@ -82,13 +119,21 @@ public class ModeleVuePrincipal : Observable
         }
     }
 
-    public NoteDeCalcul Note => Selection is Depart d
-        ? Resultat.Departs.FirstOrDefault(r => r.Depart == d)?.Note ?? Resultat.NoteArrivee
-        : Resultat.NoteArrivee;
+    public NoteDeCalcul Note => Selection switch
+    {
+        Depart d => Resultat.Departs.FirstOrDefault(r => r.Depart == d)?.Note ?? Resultat.NoteArrivee,
+        ConfigurationSecurite => Resultat.Securite?.Note ?? Resultat.NoteArrivee,
+        ConfigurationAutomate => Resultat.Automate?.Note ?? Resultat.NoteArrivee,
+        _ => Resultat.NoteArrivee,
+    };
 
-    public string TitreNote => Selection is Depart d
-        ? $"NOTE DE CALCUL – D{d.Numero:00} {d.Designation}".ToUpperInvariant()
-        : "NOTE DE CALCUL – ARRIVÉE ET BILAN DE PUISSANCE";
+    public string TitreNote => Selection switch
+    {
+        Depart d => $"NOTE DE CALCUL – D{d.Numero:00} {d.Designation}".ToUpperInvariant(),
+        ConfigurationSecurite => "NOTE DE CALCUL – SÉCURITÉ MACHINE",
+        ConfigurationAutomate => "NOTE DE CALCUL – AUTOMATE",
+        _ => "NOTE DE CALCUL – ARRIVÉE ET BILAN DE PUISSANCE",
+    };
 
     public string Titre => $"Dimensionnement électrique – {_projet.Nom}{(_modifie ? " *" : "")}";
     public string Chemin => _chemin ?? "Projet non enregistré";
@@ -98,13 +143,19 @@ public class ModeleVuePrincipal : Observable
     public void Recalculer()
     {
         _modifie = true;
-        Resultat = CalculProjet.Calculer(_projet);
+        Resultat = CalculProjet.Calculer(_projet, _catalogue);
         SignalerTout();
+    }
+
+    void Modifier(Action action)
+    {
+        action();
+        Recalculer();
     }
 
     void AjouterDepart(Depart depart)
     {
-        depart.Alimentation = depart is DepartPrise or DepartGenerique
+        depart.Alimentation = depart is DepartPrise or DepartGenerique or DepartAlimentation24V
             ? depart.Alimentation
             : _projet.Reseau.Alimentation == TypeAlimentation.Mono230 ? TypeAlimentation.Mono230 : TypeAlimentation.Tri400;
         _projet.Ajouter(depart);
@@ -192,7 +243,7 @@ public class ModeleVuePrincipal : Observable
         _chemin = chemin;
         _selection = projet;
         if (chemin is not null) MemoriserRecent(chemin);
-        Resultat = CalculProjet.Calculer(_projet);
+        Resultat = CalculProjet.Calculer(_projet, _catalogue);
         _modifie = false;
         SignalerTout();
     }
@@ -230,8 +281,11 @@ public class ModeleVuePrincipal : Observable
         foreach (var r in _recents.Lire()) Recents.Add(r);
     }
 
-    void GenererRapport()
+    async void GenererRapport()
     {
+        var chemin = DemanderChemin("Rapport PDF (*.pdf)|*.pdf", $"{NomFichier(_projet.Nom)}-rapport-{NomFichier(_projet.Indice)}.pdf");
+        if (chemin is null) return;
+
         // Chaque émission du rapport est tracée dans l'historique des révisions.
         if (_projet.Revisions.LastOrDefault()?.Indice != _projet.Indice)
         {
@@ -244,21 +298,101 @@ public class ModeleVuePrincipal : Observable
             Recalculer();
         }
 
-        var dossier = _chemin is not null
-            ? Path.GetDirectoryName(_chemin)!
-            : Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        var fichier = Path.Combine(dossier, $"{NomFichier(_projet.Nom)}-rapport-{NomFichier(_projet.Indice)}.html");
+        var html = RapportHtml.Generer(Resultat);
         try
         {
-            File.WriteAllText(fichier, RapportHtml.Generer(Resultat));
-            Process.Start(new ProcessStartInfo(fichier) { UseShellExecute = true });
+            await GenerateurPdf.Generer(html, chemin);
+            AfficherFichier(chemin);
+        }
+        catch (Exception ex)
+        {
+            // Sans moteur WebView2, le rapport reste disponible en HTML, imprimable en PDF depuis le navigateur.
+            var cheminHtml = Path.ChangeExtension(chemin, ".html");
+            try
+            {
+                File.WriteAllText(cheminHtml, html);
+                AfficherFichier(cheminHtml);
+                MessageBox.Show($"Le PDF n'a pas pu être généré ({ex.Message}).\nLe rapport a été enregistré en HTML : " +
+                                "imprimez-le en PDF depuis le navigateur.", "Rapport", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            catch (Exception ex2) when (ex2 is IOException or UnauthorizedAccessException)
+            {
+                Erreur("Impossible de générer le rapport", ex2);
+            }
+        }
+    }
+
+    void EnregistrerExcel()
+    {
+        var chemin = DemanderChemin("Classeur Excel (*.xlsx)|*.xlsx", $"{NomFichier(_projet.Nom)}-nomenclature-{NomFichier(_projet.Indice)}.xlsx");
+        if (chemin is null) return;
+        try
+        {
+            ExportExcel.Enregistrer(Resultat, chemin);
+            AfficherFichier(chemin);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Erreur("Impossible d'enregistrer le classeur Excel", ex);
+        }
+    }
+
+    void EnregistrerSistema()
+    {
+        var chemin = DemanderChemin("Fichier CSV (*.csv)|*.csv", $"{NomFichier(_projet.Nom)}-fonctions-securite.csv");
+        if (chemin is null) return;
+        try
+        {
+            // UTF-8 avec BOM pour qu'Excel affiche correctement les accents.
+            File.WriteAllText(chemin, ExportSistema.Generer(Resultat), new System.Text.UTF8Encoding(true));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Erreur("Impossible d'enregistrer l'export SISTEMA", ex);
+        }
+    }
+
+    void OuvrirCatalogueAutomates()
+    {
+        try
+        {
+            if (!File.Exists(CheminCatalogue))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(CheminCatalogue)!);
+                File.WriteAllText(CheminCatalogue, CatalogueAutomates.TexteEmbarque());
+            }
+            Process.Start(new ProcessStartInfo("notepad.exe", $"\"{CheminCatalogue}\"") { UseShellExecute = true });
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
         {
-            MessageBox.Show($"Impossible de générer le rapport :\n{ex.Message}", "Rapport",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            Erreur("Impossible d'ouvrir le catalogue des automates", ex);
         }
     }
+
+    string? DemanderChemin(string filtre, string nom)
+    {
+        var dialogue = new SaveFileDialog
+        {
+            Filter = filtre, FileName = nom,
+            InitialDirectory = _chemin is not null ? Path.GetDirectoryName(_chemin) : null,
+        };
+        return dialogue.ShowDialog() == true ? dialogue.FileName : null;
+    }
+
+    static void AfficherFichier(string chemin)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(chemin) { UseShellExecute = true });
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            // Aucun programme associé : le fichier est tout de même enregistré.
+        }
+    }
+
+    static void Erreur(string titre, Exception ex) =>
+        MessageBox.Show($"{titre} :\n{ex.Message}", "Dimensionnement électrique", MessageBoxButton.OK, MessageBoxImage.Error);
 
     static string NomFichier(string texte)
     {
