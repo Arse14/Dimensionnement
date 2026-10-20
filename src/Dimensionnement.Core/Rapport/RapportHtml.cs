@@ -99,9 +99,34 @@ public static class RapportHtml
             """);
         Note(sb, r.NoteArrivee);
 
-        sb.Append("<h2>7. Directives CEM et basse tension</h2><table><tr><th>Point de contrôle</th><th>Référence</th></tr>");
-        foreach (var (point, reference) in ListeControle(r))
-            sb.Append($"<tr><td>{E(point)}</td><td>{E(reference)}</td></tr>");
+        if (r.Securite is { Fonctions.Count: > 0 } sec)
+        {
+            sb.Append("<h2>Sécurité machine</h2><table><tr><th>Fonction</th><th>PLr</th><th>Catégorie conseillée</th>" +
+                      "<th>Architecture</th><th>Départs coupés</th></tr>");
+            foreach (var f in sec.Fonctions)
+                sb.Append($"<tr><td>{E(f.Fonction.Nom)}</td><td>{f.Fonction.PLr}</td><td>{f.Categorie}</td>" +
+                          $"<td>{E(f.Architecture)}</td><td>{E(f.Fonction.DepartsTexte)}</td></tr>");
+            sb.Append("</table>");
+            Note(sb, sec.Note);
+        }
+
+        if (r.Automate is { Note.Lignes.Count: > 0 } api)
+        {
+            sb.Append("<h2>Automate</h2>");
+            Note(sb, api.Note);
+        }
+
+        if (r.Consommateurs24V.Count > 0)
+        {
+            sb.Append("<h3>Bilan 24 V DC</h3><table><tr><th>Consommateur</th><th>Courant</th></tr>");
+            foreach (var c in r.Consommateurs24V)
+                sb.Append($"<tr><td>{E(c.Designation)}</td><td>{A(c.Courant)}</td></tr>");
+            sb.Append($"<tr><th>Total</th><th>{A(r.Consommation24V)}</th></tr></table>");
+        }
+
+        sb.Append("<h2>7. Directives CEM et basse tension</h2><table><tr><th>Vérifié</th><th>Point de contrôle</th><th>Référence</th></tr>");
+        foreach (var c in r.Controles)
+            sb.Append($"<tr><td class=\"{(c.Fait ? "Conforme" : "Alerte")}\">{(c.Fait ? "☑ Oui" : "☐ Non")}</td><td>{E(c.Libelle)}</td><td>{E(c.Reference)}</td></tr>");
         sb.Append("</table>");
 
         sb.Append("<h2>8. Nomenclature</h2><table><tr><th>Repères</th><th>Famille</th><th>Désignation</th><th>Calibre</th><th>Qté</th></tr>");
@@ -144,20 +169,6 @@ public static class RapportHtml
             sb.Append("</ul>");
         }
         sb.Append("</li>");
-    }
-
-    static IEnumerable<(string, string)> ListeControle(ResultatProjet r)
-    {
-        yield return ("Séparation des goulottes puissance et commande", "Directive 2014/30/UE ; NF EN 60204-1, 13");
-        yield return ("Plaque de montage métallique non peinte reliée à la terre, liaisons équipotentielles courtes", "Directive 2014/30/UE");
-        if (r.Projet.Departs.OfType<DepartMoteur>().Any(m => m.Demarrage == ModeDemarrage.Variateur))
-        {
-            yield return ("Câbles moteurs blindés, blindage repris à 360° aux deux extrémités", "NF EN 61800-3");
-            yield return ("Filtre CEM côté réseau des variateurs, au plus près de l'appareil", "NF EN 61800-3");
-        }
-        yield return ("Protection contre les contacts directs (IP2X minimum à l'intérieur de l'armoire)", "Directive 2014/35/UE ; NF EN IEC 61439-1");
-        yield return ("Vérification d'échauffement de l'ensemble", "NF EN IEC 61439-1, 10.10");
-        yield return ("Plaque signalétique de l'ensemble, déclaration UE de conformité et marquage CE", "Directive 2014/35/UE ; NF EN IEC 61439-2");
     }
 
     static string Statut(StatutCalcul s) => s switch

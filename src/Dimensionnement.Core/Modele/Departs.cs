@@ -8,6 +8,7 @@ namespace Dimensionnement.Core.Modele;
 [JsonDerivedType(typeof(DepartResistif), "resistif")]
 [JsonDerivedType(typeof(DepartPrise), "prise")]
 [JsonDerivedType(typeof(DepartGenerique), "generique")]
+[JsonDerivedType(typeof(DepartAlimentation24V), "alimentation24v")]
 public abstract class Depart
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -22,6 +23,7 @@ public abstract class Depart
     public TypeAlimentation Alimentation { get; set; } = TypeAlimentation.Tri400;
     public CaracteristiquesCable Cable { get; set; } = new();
     public SensibiliteDifferentiel Differentiel { get; set; } = SensibiliteDifferentiel.Aucun;
+    public TypeProtection Protection { get; set; } = TypeProtection.Disjoncteur;
 
     /// <summary>Coefficient d'utilisation ku.</summary>
     public double CoefficientUtilisation { get; set; } = 1;
@@ -54,6 +56,7 @@ public class DepartMoteur : Depart
         ModeDemarrage.Direct => "Moteur, démarrage direct",
         ModeDemarrage.Inverseur => "Moteur, inverseur de sens",
         ModeDemarrage.EtoileTriangle => "Moteur, étoile-triangle",
+        ModeDemarrage.DemarreurProgressif => "Moteur, démarreur progressif",
         _ => "Moteur sur variateur",
     };
     public override string PrefixeRecepteur => "M";
@@ -94,4 +97,37 @@ public class DepartGenerique : Depart
 
     public override string TypeLibelle => "Charge générique";
     public override string PrefixeRecepteur => "E";
+}
+
+/// <summary>
+/// Alimentation 24 V DC des circuits de commande : dimensionnée sur les consommateurs 24 V du projet
+/// (automates, E/S, relais de sécurité, consommateurs déclarés) avec une réserve.
+/// </summary>
+public class DepartAlimentation24V : Depart
+{
+    /// <summary>Rendement de l'alimentation à découpage.</summary>
+    public double Rendement { get; set; } = 0.9;
+
+    /// <summary>Réserve appliquée sur la consommation, en % (25 % par défaut).</summary>
+    public double ReservePourcent { get; set; } = 25;
+
+    public DepartAlimentation24V()
+    {
+        Alimentation = TypeAlimentation.Mono230;
+        Rubrique = "Commande";
+        Designation = "Alimentation 24 V DC";
+    }
+
+    public override string TypeLibelle => "Alimentation 24 V DC";
+    public override string PrefixeRecepteur => "G";
+}
+
+/// <summary>Consommateur raccordé au 24 V DC (capteurs, voyants, pupitre, électrovannes…).</summary>
+public class Consommateur24V
+{
+    public string Designation { get; set; } = "";
+
+    /// <summary>Courant unitaire, en mA.</summary>
+    public double CourantMa { get; set; }
+    public int Quantite { get; set; } = 1;
 }

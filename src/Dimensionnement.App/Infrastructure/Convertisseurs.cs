@@ -52,6 +52,18 @@ public class LibelleEnum : IValueConverter
         ModeDemarrage.Inverseur => "Inverseur de sens",
         ModeDemarrage.EtoileTriangle => "Étoile-triangle",
         ModeDemarrage.Variateur => "Variateur de fréquence",
+        ModeDemarrage.DemarreurProgressif => "Démarreur progressif",
+        TypeProtection.Disjoncteur => "Disjoncteur",
+        TypeProtection.Fusibles => "Sectionneur porte-fusibles",
+        TypeFonctionSecurite.ArretUrgence => "Arrêt d'urgence",
+        TypeFonctionSecurite.ProtecteurMobile => "Protecteur mobile (porte)",
+        TypeFonctionSecurite.BarriereImmaterielle => "Barrière immatérielle",
+        TypeFonctionSecurite.CommandeBimanuelle => "Commande bimanuelle",
+        TypeFonctionSecurite.ArretSurCouple => "STO variateur",
+        TypeFonctionSecurite.Autre => "Autre fonction",
+        NiveauPerformance p => $"PLr {p}",
+        MarqueAutomate.Siemens => "Siemens (S7-1200, S7-1500)",
+        MarqueAutomate.Schneider => "Schneider Electric (Modicon)",
         MethodePose.A1 => "A1 – conduit encastré dans paroi isolante",
         MethodePose.B1 => "B1 – conduit ou goulotte sur paroi",
         MethodePose.C => "C – câble fixé sur paroi",
@@ -97,5 +109,10 @@ public static class Listes
     public static Isolant[] Isolants { get; } = Enum.GetValues<Isolant>();
     public static CourbeDisjoncteur[] Courbes { get; } = Enum.GetValues<CourbeDisjoncteur>();
     public static SensibiliteDifferentiel[] Differentiels { get; } = Enum.GetValues<SensibiliteDifferentiel>();
+    public static TypeProtection[] Protections { get; } = Enum.GetValues<TypeProtection>();
+    public static FabricantSecurite[] FabricantsSecurite { get; } = Enum.GetValues<FabricantSecurite>();
+    public static TypeFonctionSecurite[] TypesFonction { get; } = Enum.GetValues<TypeFonctionSecurite>();
+    public static NiveauPerformance[] NiveauxPerformance { get; } = Enum.GetValues<NiveauPerformance>();
+    public static MarqueAutomate[] MarquesAutomate { get; } = Enum.GetValues<MarqueAutomate>();
     public static string[] Rubriques { get; } = { "Puissance", "Commande", "Auxiliaires", "Distribution", "Sécurité" };
 }
