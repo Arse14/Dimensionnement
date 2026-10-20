@@ -31,7 +31,7 @@
         <Border DockPanel.Dock="Top" Style="{StaticResource CadrePanneau}" Margin="0,0,0,8">
             <WrapPanel>
                 <CheckBox x:Name="CaseZones" Content="Zones CEM" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"/>
-                <CheckBox x:Name="CaseChamps" Content="Champs électromagnétiques" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                <CheckBox x:Name="CaseChamps" Content="Champ magnétique" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"/>
                 <Button Content="Réinitialiser l'implantation" Command="{Binding ReinitialiserImplantation}" Margin="0,0,16,0"/>
                 <TextBlock Text="{Binding ResumeArmoire}" FontWeight="SemiBold" VerticalAlignment="Center"/>
             </WrapPanel>
@@ -41,7 +41,7 @@
             <DockPanel>
                 <TextBlock DockPanel.Dock="Top" Text="CONTRÔLES DE L'IMPLANTATION" Style="{StaticResource TitrePanneau}"/>
                 <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
-                           Text="Glissez un appareil pour le déplacer (pas de 5 mm). Zone propre en vert, intermédiaire en gris, sale en rose ; le dégradé rouge orangé figure le rayonnement indicatif des variateurs, démarreurs, contacteurs et alimentations."/>
+                           Text="Glissez un appareil pour le déplacer (pas de 5 mm). Zones : propre en vert, intermédiaire en bleu, sale en rouge hachuré. Courbes du champ magnétique calculé selon le courant de chaque source : 10 A/m en orange, 30 A/m en framboise (immunité industrielle NF EN 61000-6-2), 100 A/m en violet. Survolez un appareil pour le champ qu'il reçoit ou émet."/>
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <ItemsControl ItemsSource="{Binding Resultat.Armoire.Note.Lignes}" ItemTemplate="{StaticResource LigneControle}"/>
                 </ScrollViewer>

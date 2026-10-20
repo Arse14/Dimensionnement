@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using Dimensionnement.Core.Armoire;
 using Dimensionnement.Core.Materiel;
+using Dimensionnement.Core.Rapport;
 
 namespace Dimensionnement.App.Infrastructure;
 
@@ -69,22 +70,31 @@ public class VueArmoire : Border
         foreach (var b in a.Bandes)
         {
             if (AfficherZones)
-                Placer(new Rectangle { Width = b.Largeur - 16, Height = b.Hauteur, Fill = Pinceau(Core.Rapport.SchemaArmoire.CouleurZone(b.Zone)),
-                    ToolTip = LibelleEnum.Libelle(b.Zone) }, b.X + 8, b.Y);
+            {
+                var trait = Pinceau(SchemaArmoire.TraitZone(b.Zone));
+                Placer(new Rectangle
+                {
+                    Width = b.Largeur - 16, Height = b.Hauteur, RadiusX = 6, RadiusY = 6,
+                    Fill = Pinceau(SchemaArmoire.CouleurZone(b.Zone)), Stroke = trait, StrokeThickness = 3,
+                    StrokeDashArray = new DoubleCollection { 4, 2 }, ToolTip = LibelleEnum.Libelle(b.Zone),
+                }, b.X + 8, b.Y);
+                if (b.Zone == ZoneCem.Sale)
+                    Placer(new Rectangle { Width = b.Largeur - 16, Height = b.Hauteur, RadiusX = 6, RadiusY = 6, Fill = Hachures, IsHitTestVisible = false },
+                        b.X + 8, b.Y);
+                // Nom de la zone à la verticale dans la marge gauche de la bande, hors des appareils.
+                Placer(new TextBlock
+                {
+                    Text = SchemaArmoire.NomZone(b.Zone), Width = b.Hauteur, TextAlignment = TextAlignment.Center,
+                    FontSize = Math.Min(16, b.Hauteur / 7), FontWeight = FontWeights.Bold, Foreground = trait,
+                    LayoutTransform = new RotateTransform(-90), IsHitTestVisible = false,
+                }, b.X + 8 + (CalculArmoire.MargeLaterale - 8 - 21) / 2, b.Y);
+            }
             Placer(new Rectangle { Width = b.Largeur - 2 * CalculArmoire.MargeLaterale, Height = 8, Fill = Pinceau("#A3ACB5"), IsHitTestVisible = false },
                 b.X + CalculArmoire.MargeLaterale, b.Y + b.Hauteur / 2 - 4);
         }
 
-        if (AfficherChamps)
-            foreach (var s in a.Sources)
-            {
-                var degrade = new RadialGradientBrush();
-                degrade.GradientStops.Add(new GradientStop(Color.FromArgb((byte)(150 * s.Intensite), 0xE5, 0x39, 0x35), 0));
-                degrade.GradientStops.Add(new GradientStop(Color.FromArgb((byte)(70 * s.Intensite), 0xFB, 0x8C, 0x00), 0.6));
-                degrade.GradientStops.Add(new GradientStop(Color.FromArgb(0, 0xFD, 0xD8, 0x35), 1));
-                Placer(new Ellipse { Width = 2 * s.Rayon, Height = 2 * s.Rayon, Fill = degrade, IsHitTestVisible = false },
-                    s.X - s.Rayon, s.Y - s.Rayon);
-            }
+        if (AfficherChamps && a.Sources.Count > 0)
+            DessinerChamp(a);
 
         foreach (var x in a.Appareils)
         {
@@ -96,7 +106,11 @@ public class VueArmoire : Border
                 BorderThickness = new Thickness(x.Manuel ? 4 : 2),
                 Tag = x,
                 ToolTip = $"{x.Repere} – {x.Designation}\n{x.Largeur:0} × {x.Hauteur:0} × {x.Profondeur:0} mm, {x.DissipationW:0.#} W\n" +
-                          $"{LibelleEnum.Libelle(x.Zone)}{(x.Manuel ? "\nPlacé à la main" : "")}",
+                          $"{LibelleEnum.Libelle(x.Zone)}{(x.Manuel ? "\nPlacé à la main" : "")}" +
+                          (a.Expositions.TryGetValue(x.Repere, out var h) ? $"\nChamp reçu ≈ {h:0.#} A/m (immunité industrielle {ChampMagnetique.ImmuniteIndustrielle:0} A/m)" : "") +
+                          (a.Sources.FirstOrDefault(c => c.Repere == x.Repere) is { } src
+                              ? $"\nSource : {src.Courant:0.#} A × k {src.Facteur:0.#} ; 30 A/m jusqu'à {src.Rayon(30):0} mm"
+                              : ""),
                 Child = new Viewbox
                 {
                     Margin = new Thickness(2), StretchDirection = StretchDirection.DownOnly,
@@ -109,6 +123,59 @@ public class VueArmoire : Border
                 bloc.MouseLeftButtonDown += Saisir;
             }
             Placer(bloc, x.X, x.Y);
+        }
+    }
+
+    /// <summary>Hachures obliques de la zone sale : dégradé répété à bords francs.</summary>
+    static readonly Brush Hachures = CreerHachures();
+
+    static Brush CreerHachures()
+    {
+        var couleur = Color.FromArgb(70, 0xC9, 0x2A, 0x2A);
+        var pinceau = new LinearGradientBrush
+        {
+            MappingMode = BrushMappingMode.Absolute, SpreadMethod = GradientSpreadMethod.Repeat,
+            StartPoint = new Point(0, 0), EndPoint = new Point(10, 10),
+            GradientStops =
+            {
+                new GradientStop(Colors.Transparent, 0), new GradientStop(Colors.Transparent, 0.75),
+                new GradientStop(couleur, 0.75), new GradientStop(couleur, 1),
+            },
+        };
+        pinceau.Freeze();
+        return pinceau;
+    }
+
+    /// <summary>Isolignes du champ magnétique (10, 30 et 100 A/m) et leur niveau écrit à côté.</summary>
+    void DessinerChamp(ResultatArmoire a)
+    {
+        var grille = ChampMagnetique.Grille(a.Sources, a.LargeurTotale, a.Hauteur, SchemaArmoire.PasChamp);
+        var etiquettes = new List<(double X, double Y)>();
+        foreach (var (niveau, couleur, libelle) in ChampMagnetique.Isolignes)
+        {
+            var segments = ChampMagnetique.Isoligne(grille, SchemaArmoire.PasChamp, niveau);
+            if (segments.Count == 0) continue;
+            var geometrie = new StreamGeometry();
+            using (var g = geometrie.Open())
+                foreach (var (x1, y1, x2, y2) in segments)
+                {
+                    g.BeginFigure(new Point(x1, y1), false, false);
+                    g.LineTo(new Point(x2, y2), true, false);
+                }
+            geometrie.Freeze();
+            var trait = Pinceau(couleur);
+            Placer(new System.Windows.Shapes.Path
+            {
+                Data = geometrie, Stroke = trait, StrokeThickness = 4, StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round, ToolTip = libelle,
+            }, 0, 0);
+            if (ChampMagnetique.PointEtiquette(segments, a.LargeurTotale, a.Hauteur, etiquettes) is { } p)
+                Placer(new Border
+                {
+                    Background = new SolidColorBrush(Color.FromArgb(220, 255, 255, 255)), CornerRadius = new CornerRadius(3),
+                    Padding = new Thickness(3, 0, 3, 0), IsHitTestVisible = false,
+                    Child = new TextBlock { Text = $"{niveau:0} A/m", FontSize = 16, FontWeight = FontWeights.Bold, Foreground = trait },
+                }, p.X + 6, p.Y - 11);
         }
     }
 

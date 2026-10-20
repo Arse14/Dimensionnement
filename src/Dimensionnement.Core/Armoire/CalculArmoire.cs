@@ -34,9 +34,6 @@ public class AppareilImplante
 /// <summary>Bande d'une zone CEM sur la plaque (une rangée de rail et ses goulottes).</summary>
 public record BandeZone(ZoneCem Zone, double X, double Y, double Largeur, double Hauteur);
 
-/// <summary>Source de perturbations : centre, rayon d'influence indicatif en mm et intensité relative de 0 à 1.</summary>
-public record SourceChamp(string Repere, double X, double Y, double Rayon, double Intensite);
-
 public class ResultatArmoire
 {
     public required NoteDeCalcul Note { get; init; }
@@ -53,6 +50,9 @@ public class ResultatArmoire
     public IReadOnlyList<AppareilImplante> Appareils { get; init; } = Array.Empty<AppareilImplante>();
     public IReadOnlyList<BandeZone> Bandes { get; init; } = Array.Empty<BandeZone>();
     public IReadOnlyList<SourceChamp> Sources { get; init; } = Array.Empty<SourceChamp>();
+
+    /// <summary>Champ magnétique reçu par chaque appareil sensible de la zone propre, en A/m.</summary>
+    public IReadOnlyDictionary<string, double> Expositions { get; init; } = new Dictionary<string, double>();
 
     /// <summary>Longueur de rail DIN et de goulotte nécessaires, en m (pour la liste de matériel).</summary>
     public double LongueurRail { get; init; }
@@ -144,15 +144,15 @@ public static class CalculArmoire
         AppliquerPositionsManuelles(appareils, config, largeur * cellules, hauteur);
         ControlerManuel(note, appareils, implantation.Bandes, largeur * cellules, hauteur);
 
-        var sources = Sources(appareils);
-        ControlerChamps(note, appareils, sources);
+        var sources = ChampMagnetique.Sources(appareils);
+        var expositions = ControlerChamps(note, appareils, sources);
         ControlerSeparation(note, implantation.Bandes);
 
         return new ResultatArmoire
         {
             Note = note, Largeur = largeur, Hauteur = hauteur, Profondeur = profondeur, Cellules = cellules,
             Type = armoire ? "Armoire au sol" : "Coffret mural",
-            Appareils = appareils, Bandes = implantation.Bandes, Sources = sources,
+            Appareils = appareils, Bandes = implantation.Bandes, Sources = sources, Expositions = expositions,
             LongueurRail = implantation.Bandes.Count * (largeur - 2 * MargeLaterale) / 1000,
             LongueurGoulotte = (implantation.Bandes.Count + 1) * (largeur - 2 * MargeLaterale) / 1000 + 2 * cellules * hauteur / 1000,
             Occupation = implantation.Occupation,
@@ -354,50 +354,44 @@ public static class CalculArmoire
                 RefArmoire, StatutCalcul.Alerte);
     }
 
-    /// <summary>Sources de perturbations et rayon d'influence indicatif selon le type et la puissance.</summary>
-    public static List<SourceChamp> Sources(IEnumerable<AppareilImplante> appareils)
+    /// <summary>
+    /// Champ magnétique reçu par les appareils sensibles (automate, E/S, sécurité) comparé à l'immunité industrielle.
+    /// </summary>
+    static Dictionary<string, double> ControlerChamps(NoteDeCalcul note, List<AppareilImplante> appareils, List<SourceChamp> sources)
     {
-        var sources = new List<SourceChamp>();
-        foreach (var a in appareils)
-        {
-            var e = a.Element;
-            (double Rayon, double Intensite)? champ = a.Famille switch
-            {
-                "Variateur" => (120 + 25 * Math.Sqrt(e?.PuissanceKw ?? 1), 1.0),
-                "Démarreur progressif" => (80 + 15 * Math.Sqrt(e?.PuissanceKw ?? 1), 0.6),
-                "Contacteur" => (50 + 0.5 * (e?.Courant ?? 10), 0.35),
-                "Alimentation" => (70, 0.3),
-                "Bornier" when a.Zone == ZoneCem.Sale => (60, 0.25),
-                _ => null,
-            };
-            if (champ is { } c)
-                sources.Add(new SourceChamp(a.Repere, a.CentreX, a.CentreY, c.Rayon, c.Intensite));
-        }
-        return sources;
-    }
+        var expositions = new Dictionary<string, double>();
+        if (sources.Count == 0) return expositions;
+        note.Info("Champ magnétique", "Chaque source est assimilée à un faisceau de conducteurs d'écart e : H = k × I × e / (2π × d²), contributions sommées (majorant). " +
+            "k = 3 variateur et alimentation à découpage (harmoniques, commutation), 2 démarreur progressif, 1 contacteur ; " +
+            $"e = √3 × {N(ChampMagnetique.EntraxePoles, 0)} mm en triphasé.",
+            ChampMagnetique.Reference);
+        foreach (var s in sources.OrderByDescending(s => s.Equivalent).Take(4))
+            note.Info($"Source {s.Repere}", $"{s.Famille} : I = {N(s.Courant, 1)} A, k = {N(s.Facteur, 1)} ; " +
+                $"{N(ChampMagnetique.ImmuniteIndustrielle, 0)} A/m jusqu'à {N(s.Rayon(ChampMagnetique.ImmuniteIndustrielle), 0)} mm, " +
+                $"10 A/m jusqu'à {N(s.Rayon(10), 0)} mm.", ChampMagnetique.Reference);
 
-    static void ControlerChamps(NoteDeCalcul note, List<AppareilImplante> appareils, List<SourceChamp> sources)
-    {
-        var sensibles = appareils.Where(a => a.Zone == ZoneCem.Propre && a.Famille != "Bornier").ToList();
         var exposes = new List<string>();
-        foreach (var s in sources.Where(s => s.Intensite >= 0.6))
-            foreach (var a in sensibles)
-            {
-                // Distance du centre de la source au bord le plus proche de l'appareil sensible.
-                var dx = Math.Max(Math.Max(a.X - s.X, 0), s.X - (a.X + a.Largeur));
-                var dy = Math.Max(Math.Max(a.Y - s.Y, 0), s.Y - (a.Y + a.Hauteur));
-                var d = Math.Sqrt(dx * dx + dy * dy);
-                if (d < s.Rayon) exposes.Add($"{a.Repere} à {N(d, 0)} mm de {s.Repere}");
-            }
-        if (sensibles.Count > 0 && sources.Any(s => s.Intensite >= 0.6))
+        var pire = (Repere: "", H: 0.0);
+        foreach (var a in appareils.Where(a => a.Zone == ZoneCem.Propre && a.Famille != "Bornier"))
+        {
+            var h = ChampMagnetique.Exposition(sources, a, out var principale);
+            expositions[a.Repere] = h;
+            if (h > pire.H) pire = (a.Repere, h);
+            if (h > ChampMagnetique.ImmuniteIndustrielle)
+                exposes.Add($"{a.Repere} reçoit {N(h, 0)} A/m, surtout de {principale?.Repere}");
+        }
+        if (expositions.Count > 0)
             note.Verifier("Champ des sources de perturbations", exposes.Count == 0,
                 exposes.Count == 0
-                    ? "Aucun appareil sensible dans le rayon d'influence des variateurs et démarreurs."
-                    : $"Appareils sensibles exposés : {string.Join(" ; ", exposes)}. Éloigner, ou séparer par une tôle reliée à la masse.",
-                RefCem, StatutCalcul.Alerte);
-        if (sources.Any(s => s.Intensite >= 1))
+                    ? $"Champ maximal sur les appareils sensibles : {N(pire.H, 1)} A/m ({pire.Repere}), " +
+                      $"≤ {N(ChampMagnetique.ImmuniteIndustrielle, 0)} A/m d'immunité industrielle."
+                    : $"{string.Join(" ; ", exposes)} (> {N(ChampMagnetique.ImmuniteIndustrielle, 0)} A/m). " +
+                      "Éloigner, ou séparer par une tôle reliée à la masse.",
+                ChampMagnetique.Reference, StatutCalcul.Alerte);
+        if (sources.Any(s => s.Famille == "Variateur"))
             note.Info("Câblage CEM", "Câbles moteurs blindés, repris à 360° sur la plaque à la sortie ; câbles de puissance et de commande " +
                 "dans des goulottes séparées, croisements à 90°.", RefCem);
+        return expositions;
     }
 
     static void ControlerSeparation(NoteDeCalcul note, List<BandeZone> bandes)

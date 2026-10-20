@@ -79,7 +79,6 @@ public class Version3Tests
     {
         var projet = ProjetMachine();
         var auto = CalculProjet.Calculer(projet).Armoire!;
-        var u1 = auto.Appareils.Single(x => x.Repere == "U1");
         var km2 = auto.Appareils.Single(x => x.Repere == "KM2");
         projet.Armoire.Positions["API1"] = new PositionManuelle { X = km2.X, Y = km2.Y };
 
@@ -90,7 +89,7 @@ public class Version3Tests
         Assert.Contains(a.Note.Lignes, l => l.Libelle == "Zone de API1" && l.Statut == StatutCalcul.Alerte);
         Assert.Contains(a.Note.Lignes, l => l.Libelle == "Chevauchements" && l.Statut == StatutCalcul.Alerte);
         Assert.Contains(a.Note.Lignes, l => l.Libelle == "Champ des sources de perturbations" && l.Statut == StatutCalcul.Alerte
-                                            && l.Message.Contains("API1") && l.Message.Contains(u1.Repere));
+                                            && l.Message.Contains("API1 reçoit"));
     }
 
     [Fact]
@@ -257,5 +256,44 @@ public class Version3Tests
         Assert.Equal(InstallationEnveloppe.Autonome, relu.Armoire.Installation);
         Assert.Equal(FabricantMateriel.Siemens, relu.References.Fabricant);
         Assert.Equal("5SL6316-7", relu.References.Forcees["Q1"]);
+    }
+}
+
+public class ChampMagnetiqueTests
+{
+    [Fact]
+    public void Champ_d_un_conducteur_et_rayon_au_seuil()
+    {
+        // 10 A × k 3 = 30 A équivalents, e = 43,3 mm : H = 30 × 0,0433 / (2π × 0,1²) ≈ 20,7 A/m à 100 mm ; 30 A/m à 83 mm.
+        var s = new SourceChamp("U1", "Variateur", 0, 0, 10, 3, 43.3, 25);
+
+        Assert.Equal(20.7, s.H(100, 0), 1);
+        Assert.Equal(83.0, s.Rayon(30), 1);
+        Assert.Equal(30, s.H(s.Rayon(30), 0), 6);
+        Assert.Equal(s.H(25, 0), s.H(5, 0));
+    }
+
+    [Fact]
+    public void Isoligne_d_une_source_seule_est_un_cercle()
+    {
+        var s = new SourceChamp("U1", "Variateur", 300, 300, 10, 3, 43.3, 25);
+        var grille = ChampMagnetique.Grille(new[] { s }, 600, 600, 5);
+
+        var segments = ChampMagnetique.Isoligne(grille, 5, 30);
+
+        Assert.NotEmpty(segments);
+        Assert.All(segments, g => Assert.InRange(Math.Sqrt((g.X1 - 300) * (g.X1 - 300) + (g.Y1 - 300) * (g.Y1 - 300)), 79, 87));
+    }
+
+    [Fact]
+    public void Variateur_rayonne_plus_qu_un_contacteur_de_meme_courant()
+    {
+        var a = CalculProjet.Calculer(Version3Tests.ProjetMachine()).Armoire!;
+
+        var u1 = a.Sources.Single(s => s.Repere == "U1");
+        Assert.Equal(3, u1.Facteur);
+        Assert.Contains(a.Sources, s => s.Famille == "Contacteur" && s.Facteur == 1);
+        Assert.Contains("API1", a.Expositions.Keys);
+        Assert.Contains(a.Note.Lignes, l => l.Libelle == "Source U1" && l.Message.Contains("30 A/m jusqu'à"));
     }
 }
