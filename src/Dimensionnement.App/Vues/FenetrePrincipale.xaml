@@ -455,6 +455,154 @@
             </StackPanel>
         </DataTemplate>
 
+        <!-- Armoire et implantation -->
+        <DataTemplate DataType="{x:Type mv:PageArmoire}">
+            <StackPanel>
+                <TextBlock Text="ARMOIRE ET IMPLANTATION" Style="{StaticResource TitrePanneau}"/>
+                <TextBlock TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,8"
+                           Text="{Binding DataContext.ResumeArmoire, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Réserve de place sur les rails (%)" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien Projet.Armoire.ReservePourcent}"/>
+                </DockPanel>
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,4,0,8"
+                           Text="L'enveloppe est la plus petite taille normalisée qui reçoit le matériel. Ses dimensions se forcent depuis la note de calcul ; les appareils se déplacent à la souris dans la vue d'armoire."/>
+                <WrapPanel>
+                    <Button Style="{StaticResource BoutonAccent}" Content="Ouvrir la vue d'armoire" Margin="0,0,6,6"
+                            Command="{Binding DataContext.OuvrirVueArmoire, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <Button Content="Réinitialiser l'implantation" Margin="0,0,6,6"
+                            Command="{Binding DataContext.ReinitialiserImplantation, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                </WrapPanel>
+                <inf:VueArmoire Height="460" Margin="0,8,0,0" Background="{StaticResource Champ}"
+                                Armoire="{Binding DataContext.Resultat.Armoire, RelativeSource={RelativeSource AncestorType=Window}}"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- Bilan thermique -->
+        <DataTemplate DataType="{x:Type mv:PageThermique}">
+            <StackPanel>
+                <TextBlock Text="BILAN THERMIQUE – IEC TR 60890" Style="{StaticResource TitrePanneau}"/>
+                <TextBlock TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource Accent}" Margin="0,0,0,8"
+                           Text="{Binding DataContext.ResumeThermique, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Matériau de l'enveloppe" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.Materiaux}" SelectedItem="{inf:Lien Projet.Armoire.Materiau}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Installation" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.Installations}" SelectedItem="{inf:Lien Projet.Armoire.Installation}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Ambiance maximale (°C)" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien Projet.Armoire.TemperatureAmbianteMax}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Ambiance minimale (°C)" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien Projet.Armoire.TemperatureAmbianteMin}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Intérieur maximal admis (°C)" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien Projet.Armoire.TemperatureInterieureMax}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Intérieur minimal (°C)" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien Projet.Armoire.TemperatureInterieureMin}"/>
+                </DockPanel>
+
+                <TextBlock Text="Pertes des appareils à leur courant de service" Style="{StaticResource Section}"/>
+                <ItemsControl ItemsSource="{Binding DataContext.Resultat.Thermique.Postes, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel Margin="0,2">
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding PuissanceW, StringFormat={}{0:0.0} W}" FontFamily="Consolas, Segoe UI"/>
+                                <TextBlock Text="{Binding Repere}" FontWeight="SemiBold" MinWidth="64"/>
+                                <TextBlock Text="{Binding Designation}" Foreground="{StaticResource TexteSecondaire}" TextTrimming="CharacterEllipsis"/>
+                            </DockPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <DockPanel Margin="0,6,0,0">
+                    <TextBlock DockPanel.Dock="Right" FontWeight="SemiBold" Foreground="{StaticResource Accent}" FontFamily="Consolas, Segoe UI"
+                               Text="{Binding DataContext.Resultat.Thermique.PuissanceDissipee, RelativeSource={RelativeSource AncestorType=Window}, StringFormat={}{0:0} W}"/>
+                    <TextBlock Text="Total retenu, câblage compris" FontWeight="SemiBold"/>
+                </DockPanel>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- Sélectivité -->
+        <DataTemplate DataType="{x:Type mv:PageSelectivite}">
+            <StackPanel>
+                <TextBlock Text="SÉLECTIVITÉ GÉNÉRAL / DÉPARTS" Style="{StaticResource TitrePanneau}"/>
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
+                           Text="Sélectivité ampèremétrique minimale ; les tables de sélectivité du fabricant donnent souvent mieux."/>
+                <ItemsControl ItemsSource="{Binding DataContext.Resultat.Selectivite.Lignes, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type calc:LigneSelectivite}">
+                            <Border Background="{StaticResource PanneauClair}" CornerRadius="4" Padding="10" Margin="0,0,0,6">
+                                <StackPanel>
+                                    <DockPanel>
+                                        <TextBlock DockPanel.Dock="Right" FontWeight="SemiBold" Foreground="{StaticResource Accent}"
+                                                   Text="{Binding Niveau, Converter={StaticResource LibelleEnum}}"/>
+                                        <TextBlock FontWeight="SemiBold">
+                                            <Run Text="{Binding Depart, Mode=OneWay}"/><Run Text=" : "/><Run Text="{Binding Amont, Mode=OneWay}"/><Run Text=" → "/><Run Text="{Binding Aval, Mode=OneWay}"/>
+                                        </TextBlock>
+                                    </DockPanel>
+                                    <TextBlock Foreground="{StaticResource TexteSecondaire}" Margin="0,2,0,0">
+                                        <Run Text="Rapport des calibres "/><Run Text="{Binding RapportSurcharge, Mode=OneWay, StringFormat={}{0:0.00}}"/>
+                                        <Run Text=" – magnétique amont "/><Run Text="{Binding SeuilAmont, Mode=OneWay, StringFormat={}{0:0} A}"/>
+                                        <Run Text=", aval "/><Run Text="{Binding SeuilAval, Mode=OneWay, StringFormat={}{0:0} A}"/>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Commentaire}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- Références fabricants -->
+        <DataTemplate DataType="{x:Type mv:PageReferences}">
+            <StackPanel>
+                <TextBlock Text="RÉFÉRENCES DU MATÉRIEL" Style="{StaticResource TitrePanneau}"/>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Fabricant de la puissance" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.FabricantsMateriel}" SelectedItem="{inf:Lien Projet.References.Fabricant}"/>
+                </DockPanel>
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,4,0,8"
+                           Text="Références indicatives à confirmer sur le configurateur du fabricant. Saisissez une référence pour remplacer celle du catalogue ; videz la case pour revenir au catalogue."/>
+                <ItemsControl ItemsSource="{Binding DataContext.LignesReferences, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type mv:LigneReference}">
+                            <Border BorderBrush="{StaticResource Bordure}" BorderThickness="0,0,0,1" Padding="0,5">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="64"/><ColumnDefinition Width="*"/><ColumnDefinition Width="170"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Repere}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                                        <TextBlock Text="{Binding Designation}" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock FontSize="11" Foreground="{StaticResource TexteSecondaire}" TextTrimming="CharacterEllipsis">
+                                            <Run Text="{Binding Calibre, Mode=OneWay}"/><Run Text="   "/><Run Text="{Binding Fabricant, Mode=OneWay}"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <TextBox Grid.Column="2" Text="{inf:Lien Reference}" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <WrapPanel Margin="0,8,0,0">
+                    <Button Style="{StaticResource BoutonAccent}" Content="Demande de devis (Excel)" Margin="0,0,6,6"
+                            Command="{Binding DataContext.ExporterDevis, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <Button Content="Ouvrir le catalogue" Margin="0,0,6,6"
+                            Command="{Binding DataContext.OuvrirCatalogueReferences, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <Button Content="Recharger le catalogue" Margin="0,0,6,6"
+                            Command="{Binding DataContext.RechargerCatalogueReferences, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                </WrapPanel>
+            </StackPanel>
+        </DataTemplate>
+
         <!-- Arbre du matériel -->
         <HierarchicalDataTemplate DataType="{x:Type mat:ElementMateriel}" ItemsSource="{Binding Enfants}">
             <StackPanel Orientation="Horizontal" Margin="0,2"
@@ -530,8 +678,9 @@
         <!-- Barre d'outils -->
         <Border DockPanel.Dock="Top" Background="{StaticResource Panneau}" BorderBrush="{StaticResource Bordure}"
                 BorderThickness="0,0,0,1" Padding="10,6">
-            <DockPanel>
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+            <!-- Les boutons passent à la ligne quand la fenêtre est étroite. -->
+            <WrapPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,16,0">
                     <TextBlock Text="DIMENSIONNEMENT" FontWeight="Bold" Foreground="{StaticResource Accent}"
                                VerticalAlignment="Center" Margin="4,0,18,0" FontSize="14"/>
                     <Button Style="{StaticResource BoutonOutil}" Command="{Binding Nouveau}" ToolTip="Nouveau projet (Ctrl+N)">
@@ -560,7 +709,16 @@
                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE74D;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Supprimer"/></StackPanel>
                     </Button>
                 </StackPanel>
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                <StackPanel Orientation="Horizontal">
+                    <Button Command="{Binding OuvrirVueArmoire}" ToolTip="Vue de face de l'armoire, zones CEM et champs ; déplacement des appareils à la souris">
+                        <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE80F;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Armoire"/></StackPanel>
+                    </Button>
+                    <Button Command="{Binding OuvrirUnifilaire}" ToolTip="Schéma unifilaire de puissance">
+                        <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE8A1;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Unifilaire"/></StackPanel>
+                    </Button>
+                    <Button Command="{Binding ExporterDevis}" ToolTip="Liste exhaustive du matériel à envoyer au fournisseur pour un devis (Excel)">
+                        <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE719;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Demande de devis"/></StackPanel>
+                    </Button>
                     <Button Command="{Binding ExporterExcel}" ToolTip="Nomenclature, départs, notes de calcul et contrôles au format Excel">
                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE80A;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Excel"/></StackPanel>
                     </Button>
@@ -569,7 +727,7 @@
                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE749;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Rapport PDF"/></StackPanel>
                     </Button>
                 </StackPanel>
-            </DockPanel>
+            </WrapPanel>
         </Border>
 
         <!-- Barre d'état -->
@@ -643,6 +801,10 @@
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Automate" Command="{Binding AfficherAutomate}"/>
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Bilan 24 V" Command="{Binding AfficherBilan24V}"/>
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Contrôles CEM / BT" Command="{Binding AfficherControles}"/>
+                        <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Armoire" Command="{Binding AfficherArmoire}"/>
+                        <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Thermique" Command="{Binding AfficherThermique}"/>
+                        <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Sélectivité" Command="{Binding AfficherSelectivite}"/>
+                        <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Références" Command="{Binding AfficherReferences}"/>
                     </WrapPanel>
                     <TextBlock DockPanel.Dock="Top" Text="ARBRE DU MATÉRIEL" Style="{StaticResource TitrePanneau}"/>
                     <TextBlock DockPanel.Dock="Top" Foreground="{StaticResource TexteSecondaire}" TextWrapping="Wrap" Margin="0,0,0,8"

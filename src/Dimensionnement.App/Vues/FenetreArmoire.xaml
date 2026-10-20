@@ -1,0 +1,59 @@
+<Window x:Class="Dimensionnement.App.Vues.FenetreArmoire"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:inf="clr-namespace:Dimensionnement.App.Infrastructure"
+        xmlns:calc="clr-namespace:Dimensionnement.Core.Calculs;assembly=Dimensionnement.Core"
+        Title="Vue d'armoire" Width="1200" Height="900" MinWidth="800" MinHeight="600"
+        WindowStartupLocation="CenterOwner" Background="{StaticResource Fond}"
+        Foreground="{StaticResource Texte}" FontFamily="Segoe UI" FontSize="13">
+
+    <Window.Resources>
+        <DataTemplate x:Key="LigneControle" DataType="{x:Type calc:LigneCalcul}">
+            <Border BorderBrush="{StaticResource Bordure}" BorderThickness="0,0,0,1" Padding="0,6">
+                <DockPanel>
+                    <Ellipse DockPanel.Dock="Left" Width="10" Height="10" Margin="0,4,8,0" VerticalAlignment="Top"
+                             Fill="{Binding Statut, Converter={StaticResource StatutCouleur}}"/>
+                    <StackPanel>
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding ValeurTexte}" FontWeight="SemiBold"
+                                       FontFamily="Consolas, Segoe UI" Foreground="{StaticResource Accent}"/>
+                            <TextBlock Text="{Binding Libelle}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                        </DockPanel>
+                        <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}"
+                                   Visibility="{Binding Message, Converter={StaticResource VideMasque}}"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <DockPanel Margin="10">
+        <Border DockPanel.Dock="Top" Style="{StaticResource CadrePanneau}" Margin="0,0,0,8">
+            <WrapPanel>
+                <CheckBox x:Name="CaseZones" Content="Zones CEM" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                <CheckBox x:Name="CaseChamps" Content="Champs électromagnétiques" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                <Button Content="Réinitialiser l'implantation" Command="{Binding ReinitialiserImplantation}" Margin="0,0,16,0"/>
+                <TextBlock Text="{Binding ResumeArmoire}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            </WrapPanel>
+        </Border>
+
+        <Border DockPanel.Dock="Right" Width="360" Style="{StaticResource CadrePanneau}" Margin="8,0,0,0">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="CONTRÔLES DE L'IMPLANTATION" Style="{StaticResource TitrePanneau}"/>
+                <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
+                           Text="Glissez un appareil pour le déplacer (pas de 5 mm). Zone propre en vert, intermédiaire en gris, sale en rose ; le dégradé rouge orangé figure le rayonnement indicatif des variateurs, démarreurs, contacteurs et alimentations."/>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Resultat.Armoire.Note.Lignes}" ItemTemplate="{StaticResource LigneControle}"/>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+
+        <Border Style="{StaticResource CadrePanneau}">
+            <inf:VueArmoire Interactif="True" Background="{StaticResource Champ}"
+                            Armoire="{Binding Resultat.Armoire}"
+                            AfficherZones="{Binding IsChecked, ElementName=CaseZones}"
+                            AfficherChamps="{Binding IsChecked, ElementName=CaseChamps}"
+                            DeplacerCommande="{Binding DeplacerAppareil}"/>
+        </Border>
+    </DockPanel>
+</Window>

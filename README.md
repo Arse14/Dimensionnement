@@ -36,6 +36,19 @@ note de calcul traçable.
 | Contrôles CEM / BT | Liste de points à cocher, enregistrée dans le projet et reprise dans le rapport |
 | Exports | Rapport PDF direct (WebView2, repli en HTML si indisponible), nomenclature et notes de calcul en Excel |
 
+## Ce qu'ajoute la version 3
+
+| Domaine | Contenu |
+| --- | --- |
+| Armoire | Plus petite enveloppe normalisée (coffret mural ou armoire au sol, cellules juxtaposées) selon l'encombrement du matériel et la réserve ; profondeur selon l'appareil le plus profond ; dimensions forçables |
+| Implantation CEM | Zone propre en haut (automate, E/S, sécurité), intermédiaire (protections, alimentations), sale en bas près des entrées de câbles moteurs, séparation ≥ 200 mm ; borniers estimés |
+| Vue d'armoire | Fenêtre interactive : déplacement des appareils à la souris, contrôle de zone et de chevauchement, carte indicative des champs des variateurs, démarreurs, contacteurs et alimentations |
+| Bilan thermique | Pertes des appareils au courant de service, surface effective IEC TR 60890, ventilateur à filtre, climatiseur ou résistance anticondensation |
+| Sélectivité | Rapport des calibres et des seuils magnétiques entre le général et chaque départ, comparés à l'Icc |
+| Références | Schneider, ABB, Siemens ou Legrand pour la puissance (catalogue indicatif modifiable, repli sur un autre fabricant si la gamme manque), saisie manuelle possible |
+| Demande de devis | Liste exhaustive en Excel pour le fournisseur : enveloppe, thermique, appareillage regroupé par référence, accessoires, borniers, rails, goulottes, filerie, câbles en mètres, presse-étoupes |
+| Schéma unifilaire | Généré en SVG, affiché dans l'application, exportable et repris dans le rapport PDF |
+
 ## Organisation
 
 ```

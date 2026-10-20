@@ -74,6 +74,13 @@ public class LibelleEnum : IValueConverter
         SensibiliteDifferentiel.Aucun => "Sans différentiel",
         SensibiliteDifferentiel.Ma30 => "30 mA",
         SensibiliteDifferentiel.Ma300 => "300 mA",
+        MateriauEnveloppe.AcierPeint => "Acier peint (k = 5,5)",
+        MateriauEnveloppe.Inox => "Inox (k = 4,5)",
+        MateriauEnveloppe.Aluminium => "Aluminium (k = 12)",
+        MateriauEnveloppe.Polyester => "Polyester (k = 3,5)",
+        InstallationEnveloppe i => Core.Armoire.CalculThermique.LibelleInstallation(i) is var l ? char.ToUpper(l[0]) + l[1..] : "",
+        FabricantMateriel.Schneider => "Schneider Electric",
+        Core.Calculs.NiveauSelectivite n => Core.Calculs.CalculSelectivite.Libelle(n),
         ZoneCem.Sale => "Zone CEM « sale »",
         ZoneCem.Intermediaire => "Zone CEM intermédiaire",
         ZoneCem.Propre => "Zone CEM « propre »",
@@ -114,5 +121,8 @@ public static class Listes
     public static TypeFonctionSecurite[] TypesFonction { get; } = Enum.GetValues<TypeFonctionSecurite>();
     public static NiveauPerformance[] NiveauxPerformance { get; } = Enum.GetValues<NiveauPerformance>();
     public static MarqueAutomate[] MarquesAutomate { get; } = Enum.GetValues<MarqueAutomate>();
+    public static MateriauEnveloppe[] Materiaux { get; } = Enum.GetValues<MateriauEnveloppe>();
+    public static InstallationEnveloppe[] Installations { get; } = Enum.GetValues<InstallationEnveloppe>();
+    public static FabricantMateriel[] FabricantsMateriel { get; } = Enum.GetValues<FabricantMateriel>();
     public static string[] Rubriques { get; } = { "Puissance", "Commande", "Auxiliaires", "Distribution", "Sécurité" };
 }

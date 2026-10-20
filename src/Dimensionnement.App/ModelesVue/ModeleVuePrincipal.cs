@@ -24,6 +24,11 @@ public class ModeleVuePrincipal : Observable
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueAutomates.NomFichier);
     IReadOnlyList<CpuAutomate> _catalogue = CatalogueAutomates.Charger(CheminCatalogue);
 
+    /// <summary>Catalogue des références modifiable par l'utilisateur, à la place du catalogue livré.</summary>
+    static readonly string CheminReferences = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueReferences.NomFichier);
+    IReadOnlyList<ReferenceCatalogue> _references = CatalogueReferences.Charger(CheminReferences);
+
     Projet _projet = new();
     string? _chemin;
     bool _modifie;
@@ -32,7 +37,7 @@ public class ModeleVuePrincipal : Observable
     public ModeleVuePrincipal()
     {
         _selection = _projet;
-        Resultat = CalculProjet.Calculer(_projet, _catalogue);
+        Resultat = CalculProjet.Calculer(_projet, _catalogue, _references);
 
         Nouveau = new Commande(NouveauProjet);
         Ouvrir = new Commande(OuvrirProjet);
@@ -59,6 +64,28 @@ public class ModeleVuePrincipal : Observable
         AjouterFonction = new Commande(() => Modifier(() => _projet.Securite.Fonctions.Add(new FonctionSecurite
             { Nom = $"Fonction {_projet.Securite.Fonctions.Count + 1}" })));
         SupprimerFonction = new Commande(p => Modifier(() => _projet.Securite.Fonctions.Remove((FonctionSecurite)p!)), p => p is FonctionSecurite);
+        AfficherArmoire = new Commande(() => Selection = new PageArmoire(_projet));
+        AfficherThermique = new Commande(() => Selection = new PageThermique(_projet));
+        AfficherSelectivite = new Commande(() => Selection = new PageSelectivite(_projet));
+        AfficherReferences = new Commande(() => Selection = new PageReferences(_projet));
+        OuvrirVueArmoire = new Commande(() => Afficher(new FenetreArmoire(this)));
+        OuvrirUnifilaire = new Commande(() => Afficher(new FenetreUnifilaire(this)));
+        DeplacerAppareil = new Commande(p => Modifier(() =>
+        {
+            var d = (DeplacementAppareil)p!;
+            _projet.Armoire.Positions[d.Repere] = new PositionManuelle { X = d.X, Y = d.Y };
+        }), p => p is DeplacementAppareil);
+        ReinitialiserImplantation = new Commande(() => Modifier(() => _projet.Armoire.Positions.Clear()),
+            () => _projet.Armoire.Positions.Count > 0);
+        ExporterDevis = new Commande(EnregistrerDevis);
+        ExporterUnifilaire = new Commande(EnregistrerUnifilaire);
+        OuvrirCatalogueReferences = new Commande(() => OuvrirCatalogueUtilisateur(CheminReferences, CatalogueReferences.TexteEmbarque(),
+            "Impossible d'ouvrir le catalogue des références"));
+        RechargerCatalogueReferences = new Commande(() =>
+        {
+            _references = CatalogueReferences.Charger(CheminReferences);
+            Recalculer();
+        });
         OuvrirCatalogue = new Commande(OuvrirCatalogueAutomates);
         RechargerCatalogue = new Commande(() =>
         {
@@ -92,6 +119,18 @@ public class ModeleVuePrincipal : Observable
     public Commande SupprimerConsommateur { get; }
     public Commande AjouterFonction { get; }
     public Commande SupprimerFonction { get; }
+    public Commande AfficherArmoire { get; }
+    public Commande AfficherThermique { get; }
+    public Commande AfficherSelectivite { get; }
+    public Commande AfficherReferences { get; }
+    public Commande OuvrirVueArmoire { get; }
+    public Commande OuvrirUnifilaire { get; }
+    public Commande DeplacerAppareil { get; }
+    public Commande ReinitialiserImplantation { get; }
+    public Commande ExporterDevis { get; }
+    public Commande ExporterUnifilaire { get; }
+    public Commande OuvrirCatalogueReferences { get; }
+    public Commande RechargerCatalogueReferences { get; }
     public Commande OuvrirCatalogue { get; }
     public Commande RechargerCatalogue { get; }
     public Commande Forcer { get; }
@@ -119,8 +158,32 @@ public class ModeleVuePrincipal : Observable
         }
     }
 
+    /// <summary>Appareils commandables avec leur référence, pour la page des références.</summary>
+    public IReadOnlyList<LigneReference> LignesReferences => Resultat.Arbre.Parcourir()
+        .Where(CatalogueReferences.Commandable)
+        .Select(e => new LigneReference(e, _projet.References))
+        .ToList();
+
+    /// <summary>Résumé de l'armoire et de sa thermique, pour les bandeaux.</summary>
+    public string ResumeArmoire => Resultat.Armoire is { } a
+        ? $"{a.Type} {a.Largeur:0} × {a.Hauteur:0} × {a.Profondeur:0} mm{(a.Cellules > 1 ? $", {a.Cellules} cellules" : "")} – " +
+          $"plaque occupée à {a.Occupation:0} % – {Resultat.Thermique?.PuissanceDissipee:0} W dissipés"
+        : "";
+
+    public string ResumeThermique => Resultat.Thermique switch
+    {
+        null => "",
+        { Solution: Core.Armoire.SolutionThermique.Ventilation } t => $"Ventilateur à filtre de {t.Ventilateur:0} m³/h (besoin {t.DebitNecessaire:0} m³/h)",
+        { Solution: Core.Armoire.SolutionThermique.Climatisation } t => $"Climatiseur de {t.Climatiseur:0} W (besoin {t.PuissanceFrigorifique:0} W)",
+        var t => $"Convection naturelle suffisante ({t.TemperatureInterieure:0.0} °C à l'intérieur)",
+    };
+
     public NoteDeCalcul Note => Selection switch
     {
+        PageArmoire => Resultat.Armoire?.Note ?? Resultat.NoteArrivee,
+        PageThermique => Resultat.Thermique?.Note ?? Resultat.NoteArrivee,
+        PageSelectivite => Resultat.Selectivite?.Note ?? Resultat.NoteArrivee,
+        PageReferences => Resultat.References?.Note ?? Resultat.NoteArrivee,
         Depart d => Resultat.Departs.FirstOrDefault(r => r.Depart == d)?.Note ?? Resultat.NoteArrivee,
         ConfigurationSecurite => Resultat.Securite?.Note ?? Resultat.NoteArrivee,
         ConfigurationAutomate => Resultat.Automate?.Note ?? Resultat.NoteArrivee,
@@ -132,6 +195,10 @@ public class ModeleVuePrincipal : Observable
         Depart d => $"NOTE DE CALCUL – D{d.Numero:00} {d.Designation}".ToUpperInvariant(),
         ConfigurationSecurite => "NOTE DE CALCUL – SÉCURITÉ MACHINE",
         ConfigurationAutomate => "NOTE DE CALCUL – AUTOMATE",
+        PageArmoire => "NOTE DE CALCUL – ARMOIRE ET IMPLANTATION",
+        PageThermique => "NOTE DE CALCUL – BILAN THERMIQUE",
+        PageSelectivite => "NOTE DE CALCUL – SÉLECTIVITÉ",
+        PageReferences => "RÉFÉRENCES DU MATÉRIEL",
         _ => "NOTE DE CALCUL – ARRIVÉE ET BILAN DE PUISSANCE",
     };
 
@@ -143,7 +210,7 @@ public class ModeleVuePrincipal : Observable
     public void Recalculer()
     {
         _modifie = true;
-        Resultat = CalculProjet.Calculer(_projet, _catalogue);
+        Resultat = CalculProjet.Calculer(_projet, _catalogue, _references);
         SignalerTout();
     }
 
@@ -193,7 +260,12 @@ public class ModeleVuePrincipal : Observable
         Recalculer();
     }
 
-    Dictionary<string, Forcage> Forcages() => Selection is Depart d ? d.Forcages : _projet.ForcagesArrivee;
+    Dictionary<string, Forcage> Forcages() => Selection switch
+    {
+        Depart d => d.Forcages,
+        PageArmoire or PageThermique => _projet.Armoire.Forcages,
+        _ => _projet.ForcagesArrivee,
+    };
 
     /// <summary>Demande confirmation avant d'abandonner des modifications non enregistrées.</summary>
     public bool ConfirmerAbandon()
@@ -243,7 +315,7 @@ public class ModeleVuePrincipal : Observable
         _chemin = chemin;
         _selection = projet;
         if (chemin is not null) MemoriserRecent(chemin);
-        Resultat = CalculProjet.Calculer(_projet, _catalogue);
+        Resultat = CalculProjet.Calculer(_projet, _catalogue, _references);
         _modifie = false;
         SignalerTout();
     }
@@ -352,21 +424,62 @@ public class ModeleVuePrincipal : Observable
         }
     }
 
-    void OuvrirCatalogueAutomates()
+    void OuvrirCatalogueAutomates() =>
+        OuvrirCatalogueUtilisateur(CheminCatalogue, CatalogueAutomates.TexteEmbarque(), "Impossible d'ouvrir le catalogue des automates");
+
+    /// <summary>Copie le catalogue livré dans le dossier de l'utilisateur à la première ouverture, puis l'ouvre dans le Bloc-notes.</summary>
+    static void OuvrirCatalogueUtilisateur(string chemin, string contenuInitial, string erreur)
     {
         try
         {
-            if (!File.Exists(CheminCatalogue))
+            if (!File.Exists(chemin))
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(CheminCatalogue)!);
-                File.WriteAllText(CheminCatalogue, CatalogueAutomates.TexteEmbarque());
+                Directory.CreateDirectory(Path.GetDirectoryName(chemin)!);
+                File.WriteAllText(chemin, contenuInitial);
             }
-            Process.Start(new ProcessStartInfo("notepad.exe", $"\"{CheminCatalogue}\"") { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo("notepad.exe", $"\"{chemin}\"") { UseShellExecute = true });
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
         {
-            Erreur("Impossible d'ouvrir le catalogue des automates", ex);
+            Erreur(erreur, ex);
         }
+    }
+
+    void EnregistrerDevis()
+    {
+        var chemin = DemanderChemin("Classeur Excel (*.xlsx)|*.xlsx", $"{NomFichier(_projet.Nom)}-demande-de-devis-{NomFichier(_projet.Indice)}.xlsx");
+        if (chemin is null) return;
+        try
+        {
+            ExportExcel.EnregistrerDevis(Resultat, chemin);
+            AfficherFichier(chemin);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Erreur("Impossible d'enregistrer la demande de devis", ex);
+        }
+    }
+
+    void EnregistrerUnifilaire()
+    {
+        var chemin = DemanderChemin("Image vectorielle (*.svg)|*.svg", $"{NomFichier(_projet.Nom)}-unifilaire-{NomFichier(_projet.Indice)}.svg");
+        if (chemin is null) return;
+        try
+        {
+            File.WriteAllText(chemin, SchemaUnifilaire.Svg(Resultat));
+            AfficherFichier(chemin);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Erreur("Impossible d'enregistrer le schéma unifilaire", ex);
+        }
+    }
+
+    /// <summary>Ouvre une fenêtre secondaire non modale ; elle suit les recalculs du projet.</summary>
+    static void Afficher(Window fenetre)
+    {
+        fenetre.Owner = Application.Current.MainWindow;
+        fenetre.Show();
     }
 
     string? DemanderChemin(string filtre, string nom)
