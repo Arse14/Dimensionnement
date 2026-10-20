@@ -104,3 +104,33 @@ public class CalculProjetTests
         Directory.Delete(dossier, true);
     }
 }
+
+public class ExportsTests
+{
+    [Fact]
+    public void Export_Excel_contient_nomenclature_departs_notes_bilan_et_controles()
+    {
+        var projet = new Projet { Nom = "Essai" };
+        projet.Ajouter(new DepartMoteur { Designation = "Pompe", PuissanceKw = 4, Demarrage = ModeDemarrage.Variateur });
+        projet.Ajouter(new DepartAlimentation24V());
+        projet.Consommateurs24V.Add(new Consommateur24V { Designation = "Capteurs", CourantMa = 500 });
+        projet.Controles["CEM-PLAQUE"] = true;
+        var chemin = Path.Combine(Path.GetTempPath(), $"essai-{Guid.NewGuid()}.xlsx");
+        try
+        {
+            ExportExcel.Enregistrer(CalculProjet.Calculer(projet), chemin);
+
+            using var classeur = new ClosedXML.Excel.XLWorkbook(chemin);
+            Assert.Equal(new[] { "Nomenclature", "Départs", "Notes de calcul", "Bilan 24 V", "Contrôles CEM-BT" },
+                classeur.Worksheets.Select(f => f.Name));
+            Assert.Equal("D01", classeur.Worksheet("Départs").Cell(2, 1).GetString());
+            Assert.Contains(classeur.Worksheet("Contrôles CEM-BT").RowsUsed(),
+                r => r.Cell(1).GetString() == "Oui" && r.Cell(2).GetString().StartsWith("Plaque de montage"));
+            Assert.Contains(classeur.Worksheet("Contrôles CEM-BT").RowsUsed(), r => r.Cell(2).GetString().StartsWith("D01 : câble moteur blindé"));
+        }
+        finally
+        {
+            File.Delete(chemin);
+        }
+    }
+}

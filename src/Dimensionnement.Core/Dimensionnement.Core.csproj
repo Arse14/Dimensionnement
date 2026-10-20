@@ -10,4 +10,8 @@
     <EmbeddedResource Include="Normes\catalogue-automates.json" LogicalName="Dimensionnement.Core.Normes.catalogue-automates.json" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.105.1" />
+  </ItemGroup>
+
 </Project>

@@ -32,6 +32,7 @@ public class ResultatProjet
 
     public ResultatSecurite? Securite { get; init; }
     public ResultatAutomate? Automate { get; init; }
+    public IReadOnlyList<PointControle> Controles { get; init; } = Array.Empty<PointControle>();
 
     /// <summary>Toutes les notes de calcul du projet : départs, arrivée, sécurité, automate.</summary>
     public IEnumerable<NoteDeCalcul> Notes => Departs.Select(d => d.Note).Append(NoteArrivee)
@@ -160,6 +161,7 @@ public static class CalculProjet
             CoefficientSimultaneite = ks, CourantEmploi = ib, CalibreGeneral = qg,
             SectionArrivee = cable.Section, ChuteTensionArrivee = cable.ChuteTension, Arbre = arbre,
             Consommateurs24V = consommateurs24V, Securite = securite, Automate = automate,
+            Controles = ControlesConformite.Generer(projet),
         };
     }
 

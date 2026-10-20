@@ -21,6 +21,9 @@ public class Projet
     public ConfigurationAutomate Automate { get; set; } = new();
     public List<Revision> Revisions { get; set; } = new();
 
+    /// <summary>Points de la liste de contrôle CEM / basse tension déjà vérifiés, par identifiant.</summary>
+    public Dictionary<string, bool> Controles { get; set; } = new();
+
     /// <summary>Consommateurs 24 V DC déclarés à la main, en plus de ceux que le projet déduit.</summary>
     public List<Consommateur24V> Consommateurs24V { get; set; } = new();
 
