@@ -18,6 +18,7 @@ public class Projet
     public Reseau Reseau { get; set; } = new();
     public List<Depart> Departs { get; set; } = new();
     public ConfigurationSecurite Securite { get; set; } = new();
+    public ConfigurationAutomate Automate { get; set; } = new();
     public List<Revision> Revisions { get; set; } = new();
 
     /// <summary>Consommateurs 24 V DC déclarés à la main, en plus de ceux que le projet déduit.</summary>

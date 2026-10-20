@@ -110,6 +110,12 @@ public static class RapportHtml
             Note(sb, sec.Note);
         }
 
+        if (r.Automate is { Note.Lignes.Count: > 0 } api)
+        {
+            sb.Append("<h2>Automate</h2>");
+            Note(sb, api.Note);
+        }
+
         if (r.Consommateurs24V.Count > 0)
         {
             sb.Append("<h3>Bilan 24 V DC</h3><table><tr><th>Consommateur</th><th>Courant</th></tr>");

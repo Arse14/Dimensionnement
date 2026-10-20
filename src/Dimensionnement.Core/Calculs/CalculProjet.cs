@@ -31,10 +31,11 @@ public class ResultatProjet
     public required ElementMateriel Arbre { get; init; }
 
     public ResultatSecurite? Securite { get; init; }
+    public ResultatAutomate? Automate { get; init; }
 
-    /// <summary>Toutes les notes de calcul du projet : départs, arrivée, sécurité.</summary>
+    /// <summary>Toutes les notes de calcul du projet : départs, arrivée, sécurité, automate.</summary>
     public IEnumerable<NoteDeCalcul> Notes => Departs.Select(d => d.Note).Append(NoteArrivee)
-        .Concat(Securite is null ? Enumerable.Empty<NoteDeCalcul>() : new[] { Securite.Note });
+        .Concat(new[] { Securite?.Note, Automate?.Note }.OfType<NoteDeCalcul>());
 
     public StatutCalcul StatutGlobal => Notes.Select(n => n.StatutGlobal).Max();
 
@@ -62,7 +63,9 @@ public static class CalculProjet
 {
     const string RefBilan = "Guide UTE C 15-105, coefficients d'utilisation et de simultanéité";
 
-    public static ResultatProjet Calculer(Projet projet)
+    public static ResultatProjet Calculer(Projet projet) => Calculer(projet, CatalogueAutomates.Charger());
+
+    public static ResultatProjet Calculer(Projet projet, IReadOnlyList<CpuAutomate> catalogue)
     {
         var reseau = projet.Reseau;
 
@@ -122,6 +125,7 @@ public static class CalculProjet
         }
 
         var securite = CalculSecurite.Calculer(projet, departs);
+        var automate = CalculAutomate.Calculer(projet.Automate, catalogue);
 
         var arbre = new ElementMateriel { Repere = "Réseau", Famille = "Réseau",
             Designation = $"Arrivée {Libelle(reseau.Alimentation)}, {reseau.Slt}", Calibre = $"Icc {N(reseau.IccKiloAmperes)} kA" };
@@ -144,6 +148,10 @@ public static class CalculProjet
             appareil.Statut = securite.Note.StatutGlobal;
             alimentation24V.Ajouter(appareil);
         }
+        foreach (var appareil in automate.Appareils.SelectMany(a => a.Parcourir()))
+            appareil.Statut = automate.Note.StatutGlobal;
+        foreach (var appareil in automate.Appareils)
+            alimentation24V.Ajouter(appareil);
 
         return new ResultatProjet
         {
@@ -151,7 +159,7 @@ public static class CalculProjet
             PuissanceActive = ks * p, PuissanceReactive = ks * q, PuissanceApparente = s, CosPhiGlobal = cosPhi,
             CoefficientSimultaneite = ks, CourantEmploi = ib, CalibreGeneral = qg,
             SectionArrivee = cable.Section, ChuteTensionArrivee = cable.ChuteTension, Arbre = arbre,
-            Consommateurs24V = consommateurs24V, Securite = securite,
+            Consommateurs24V = consommateurs24V, Securite = securite, Automate = automate,
         };
     }
 
@@ -162,6 +170,7 @@ public static class CalculProjet
             .Select(c => new ConsommationCommande(c.Quantite > 1 ? $"{c.Designation} × {c.Quantite}" : c.Designation,
                 c.CourantMa * c.Quantite / 1000))
             .Concat(CalculSecurite.Consommations(projet.Securite))
+            .Concat(CalculAutomate.Consommations(projet.Automate))
             .ToList();
 
     /// <summary>Coefficient de simultanéité d'une armoire de distribution selon son nombre de circuits.</summary>
