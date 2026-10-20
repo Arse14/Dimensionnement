@@ -130,7 +130,7 @@ public class Version6Tests
 
     [Theory]
     [InlineData("Contacteur", "3RT2026-1BB40", 25, 3, 45, 85, 107)]
-    [InlineData("Contacteur", "LC1D09BD", 9, 3, 45, 77, 93)]
+    [InlineData("Contacteur", "LC1D09BD", 9, 3, 45, 77, 95)]
     [InlineData("Disjoncteur", "A9F74316", 16, 3, 54, 85, 78.5)]
     [InlineData("Disjoncteur moteur", "3RV2021-4BA10", 20, 3, 45, 97, 97)]
     [InlineData("Interrupteur-sectionneur", "VCF3", 63, 3, 60, 83, 65)]
@@ -172,5 +172,16 @@ public class Version6Tests
         Assert.Equal("24-28 V", reglable.Reglage);
         Assert.True(reglable.Courant >= 4);
         Assert.NotNull(CatalogueAlimentations.Choisir("Siemens", 30, "400-3P", catalogue, reglable: true));
+    }
+
+    [Fact]
+    public void Pertes_relevees_sur_la_fiche_remplacent_l_estimation()
+    {
+        var lc1d = new ElementMateriel { Famille = "Contacteur", Reference = "LC1D09BD" }.Avec(9, 3);
+        Assert.Equal(6.0, Encombrements.Estimer(lc1d)!.DissipationW);
+        var xpsu = CatalogueEncombrements.Trouver("Sécurité", "XPSUDN13AP", 0)!;
+        Assert.Equal((45.0, 100.0, 120.0), (xpsu.Largeur, xpsu.Hauteur, xpsu.Profondeur));
+        Assert.Equal("3RT2036-1NB30", CatalogueReferences.Bobine("3RT2036-1NB30", TensionCommande.Alternatif24));
+        Assert.Equal("3RT2036-1AP00", CatalogueReferences.Bobine("3RT2036-1NB30", TensionCommande.Alternatif230));
     }
 }

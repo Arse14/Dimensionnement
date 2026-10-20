@@ -20,6 +20,8 @@ public record CoteAppareil
     public double Profondeur { get; init; }
     /// <summary>Largeur donnée pour un pôle (appareils modulaires).</summary>
     public bool ParPole { get; init; }
+    /// <summary>Puissance dissipée relevée sur la fiche, en W par appareil ; 0 = estimée par famille.</summary>
+    public double Pertes { get; init; }
     public bool Verifie { get; init; }
     /// <summary>« verifie », « une_source » ou « estime ».</summary>
     public string Fiabilite { get; init; } = "";

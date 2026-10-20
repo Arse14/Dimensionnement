@@ -129,7 +129,7 @@ public static class BibliothequeCatalogues
         new FamilleCatalogue("encombrements", "Appareillage (cotes)", CatalogueEncombrements.NomFichier, CatalogueEncombrements.TexteEmbarque,
             new[] { T("fabricant", "Fabricant"), T("famille", "Famille d'appareil", true), T("gamme", "Gamme", true), T("taille", "Taille", true),
                     T("motif", "Références reconnues (expression régulière)"), N("max", "Courant max. couvert (0 = toute la taille)", "A", true, true),
-                    B("parPole", "Largeur donnée par pôle"), T("fiabilite", "Fiabilité (verifie, une_source, estime)", true),
+                    B("parPole", "Largeur donnée par pôle"), N("pertes", "Pertes relevées (0 = estimées)", "W"), T("fiabilite", "Fiabilité (verifie, une_source, estime)", true),
                     T("source", "Source des cotes"), T("note", "Remarque") }
                 .Concat(Cotes(true)).ToArray())
             { LireType = t => CatalogueEncombrements.Lire(t), ChampPrincipal = "max", ChampGamme = "famille", Designation = "Taille" },

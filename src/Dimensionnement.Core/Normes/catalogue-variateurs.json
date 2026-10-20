@@ -1035,13 +1035,13 @@
   "largeur": 105,
   "hauteur": 142,
   "profondeur": 158,
-  "pertes": 67,
+  "pertes": 56,
   "reference": "ATV320U15N4C",
   "filtreCemIntegre": true,
   "blindageFourni": true,
   "servo": false,
   "verifie": true,
-  "source": "https://automa.net/es/producto/schneider-electric/atv320u15n4c-63a37a76ca04b4f2592be25b"
+  "source": "https://www.se.com/fr/fr/product/ATV320U15N4C/"
  },
  {
   "fabricant": "Schneider",
@@ -1107,13 +1107,13 @@
   "largeur": 150,
   "hauteur": 232,
   "profondeur": 178,
-  "pertes": 179,
+  "pertes": 195,
   "reference": "ATV320U55N4C",
   "filtreCemIntegre": true,
   "blindageFourni": true,
   "servo": false,
   "verifie": true,
-  "source": "https://tatmart.com/en/bien-tan-schneider-atv320u75n4c.html"
+  "source": "https://www.se.com/fr/fr/product/ATV320U55N4C/"
  },
  {
   "fabricant": "Schneider",
@@ -1179,12 +1179,12 @@
   "largeur": 211,
   "hauteur": 546,
   "profondeur": 232,
-  "pertes": 543,
+  "pertes": 460,
   "reference": "ATV630D18N4",
   "filtreCemIntegre": true,
   "blindageFourni": true,
   "servo": false,
-  "source": "https://www.se.com/fr/fr/faqs/FA302753/",
+  "source": "https://www.se.com/fr/fr/product/ATV630D18N4/",
   "verifie": true
  },
  {
@@ -1251,12 +1251,12 @@
   "largeur": 226,
   "hauteur": 673,
   "profondeur": 271,
-  "pertes": 1285,
+  "pertes": 943,
   "reference": "ATV630D45N4",
   "filtreCemIntegre": true,
   "blindageFourni": true,
   "servo": false,
-  "source": "https://www.se.com/fr/fr/faqs/FA302753/",
+  "source": "https://www.se.com/fr/fr/product/ATV630D45N4/",
   "verifie": true
  },
  {

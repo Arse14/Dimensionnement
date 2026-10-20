@@ -148,7 +148,7 @@ public static class CatalogueReferences
 
     /// <summary>
     /// Adapte la référence d'un contacteur à la tension de sa bobine : suffixe BD / B7 / P7 chez Schneider,
-    /// 1BB4x / 1AB0x / 1AP0x chez Siemens, bobine -13 (24-60 V AC/DC) ou -14 (100-250 V AC/DC) chez ABB.
+    /// 1BB4x / 1AB0x / 1AP0x chez Siemens (1NB30 AC/DC en S2 / S3), bobine -13 (24-60 V AC/DC) ou -14 (100-250 V AC/DC) chez ABB.
     /// </summary>
     public static string Bobine(string reference, TensionCommande tension)
     {
@@ -156,6 +156,9 @@ public static class CatalogueReferences
         var ac24 = tension == TensionCommande.Alternatif24;
         if (reference.StartsWith("LC1D") && reference.EndsWith("BD"))
             return reference[..^2] + (ac24 ? "B7" : "P7");
+        // S2 / S3 : bobine 20-33 V AC/DC (-1NB30), valable aussi en 24 V AC ; 230 V AC en -1AP00.
+        if (reference.StartsWith("3RT20") && reference.Contains("-1NB30"))
+            return ac24 ? reference : reference.Replace("-1NB30", "-1AP00");
         if (reference.StartsWith("3RT20") && reference.Contains("-1BB4"))
             return reference.Replace("-1BB4", ac24 ? "-1AB0" : "-1AP0");
         if (reference.StartsWith("AF") && reference.EndsWith("-13"))

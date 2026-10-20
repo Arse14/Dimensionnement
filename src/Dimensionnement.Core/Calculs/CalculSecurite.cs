@@ -264,12 +264,18 @@ public static class CalculSecurite
         return dernier ?? (bases[^1], new List<ModeleSecurite>());
     }
 
-    static ElementMateriel Element(string repere, string designation, ModeleSecurite m, string calibre) => new()
+    static ElementMateriel Element(string repere, string designation, ModeleSecurite m, string calibre)
     {
-        Repere = repere, Famille = "Sécurité", Designation = designation, Calibre = calibre,
-        Fabricant = $"{m.Fabricant} – {m.Gamme}", Reference = m.Reference,
-        LargeurMm = m.Largeur, HauteurMm = 100, ProfondeurMm = 115, PertesW = Math.Max(1, 24 * m.Consommation),
-    };
+        // Hauteur et profondeur relevées sur la fiche quand la gamme est au catalogue des cotes.
+        var cote = CatalogueEncombrements.Trouver("Sécurité", m.Reference, 0);
+        return new()
+        {
+            Repere = repere, Famille = "Sécurité", Designation = designation, Calibre = calibre,
+            Fabricant = $"{m.Fabricant} – {m.Gamme}", Reference = m.Reference,
+            LargeurMm = cote?.Largeur ?? m.Largeur, HauteurMm = cote?.Hauteur ?? 100, ProfondeurMm = cote?.Profondeur ?? 115,
+            PertesW = cote is { Pertes: > 0 } ? cote.Pertes : Math.Max(1, 24 * m.Consommation),
+        };
+    }
 
     public static bool AvecAutomate(Projet projet, IReadOnlyList<ModeleSecurite>? catalogue = null) =>
         SelectionnerLogique(projet, catalogue ?? CatalogueSecurite.Charger()).Automate;

@@ -28,10 +28,15 @@ public static class Encombrements
         if (e.LargeurMm > 0 && e.HauteurMm > 0)
             return new(e.LargeurMm, e.HauteurMm, e.ProfondeurMm, e.PertesW);
         var moyen = Moyen(e, q, poles, i);
-        // Cotes relevées de la gamme quand la référence est reconnue ; la dissipation reste l'estimation de la famille.
+        // Cotes relevées de la gamme quand la référence est reconnue ; la dissipation de la fiche quand elle est relevée,
+        // sinon l'estimation de la famille.
         var valeur = e.Famille == "Disjoncteur moteur" && e.PlageMax > 0 ? e.PlageMax : i;
         if (moyen is { Largeur: > 0 } && CatalogueEncombrements.Trouver(e.Famille, e.Reference, valeur) is { } c)
-            return moyen with { Largeur = c.ParPole ? c.Largeur * poles : c.Largeur, Hauteur = c.Hauteur, Profondeur = c.Profondeur };
+            return moyen with
+            {
+                Largeur = c.ParPole ? c.Largeur * poles : c.Largeur, Hauteur = c.Hauteur, Profondeur = c.Profondeur,
+                DissipationW = c.Pertes > 0 ? c.Pertes * q : moyen.DissipationW,
+            };
         return moyen;
     }
 
