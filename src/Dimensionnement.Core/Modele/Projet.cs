@@ -21,6 +21,8 @@ public class Projet
     public List<Depart> Departs { get; set; } = new();
     public ConfigurationSecurite Securite { get; set; } = new();
     public ConfigurationAutomate Automate { get; set; } = new();
+    public ConfigurationArmoire Armoire { get; set; } = new();
+    public ConfigurationReferences References { get; set; } = new();
     public List<Revision> Revisions { get; set; } = new();
 
     /// <summary>Points de la liste de contrôle CEM / basse tension déjà vérifiés, par identifiant.</summary>

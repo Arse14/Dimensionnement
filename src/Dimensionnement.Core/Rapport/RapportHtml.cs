@@ -32,6 +32,8 @@ public static class RapportHtml
             .arbre ul { list-style: none; padding-left: 18px; border-left: 1px dashed #9aa5b1; margin: 2px 0; }
             .arbre > ul { border-left: none; padding-left: 0; }
             .rep { font-weight: 600; display: inline-block; min-width: 56px; }
+            .schema svg { max-width: 100%; height: auto; border: 1px solid #c9d1d9; }
+            .schema.armoire svg { max-height: 900px; width: auto; }
             .avert { background: #fff6e5; border-left: 4px solid #f5a623; padding: 8px 10px; }
             @media print { h2 { page-break-after: avoid; } .depart { page-break-inside: avoid; } }
             </style></head><body>
@@ -124,14 +126,59 @@ public static class RapportHtml
             sb.Append($"<tr><th>Total</th><th>{A(r.Consommation24V)}</th></tr></table>");
         }
 
+        sb.Append("<h2>Schéma unifilaire</h2><div class=\"schema\">");
+        sb.Append(SchemaUnifilaire.Svg(r));
+        sb.Append("</div>");
+
+        if (r.Selectivite is { } sel)
+        {
+            sb.Append("<h2>Sélectivité</h2><table><tr><th>Départ</th><th>Amont</th><th>Aval</th><th>Rapport des calibres</th>" +
+                      "<th>Magnétique amont mini</th><th>Magnétique aval maxi</th><th>Sélectivité</th><th>Commentaire</th></tr>");
+            foreach (var l in sel.Lignes)
+                sb.Append($"<tr><td>{E(l.Depart)}</td><td>{E(l.Amont)}</td><td>{E(l.Aval)}</td><td>{N(l.RapportSurcharge)}</td>" +
+                          $"<td>{A(l.SeuilAmont)}</td><td>{A(l.SeuilAval)}</td>" +
+                          $"<td class=\"{(l.Niveau is NiveauSelectivite.Totale or NiveauSelectivite.Partielle ? "Conforme" : "Alerte")}\">{CalculSelectivite.Libelle(l.Niveau)}</td>" +
+                          $"<td>{E(l.Commentaire)}</td></tr>");
+            sb.Append("</table>");
+            Note(sb, sel.Note);
+        }
+
+        if (r.Armoire is { } arm)
+        {
+            sb.Append($"<h2>Armoire et implantation</h2><p>{E(arm.Type)} {N(arm.Largeur)} × {N(arm.Hauteur)} × {N(arm.Profondeur)} mm" +
+                      (arm.Cellules > 1 ? $", {arm.Cellules} cellules" : "") + $", hauteur de plaque occupée {Pct(arm.Occupation)}. " +
+                      "Les zones de couleur rouge orangé figurent le rayonnement indicatif des sources de perturbations.</p>");
+            sb.Append("<div class=\"schema armoire\">");
+            sb.Append(SchemaArmoire.Svg(arm));
+            sb.Append("</div>");
+            Note(sb, arm.Note);
+        }
+
+        if (r.Thermique is { } th)
+        {
+            sb.Append("<h2>Bilan thermique</h2><table><tr><th>Repère</th><th>Appareil</th><th>Pertes</th></tr>");
+            foreach (var poste in th.Postes.Where(x => x.PuissanceW >= 0.05))
+                sb.Append($"<tr><td>{E(poste.Repere)}</td><td>{E(poste.Designation)}</td><td>{N(poste.PuissanceW, 1)} W</td></tr>");
+            sb.Append($"<tr><th colspan=\"2\">Total retenu (câblage compris)</th><th>{N(th.PuissanceDissipee, 0)} W</th></tr></table>");
+            Note(sb, th.Note);
+        }
+
+        if (r.References is { } refs)
+        {
+            sb.Append("<h2>Références du matériel</h2>");
+            Note(sb, refs.Note);
+        }
+
         sb.Append("<h2>7. Directives CEM et basse tension</h2><table><tr><th>Vérifié</th><th>Point de contrôle</th><th>Référence</th></tr>");
         foreach (var c in r.Controles)
             sb.Append($"<tr><td class=\"{(c.Fait ? "Conforme" : "Alerte")}\">{(c.Fait ? "☑ Oui" : "☐ Non")}</td><td>{E(c.Libelle)}</td><td>{E(c.Reference)}</td></tr>");
         sb.Append("</table>");
 
-        sb.Append("<h2>8. Nomenclature</h2><table><tr><th>Repères</th><th>Famille</th><th>Désignation</th><th>Calibre</th><th>Qté</th></tr>");
+        sb.Append("<h2>8. Nomenclature</h2><table><tr><th>Repères</th><th>Famille</th><th>Désignation</th><th>Calibre</th><th>Qté</th>" +
+                  "<th>Fabricant</th><th>Référence</th></tr>");
         foreach (var e in r.Nomenclature)
-            sb.Append($"<tr><td>{E(e.Repere)}</td><td>{E(e.Famille)}</td><td>{E(e.Designation)}</td><td>{E(e.Calibre)}</td><td>{e.Quantite}</td></tr>");
+            sb.Append($"<tr><td>{E(e.Repere)}</td><td>{E(e.Famille)}</td><td>{E(e.Designation)}</td><td>{E(e.Calibre)}</td><td>{e.Quantite}</td>" +
+                      $"<td>{E(e.Fabricant)}</td><td>{E(e.Reference)}</td></tr>");
         sb.Append("</table>");
 
         sb.Append("<h2>9. Historique des révisions</h2><table><tr><th>Indice</th><th>Date</th><th>Auteur</th><th>Description</th></tr>");

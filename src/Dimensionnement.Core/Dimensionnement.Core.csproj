@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Normes\catalogue-automates.json" LogicalName="Dimensionnement.Core.Normes.catalogue-automates.json" />
+    <EmbeddedResource Include="Normes\catalogue-references.json" LogicalName="Dimensionnement.Core.Normes.catalogue-references.json" />
   </ItemGroup>
 
   <ItemGroup>

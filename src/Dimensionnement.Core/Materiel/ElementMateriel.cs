@@ -12,8 +12,27 @@ public class ElementMateriel
     /// <summary>Calibre ou caractéristique principale, lisible (« 13–18 A », « 2,5 mm² »…).</summary>
     public string Calibre { get; init; } = "";
     public int Quantite { get; init; } = 1;
-    public string Fabricant { get; init; } = "";
-    public string Reference { get; init; } = "";
+    public string Fabricant { get; set; } = "";
+    public string Reference { get; set; } = "";
+
+    /// <summary>Courant assigné ou de réglage, en A (0 si sans objet).</summary>
+    public double Courant { get; set; }
+
+    /// <summary>Plage d'un disjoncteur moteur ou d'un relais thermique, en A (0 si sans objet).</summary>
+    public double PlageMin { get; set; }
+    public double PlageMax { get; set; }
+
+    /// <summary>Puissance du récepteur ou de l'appareil, en kW (variateur, démarreur, alimentation).</summary>
+    public double PuissanceKw { get; set; }
+
+    /// <summary>Nombre de pôles coupés (protection, sectionnement) ; 0 si sans objet.</summary>
+    public int Poles { get; set; }
+
+    /// <summary>Courbe de déclenchement d'un disjoncteur (B, C, D) ; vide si sans objet.</summary>
+    public string Courbe { get; set; } = "";
+
+    /// <summary>Taille de cartouche d'un porte-fusibles (10×38, NH00…) ; vide si sans objet.</summary>
+    public string TailleFusible { get; set; } = "";
     public StatutCalcul Statut { get; set; } = StatutCalcul.Info;
 
     /// <summary>Départ auquel l'appareil appartient ; null pour l'arrivée.</summary>
@@ -27,6 +46,20 @@ public class ElementMateriel
         "Automate" or "Entrées/sorties" or "Sécurité" => ZoneCem.Propre,
         _ => ZoneCem.Intermediaire,
     };
+
+    /// <summary>Renseigne les caractéristiques numériques utilisées par l'armoire, la thermique et les références.</summary>
+    public ElementMateriel Avec(double courant = 0, int poles = 0, double puissanceKw = 0, string courbe = "",
+        double plageMin = 0, double plageMax = 0, string tailleFusible = "")
+    {
+        Courant = courant;
+        Poles = poles;
+        PuissanceKw = puissanceKw;
+        Courbe = courbe;
+        PlageMin = plageMin;
+        PlageMax = plageMax;
+        TailleFusible = tailleFusible;
+        return this;
+    }
 
     /// <summary>Appareils alimentés par celui-ci.</summary>
     public List<ElementMateriel> Enfants { get; } = new();

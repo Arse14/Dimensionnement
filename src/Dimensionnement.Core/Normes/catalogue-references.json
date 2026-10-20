@@ -1,0 +1,2208 @@
+[
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur",
+  "min": 0.5,
+  "max": 63,
+  "reference": "A9F73{P}{In2}",
+  "gamme": "Acti9 iC60N",
+  "courbe": "B"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur",
+  "min": 0.5,
+  "max": 63,
+  "reference": "A9F74{P}{In2}",
+  "gamme": "Acti9 iC60N",
+  "courbe": "C"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur",
+  "min": 0.5,
+  "max": 63,
+  "reference": "A9F75{P}{In2}",
+  "gamme": "Acti9 iC60N",
+  "courbe": "D"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur",
+  "min": 63.1,
+  "max": 125,
+  "reference": "C120N {P}P B{In} A",
+  "gamme": "Acti9 C120N",
+  "courbe": "B"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur",
+  "min": 63.1,
+  "max": 125,
+  "reference": "C120N {P}P C{In} A",
+  "gamme": "Acti9 C120N",
+  "courbe": "C"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur",
+  "min": 63.1,
+  "max": 125,
+  "reference": "C120N {P}P D{In} A",
+  "gamme": "Acti9 C120N",
+  "courbe": "D"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur",
+  "min": 125.1,
+  "max": 160,
+  "reference": "NSX160F TM-D {In} A {P}P",
+  "gamme": "ComPacT NSX"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur",
+  "min": 160.1,
+  "max": 250,
+  "reference": "NSX250F TM-D {In} A {P}P",
+  "gamme": "ComPacT NSX"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur",
+  "min": 250.1,
+  "max": 400,
+  "reference": "NSX400F TM-D {In} A {P}P",
+  "gamme": "ComPacT NSX"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur",
+  "min": 400.1,
+  "max": 630,
+  "reference": "NSX630F TM-D {In} A {P}P",
+  "gamme": "ComPacT NSX"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur moteur",
+  "min": 0.1,
+  "max": 0.16,
+  "reference": "GV2ME01",
+  "gamme": "TeSys GV2"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur moteur",
+  "min": 0.16,
+  "max": 0.25,
+  "reference": "GV2ME02",
+  "gamme": "TeSys GV2"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur moteur",
+  "min": 0.25,
+  "max": 0.4,
+  "reference": "GV2ME03",
+  "gamme": "TeSys GV2"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur moteur",
+  "min": 0.4,
+  "max": 0.63,
+  "reference": "GV2ME04",
+  "gamme": "TeSys GV2"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur moteur",
+  "min": 0.63,
+  "max": 1,
+  "reference": "GV2ME05",
+  "gamme": "TeSys GV2"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur moteur",
+  "min": 1,
+  "max": 1.6,
+  "reference": "GV2ME06",
+  "gamme": "TeSys GV2"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur moteur",
+  "min": 1.6,
+  "max": 2.5,
+  "reference": "GV2ME07",
+  "gamme": "TeSys GV2"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur moteur",
+  "min": 2.5,
+  "max": 4,
+  "reference": "GV2ME08",
+  "gamme": "TeSys GV2"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur moteur",
+  "min": 4,
+  "max": 6.3,
+  "reference": "GV2ME10",
+  "gamme": "TeSys GV2"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur moteur",
+  "min": 6,
+  "max": 10,
+  "reference": "GV2ME14",
+  "gamme": "TeSys GV2"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur moteur",
+  "min": 9,
+  "max": 14,
+  "reference": "GV2ME16",
+  "gamme": "TeSys GV2"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur moteur",
+  "min": 13,
+  "max": 18,
+  "reference": "GV2ME20",
+  "gamme": "TeSys GV2"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur moteur",
+  "min": 17,
+  "max": 23,
+  "reference": "GV2ME21",
+  "gamme": "TeSys GV2"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur moteur",
+  "min": 20,
+  "max": 25,
+  "reference": "GV2ME22",
+  "gamme": "TeSys GV2"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur moteur",
+  "min": 24,
+  "max": 32,
+  "reference": "GV2ME32",
+  "gamme": "TeSys GV2"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur moteur",
+  "min": 30,
+  "max": 40,
+  "reference": "GV3P40",
+  "gamme": "TeSys GV3/GV4"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur moteur",
+  "min": 37,
+  "max": 50,
+  "reference": "GV3P50",
+  "gamme": "TeSys GV3/GV4"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur moteur",
+  "min": 48,
+  "max": 65,
+  "reference": "GV3P65",
+  "gamme": "TeSys GV3/GV4"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Disjoncteur moteur",
+  "min": 62,
+  "max": 80,
+  "reference": "GV4P80",
+  "gamme": "TeSys GV3/GV4"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Relais thermique",
+  "min": 0.1,
+  "max": 0.16,
+  "reference": "LRD01",
+  "gamme": "TeSys LRD"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Relais thermique",
+  "min": 0.16,
+  "max": 0.25,
+  "reference": "LRD02",
+  "gamme": "TeSys LRD"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Relais thermique",
+  "min": 0.25,
+  "max": 0.4,
+  "reference": "LRD03",
+  "gamme": "TeSys LRD"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Relais thermique",
+  "min": 0.4,
+  "max": 0.63,
+  "reference": "LRD04",
+  "gamme": "TeSys LRD"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Relais thermique",
+  "min": 0.63,
+  "max": 1,
+  "reference": "LRD05",
+  "gamme": "TeSys LRD"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Relais thermique",
+  "min": 1,
+  "max": 1.6,
+  "reference": "LRD06",
+  "gamme": "TeSys LRD"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Relais thermique",
+  "min": 1.6,
+  "max": 2.5,
+  "reference": "LRD07",
+  "gamme": "TeSys LRD"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Relais thermique",
+  "min": 2.5,
+  "max": 4,
+  "reference": "LRD08",
+  "gamme": "TeSys LRD"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Relais thermique",
+  "min": 4,
+  "max": 6,
+  "reference": "LRD10",
+  "gamme": "TeSys LRD"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Relais thermique",
+  "min": 5.5,
+  "max": 8,
+  "reference": "LRD12",
+  "gamme": "TeSys LRD"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Relais thermique",
+  "min": 7,
+  "max": 10,
+  "reference": "LRD14",
+  "gamme": "TeSys LRD"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Relais thermique",
+  "min": 9,
+  "max": 13,
+  "reference": "LRD16",
+  "gamme": "TeSys LRD"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Relais thermique",
+  "min": 12,
+  "max": 18,
+  "reference": "LRD21",
+  "gamme": "TeSys LRD"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Relais thermique",
+  "min": 16,
+  "max": 24,
+  "reference": "LRD22",
+  "gamme": "TeSys LRD"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Relais thermique",
+  "min": 23,
+  "max": 32,
+  "reference": "LRD32",
+  "gamme": "TeSys LRD"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Relais thermique",
+  "min": 30,
+  "max": 40,
+  "reference": "LRD340",
+  "gamme": "TeSys LRD"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Relais thermique",
+  "min": 37,
+  "max": 50,
+  "reference": "LRD350",
+  "gamme": "TeSys LRD"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Relais thermique",
+  "min": 48,
+  "max": 65,
+  "reference": "LRD365",
+  "gamme": "TeSys LRD"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 9,
+  "reference": "LC1D09BD",
+  "gamme": "TeSys Deca (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 12,
+  "reference": "LC1D12BD",
+  "gamme": "TeSys Deca (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 18,
+  "reference": "LC1D18BD",
+  "gamme": "TeSys Deca (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 25,
+  "reference": "LC1D25BD",
+  "gamme": "TeSys Deca (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 32,
+  "reference": "LC1D32BD",
+  "gamme": "TeSys Deca (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 38,
+  "reference": "LC1D38BD",
+  "gamme": "TeSys Deca (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 40,
+  "reference": "LC1D40ABD",
+  "gamme": "TeSys Deca (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 50,
+  "reference": "LC1D50ABD",
+  "gamme": "TeSys Deca (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 65,
+  "reference": "LC1D65ABD",
+  "gamme": "TeSys Deca (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 80,
+  "reference": "LC1D80BD",
+  "gamme": "TeSys Deca (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 95,
+  "reference": "LC1D95BD",
+  "gamme": "TeSys Deca (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 115,
+  "reference": "LC1D115BD",
+  "gamme": "TeSys Deca (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 150,
+  "reference": "LC1D150BD",
+  "gamme": "TeSys Deca (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 20,
+  "reference": "VCF0",
+  "gamme": "TeSys Vario / InterPacT INS"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 25,
+  "reference": "VCF1",
+  "gamme": "TeSys Vario / InterPacT INS"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 32,
+  "reference": "VCF2",
+  "gamme": "TeSys Vario / InterPacT INS"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 40,
+  "reference": "VCF3",
+  "gamme": "TeSys Vario / InterPacT INS"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 63,
+  "reference": "VCF4",
+  "gamme": "TeSys Vario / InterPacT INS"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 80,
+  "reference": "VCF5",
+  "gamme": "TeSys Vario / InterPacT INS"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 125,
+  "reference": "VCF6",
+  "gamme": "TeSys Vario / InterPacT INS"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 160,
+  "reference": "INS160 {P}P",
+  "gamme": "TeSys Vario / InterPacT INS"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 250,
+  "reference": "INS250 {P}P",
+  "gamme": "TeSys Vario / InterPacT INS"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 400,
+  "reference": "INS400 {P}P",
+  "gamme": "TeSys Vario / InterPacT INS"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 630,
+  "reference": "INS630 {P}P",
+  "gamme": "TeSys Vario / InterPacT INS"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Variateur",
+  "min": 0,
+  "max": 15,
+  "reference": "ATV320 {kW} kW 400 V",
+  "gamme": "Altivar Machine ATV320"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Variateur",
+  "min": 15.01,
+  "max": 315,
+  "reference": "ATV630 {kW} kW 400 V",
+  "gamme": "Altivar Process ATV630"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Démarreur progressif",
+  "min": 0,
+  "max": 110,
+  "reference": "ATS22 {kW} kW 400 V",
+  "gamme": "Altistart ATS22"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Démarreur progressif",
+  "min": 110.01,
+  "max": 900,
+  "reference": "ATS480 {kW} kW 400 V",
+  "gamme": "Altistart ATS480"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Alimentation",
+  "min": 0,
+  "max": 3,
+  "reference": "ABL8RPS24030",
+  "gamme": "Modicon ABL8"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Alimentation",
+  "min": 0,
+  "max": 5,
+  "reference": "ABL8RPS24050",
+  "gamme": "Modicon ABL8"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Alimentation",
+  "min": 0,
+  "max": 10,
+  "reference": "ABL8RPS24100",
+  "gamme": "Modicon ABL8"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Alimentation",
+  "min": 0,
+  "max": 20,
+  "reference": "ABL8RPM24200",
+  "gamme": "Modicon ABL8"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Alimentation",
+  "min": 0,
+  "max": 40,
+  "reference": "ABL8WPS24400",
+  "gamme": "Modicon ABL8"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Sectionneur porte-fusibles",
+  "min": 0,
+  "max": 125,
+  "reference": "DF10{P}",
+  "gamme": "TeSys DF",
+  "taille": "10×38"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Sectionneur porte-fusibles",
+  "min": 0,
+  "max": 125,
+  "reference": "DF14{P}",
+  "gamme": "TeSys DF",
+  "taille": "14×51"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Sectionneur porte-fusibles",
+  "min": 0,
+  "max": 125,
+  "reference": "DF22{P}",
+  "gamme": "TeSys DF",
+  "taille": "22×58"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Fusible",
+  "min": 0,
+  "max": 125,
+  "reference": "DF2CN{In2}",
+  "gamme": "TeSys DF",
+  "taille": "10×38",
+  "classe": "gG"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Fusible",
+  "min": 0,
+  "max": 125,
+  "reference": "DF2CA{In2}",
+  "gamme": "TeSys DF",
+  "taille": "10×38",
+  "classe": "aM"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Fusible",
+  "min": 0,
+  "max": 125,
+  "reference": "DF2EN{In2}",
+  "gamme": "TeSys DF",
+  "taille": "14×51",
+  "classe": "gG"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Fusible",
+  "min": 0,
+  "max": 125,
+  "reference": "DF2EA{In2}",
+  "gamme": "TeSys DF",
+  "taille": "14×51",
+  "classe": "aM"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Fusible",
+  "min": 0,
+  "max": 125,
+  "reference": "DF2GN{In3}",
+  "gamme": "TeSys DF",
+  "taille": "22×58",
+  "classe": "gG"
+ },
+ {
+  "fabricant": "Schneider",
+  "famille": "Fusible",
+  "min": 0,
+  "max": 125,
+  "reference": "DF2GA{In3}",
+  "gamme": "TeSys DF",
+  "taille": "22×58",
+  "classe": "aM"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur",
+  "min": 0.5,
+  "max": 63,
+  "reference": "5SL6{P}{In2}-6",
+  "gamme": "SENTRON 5SL6",
+  "courbe": "B"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur",
+  "min": 0.5,
+  "max": 63,
+  "reference": "5SL6{P}{In2}-7",
+  "gamme": "SENTRON 5SL6",
+  "courbe": "C"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur",
+  "min": 0.5,
+  "max": 63,
+  "reference": "5SY4{P}{In2}-8",
+  "gamme": "SENTRON 5SY4",
+  "courbe": "D"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur",
+  "min": 63.1,
+  "max": 630,
+  "reference": "3VA {In} A {P}P",
+  "gamme": "SENTRON 3VA"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 0.11,
+  "max": 0.16,
+  "reference": "3RV2011-0AA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 0.14,
+  "max": 0.2,
+  "reference": "3RV2011-0BA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 0.18,
+  "max": 0.25,
+  "reference": "3RV2011-0CA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 0.22,
+  "max": 0.32,
+  "reference": "3RV2011-0DA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 0.28,
+  "max": 0.4,
+  "reference": "3RV2011-0EA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 0.35,
+  "max": 0.5,
+  "reference": "3RV2011-0FA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 0.45,
+  "max": 0.63,
+  "reference": "3RV2011-0GA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 0.55,
+  "max": 0.8,
+  "reference": "3RV2011-0HA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 0.7,
+  "max": 1,
+  "reference": "3RV2011-0JA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 0.9,
+  "max": 1.25,
+  "reference": "3RV2011-0KA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 1.1,
+  "max": 1.6,
+  "reference": "3RV2011-1AA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 1.4,
+  "max": 2,
+  "reference": "3RV2011-1BA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 1.8,
+  "max": 2.5,
+  "reference": "3RV2011-1CA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 2.2,
+  "max": 3.2,
+  "reference": "3RV2011-1DA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 2.8,
+  "max": 4,
+  "reference": "3RV2011-1EA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 3.5,
+  "max": 5,
+  "reference": "3RV2011-1FA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 4.5,
+  "max": 6.3,
+  "reference": "3RV2011-1GA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 5.5,
+  "max": 8,
+  "reference": "3RV2011-1HA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 7,
+  "max": 10,
+  "reference": "3RV2011-1JA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 9,
+  "max": 12.5,
+  "reference": "3RV2011-1KA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 11,
+  "max": 16,
+  "reference": "3RV2011-4AA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 14,
+  "max": 20,
+  "reference": "3RV2021-4BA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 17,
+  "max": 22,
+  "reference": "3RV2021-4CA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 20,
+  "max": 25,
+  "reference": "3RV2021-4DA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 23,
+  "max": 28,
+  "reference": "3RV2021-4NA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 27,
+  "max": 32,
+  "reference": "3RV2021-4PA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 30,
+  "max": 36,
+  "reference": "3RV2021-4EA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 34,
+  "max": 40,
+  "reference": "3RV2021-4FA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 42,
+  "max": 52,
+  "reference": "3RV2031-4XA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 45,
+  "max": 63,
+  "reference": "3RV2031-4JA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 57,
+  "max": 75,
+  "reference": "3RV2031-4KA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Disjoncteur moteur",
+  "min": 70,
+  "max": 80,
+  "reference": "3RV2031-4RA10",
+  "gamme": "SIRIUS 3RV2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 0.11,
+  "max": 0.16,
+  "reference": "3RU2116-0AB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 0.14,
+  "max": 0.2,
+  "reference": "3RU2116-0BB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 0.18,
+  "max": 0.25,
+  "reference": "3RU2116-0CB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 0.22,
+  "max": 0.32,
+  "reference": "3RU2116-0DB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 0.28,
+  "max": 0.4,
+  "reference": "3RU2116-0EB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 0.35,
+  "max": 0.5,
+  "reference": "3RU2116-0FB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 0.45,
+  "max": 0.63,
+  "reference": "3RU2116-0GB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 0.55,
+  "max": 0.8,
+  "reference": "3RU2116-0HB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 0.7,
+  "max": 1,
+  "reference": "3RU2116-0JB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 0.9,
+  "max": 1.25,
+  "reference": "3RU2116-0KB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 1.1,
+  "max": 1.6,
+  "reference": "3RU2116-1AB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 1.4,
+  "max": 2,
+  "reference": "3RU2116-1BB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 1.8,
+  "max": 2.5,
+  "reference": "3RU2116-1CB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 2.2,
+  "max": 3.2,
+  "reference": "3RU2116-1DB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 2.8,
+  "max": 4,
+  "reference": "3RU2116-1EB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 3.5,
+  "max": 5,
+  "reference": "3RU2116-1FB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 4.5,
+  "max": 6.3,
+  "reference": "3RU2116-1GB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 5.5,
+  "max": 8,
+  "reference": "3RU2116-1HB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 7,
+  "max": 10,
+  "reference": "3RU2116-1JB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 9,
+  "max": 12.5,
+  "reference": "3RU2116-1KB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 11,
+  "max": 16,
+  "reference": "3RU2116-4AB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 14,
+  "max": 20,
+  "reference": "3RU2126-4BB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 17,
+  "max": 22,
+  "reference": "3RU2126-4CB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 20,
+  "max": 25,
+  "reference": "3RU2126-4DB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 23,
+  "max": 28,
+  "reference": "3RU2126-4NB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 27,
+  "max": 32,
+  "reference": "3RU2126-4PB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 30,
+  "max": 36,
+  "reference": "3RU2126-4EB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 34,
+  "max": 40,
+  "reference": "3RU2126-4FB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 42,
+  "max": 52,
+  "reference": "3RU2136-4XB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 45,
+  "max": 63,
+  "reference": "3RU2136-4JB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 57,
+  "max": 75,
+  "reference": "3RU2136-4KB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Relais thermique",
+  "min": 70,
+  "max": 80,
+  "reference": "3RU2136-4RB0",
+  "gamme": "SIRIUS 3RU2"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 7,
+  "reference": "3RT2015-1BB41",
+  "gamme": "SIRIUS 3RT2 (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 9,
+  "reference": "3RT2016-1BB41",
+  "gamme": "SIRIUS 3RT2 (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 12,
+  "reference": "3RT2017-1BB41",
+  "gamme": "SIRIUS 3RT2 (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 16,
+  "reference": "3RT2018-1BB41",
+  "gamme": "SIRIUS 3RT2 (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 25,
+  "reference": "3RT2026-1BB40",
+  "gamme": "SIRIUS 3RT2 (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 32,
+  "reference": "3RT2027-1BB40",
+  "gamme": "SIRIUS 3RT2 (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 38,
+  "reference": "3RT2028-1BB40",
+  "gamme": "SIRIUS 3RT2 (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 50,
+  "reference": "3RT2036-1BB40",
+  "gamme": "SIRIUS 3RT2 (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 65,
+  "reference": "3RT2037-1BB40",
+  "gamme": "SIRIUS 3RT2 (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 80,
+  "reference": "3RT2038-1BB40",
+  "gamme": "SIRIUS 3RT2 (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 95,
+  "reference": "3RT2046-1BB40",
+  "gamme": "SIRIUS 3RT2 (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 110,
+  "reference": "3RT2047-1BB40",
+  "gamme": "SIRIUS 3RT2 (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 150,
+  "reference": "3RT1055-6AB36",
+  "gamme": "SIRIUS 3RT2 (bobine 24 V DC)"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 125,
+  "reference": "3LD interrupteur principal {In} A {P}P",
+  "gamme": "SENTRON 3LD"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Interrupteur-sectionneur",
+  "min": 125.01,
+  "max": 630,
+  "reference": "3KD interrupteur-sectionneur {In} A {P}P",
+  "gamme": "SENTRON 3KD"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Variateur",
+  "min": 0,
+  "max": 132,
+  "reference": "SINAMICS G120C {kW} kW 400 V",
+  "gamme": "SINAMICS G120C"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Démarreur progressif",
+  "min": 0,
+  "max": 250,
+  "reference": "SIRIUS 3RW40 {kW} kW 400 V",
+  "gamme": "SIRIUS 3RW40"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Alimentation",
+  "min": 0,
+  "max": 40,
+  "reference": "SITOP PSU6200 24 V / {In} A",
+  "gamme": "SITOP PSU6200"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Sectionneur porte-fusibles",
+  "min": 0,
+  "max": 125,
+  "reference": "3NW7 {Taille} {P}P",
+  "gamme": "SENTRON 3NW7"
+ },
+ {
+  "fabricant": "Siemens",
+  "famille": "Fusible",
+  "min": 0,
+  "max": 125,
+  "reference": "3NW6 {Taille} {Classe} {In} A",
+  "gamme": "SENTRON 3NW6"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur",
+  "min": 0.5,
+  "max": 63,
+  "reference": "S20{P}-B{In}",
+  "gamme": "System pro M S200",
+  "courbe": "B"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur",
+  "min": 0.5,
+  "max": 63,
+  "reference": "S20{P}-C{In}",
+  "gamme": "System pro M S200",
+  "courbe": "C"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur",
+  "min": 0.5,
+  "max": 63,
+  "reference": "S20{P}-D{In}",
+  "gamme": "System pro M S200",
+  "courbe": "D"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur",
+  "min": 63.1,
+  "max": 630,
+  "reference": "Tmax XT {In} A {P}P",
+  "gamme": "Tmax XT"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur moteur",
+  "min": 0.1,
+  "max": 0.16,
+  "reference": "MS132-0.16",
+  "gamme": "MS132"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur moteur",
+  "min": 0.16,
+  "max": 0.25,
+  "reference": "MS132-0.25",
+  "gamme": "MS132"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur moteur",
+  "min": 0.25,
+  "max": 0.4,
+  "reference": "MS132-0.4",
+  "gamme": "MS132"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur moteur",
+  "min": 0.4,
+  "max": 0.63,
+  "reference": "MS132-0.63",
+  "gamme": "MS132"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur moteur",
+  "min": 0.63,
+  "max": 1,
+  "reference": "MS132-1",
+  "gamme": "MS132"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur moteur",
+  "min": 1,
+  "max": 1.6,
+  "reference": "MS132-1.6",
+  "gamme": "MS132"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur moteur",
+  "min": 1.6,
+  "max": 2.5,
+  "reference": "MS132-2.5",
+  "gamme": "MS132"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur moteur",
+  "min": 2.5,
+  "max": 4,
+  "reference": "MS132-4",
+  "gamme": "MS132"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur moteur",
+  "min": 4,
+  "max": 6.3,
+  "reference": "MS132-6.3",
+  "gamme": "MS132"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur moteur",
+  "min": 6,
+  "max": 10,
+  "reference": "MS132-10",
+  "gamme": "MS132"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur moteur",
+  "min": 9,
+  "max": 14,
+  "reference": "MS132-14",
+  "gamme": "MS132"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur moteur",
+  "min": 13,
+  "max": 18,
+  "reference": "MS132-18",
+  "gamme": "MS132"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur moteur",
+  "min": 17,
+  "max": 23,
+  "reference": "MS132-23",
+  "gamme": "MS132"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur moteur",
+  "min": 20,
+  "max": 25,
+  "reference": "MS132-25",
+  "gamme": "MS132"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur moteur",
+  "min": 24,
+  "max": 32,
+  "reference": "MS132-32",
+  "gamme": "MS132"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur moteur",
+  "min": 30,
+  "max": 42,
+  "reference": "MS165-42",
+  "gamme": "MS165"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur moteur",
+  "min": 40,
+  "max": 54,
+  "reference": "MS165-54",
+  "gamme": "MS165"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Disjoncteur moteur",
+  "min": 52,
+  "max": 65,
+  "reference": "MS165-65",
+  "gamme": "MS165"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Relais thermique",
+  "min": 0.1,
+  "max": 0.16,
+  "reference": "TF42-0.16",
+  "gamme": "TF42"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Relais thermique",
+  "min": 0.16,
+  "max": 0.25,
+  "reference": "TF42-0.25",
+  "gamme": "TF42"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Relais thermique",
+  "min": 0.25,
+  "max": 0.4,
+  "reference": "TF42-0.4",
+  "gamme": "TF42"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Relais thermique",
+  "min": 0.4,
+  "max": 0.63,
+  "reference": "TF42-0.63",
+  "gamme": "TF42"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Relais thermique",
+  "min": 0.63,
+  "max": 1,
+  "reference": "TF42-1",
+  "gamme": "TF42"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Relais thermique",
+  "min": 1,
+  "max": 1.6,
+  "reference": "TF42-1.6",
+  "gamme": "TF42"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Relais thermique",
+  "min": 1.6,
+  "max": 2.5,
+  "reference": "TF42-2.5",
+  "gamme": "TF42"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Relais thermique",
+  "min": 2.5,
+  "max": 4,
+  "reference": "TF42-4",
+  "gamme": "TF42"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Relais thermique",
+  "min": 4,
+  "max": 6.3,
+  "reference": "TF42-6.3",
+  "gamme": "TF42"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Relais thermique",
+  "min": 6,
+  "max": 10,
+  "reference": "TF42-10",
+  "gamme": "TF42"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Relais thermique",
+  "min": 9,
+  "max": 14,
+  "reference": "TF42-14",
+  "gamme": "TF42"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Relais thermique",
+  "min": 13,
+  "max": 18,
+  "reference": "TF42-18",
+  "gamme": "TF42"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Relais thermique",
+  "min": 17,
+  "max": 23,
+  "reference": "TF42-23",
+  "gamme": "TF42"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Relais thermique",
+  "min": 20,
+  "max": 25,
+  "reference": "TF42-25",
+  "gamme": "TF42"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Relais thermique",
+  "min": 24,
+  "max": 32,
+  "reference": "TF42-32",
+  "gamme": "TF42"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 9,
+  "reference": "AF09-30-10-13",
+  "gamme": "AF (bobine 24-60 V AC/DC)"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 12,
+  "reference": "AF12-30-10-13",
+  "gamme": "AF (bobine 24-60 V AC/DC)"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 18,
+  "reference": "AF16-30-10-13",
+  "gamme": "AF (bobine 24-60 V AC/DC)"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 26,
+  "reference": "AF26-30-10-13",
+  "gamme": "AF (bobine 24-60 V AC/DC)"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 32,
+  "reference": "AF30-30-10-13",
+  "gamme": "AF (bobine 24-60 V AC/DC)"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 38,
+  "reference": "AF38-30-10-13",
+  "gamme": "AF (bobine 24-60 V AC/DC)"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 40,
+  "reference": "AF40-30-11-13",
+  "gamme": "AF (bobine 24-60 V AC/DC)"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 53,
+  "reference": "AF52-30-11-13",
+  "gamme": "AF (bobine 24-60 V AC/DC)"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 65,
+  "reference": "AF65-30-11-13",
+  "gamme": "AF (bobine 24-60 V AC/DC)"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 80,
+  "reference": "AF80-30-11-13",
+  "gamme": "AF (bobine 24-60 V AC/DC)"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 96,
+  "reference": "AF96-30-11-13",
+  "gamme": "AF (bobine 24-60 V AC/DC)"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 116,
+  "reference": "AF116-30-11-13",
+  "gamme": "AF (bobine 24-60 V AC/DC)"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 146,
+  "reference": "AF146-30-11-13",
+  "gamme": "AF (bobine 24-60 V AC/DC)"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 16,
+  "reference": "OT16F{P}",
+  "gamme": "OT"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 25,
+  "reference": "OT25F{P}",
+  "gamme": "OT"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 32,
+  "reference": "OT32F{P}",
+  "gamme": "OT"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 40,
+  "reference": "OT40F{P}",
+  "gamme": "OT"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 63,
+  "reference": "OT63F{P}",
+  "gamme": "OT"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 80,
+  "reference": "OT80F{P}",
+  "gamme": "OT"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 100,
+  "reference": "OT100F{P}",
+  "gamme": "OT"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 125,
+  "reference": "OT125F{P}",
+  "gamme": "OT"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 160,
+  "reference": "OT160F{P}",
+  "gamme": "OT"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 200,
+  "reference": "OT200F{P}",
+  "gamme": "OT"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 250,
+  "reference": "OT250F{P}",
+  "gamme": "OT"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 315,
+  "reference": "OT315F{P}",
+  "gamme": "OT"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 400,
+  "reference": "OT400F{P}",
+  "gamme": "OT"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 630,
+  "reference": "OT630F{P}",
+  "gamme": "OT"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Variateur",
+  "min": 0,
+  "max": 22,
+  "reference": "ACS380 {kW} kW 400 V",
+  "gamme": "ACS380"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Variateur",
+  "min": 22.01,
+  "max": 500,
+  "reference": "ACS580 {kW} kW 400 V",
+  "gamme": "ACS580"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Démarreur progressif",
+  "min": 0,
+  "max": 37,
+  "reference": "PSR {kW} kW 400 V",
+  "gamme": "PSR"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Démarreur progressif",
+  "min": 37.01,
+  "max": 250,
+  "reference": "PSE {kW} kW 400 V",
+  "gamme": "PSE"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Alimentation",
+  "min": 0,
+  "max": 40,
+  "reference": "CP-E 24/{In}",
+  "gamme": "CP-E"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Sectionneur porte-fusibles",
+  "min": 0,
+  "max": 125,
+  "reference": "E 93hN/{P} {Taille}",
+  "gamme": "E 90"
+ },
+ {
+  "fabricant": "ABB",
+  "famille": "Fusible",
+  "min": 0,
+  "max": 125,
+  "reference": "E9F {Taille} {Classe} {In} A",
+  "gamme": "E 9F"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Disjoncteur",
+  "min": 0.5,
+  "max": 63,
+  "reference": "DX³ 6000 {P}P B{In}",
+  "gamme": "DX³",
+  "courbe": "B"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Disjoncteur",
+  "min": 0.5,
+  "max": 63,
+  "reference": "DX³ 6000 {P}P C{In}",
+  "gamme": "DX³",
+  "courbe": "C"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Disjoncteur",
+  "min": 0.5,
+  "max": 63,
+  "reference": "DX³ 6000 {P}P D{In}",
+  "gamme": "DX³",
+  "courbe": "D"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Disjoncteur",
+  "min": 63.1,
+  "max": 630,
+  "reference": "DPX³ {In} A {P}P",
+  "gamme": "DPX³"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Disjoncteur moteur",
+  "min": 0.1,
+  "max": 32,
+  "reference": "MPX³ 32S {Min}-{Max} A",
+  "gamme": "MPX³"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Disjoncteur moteur",
+  "min": 32.01,
+  "max": 63,
+  "reference": "MPX³ 63H {Min}-{Max} A",
+  "gamme": "MPX³"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Relais thermique",
+  "min": 0.1,
+  "max": 100,
+  "reference": "RTX³ réglé à {Ir} A",
+  "gamme": "RTX³"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 9,
+  "reference": "CTX³ 3P 9 A bobine 24 V DC",
+  "gamme": "CTX³"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 12,
+  "reference": "CTX³ 3P 12 A bobine 24 V DC",
+  "gamme": "CTX³"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 18,
+  "reference": "CTX³ 3P 18 A bobine 24 V DC",
+  "gamme": "CTX³"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 22,
+  "reference": "CTX³ 3P 22 A bobine 24 V DC",
+  "gamme": "CTX³"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 32,
+  "reference": "CTX³ 3P 32 A bobine 24 V DC",
+  "gamme": "CTX³"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 40,
+  "reference": "CTX³ 3P 40 A bobine 24 V DC",
+  "gamme": "CTX³"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 50,
+  "reference": "CTX³ 3P 50 A bobine 24 V DC",
+  "gamme": "CTX³"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 65,
+  "reference": "CTX³ 3P 65 A bobine 24 V DC",
+  "gamme": "CTX³"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 75,
+  "reference": "CTX³ 3P 75 A bobine 24 V DC",
+  "gamme": "CTX³"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 85,
+  "reference": "CTX³ 3P 85 A bobine 24 V DC",
+  "gamme": "CTX³"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 100,
+  "reference": "CTX³ 3P 100 A bobine 24 V DC",
+  "gamme": "CTX³"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Contacteur",
+  "min": 0,
+  "max": 150,
+  "reference": "CTX³ 3P 150 A bobine 24 V DC",
+  "gamme": "CTX³"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Interrupteur-sectionneur",
+  "min": 0,
+  "max": 125,
+  "reference": "DX³-IS {P}P {In} A",
+  "gamme": "DX³-IS"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Interrupteur-sectionneur",
+  "min": 125.01,
+  "max": 630,
+  "reference": "DPX³-IS {P}P {In} A",
+  "gamme": "DPX³-IS"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Alimentation",
+  "min": 0,
+  "max": 40,
+  "reference": "Alimentation 24 V DC {In} A",
+  "gamme": "Alimentations modulaires"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Sectionneur porte-fusibles",
+  "min": 0,
+  "max": 125,
+  "reference": "SP {Taille} {P}P",
+  "gamme": "SP"
+ },
+ {
+  "fabricant": "Legrand",
+  "famille": "Fusible",
+  "min": 0,
+  "max": 125,
+  "reference": "Cartouche {Taille} {Classe} {In} A",
+  "gamme": "Cartouches"
+ }
+]

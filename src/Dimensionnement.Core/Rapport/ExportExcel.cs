@@ -1,5 +1,6 @@
 using ClosedXML.Excel;
 using Dimensionnement.Core.Calculs;
+using Dimensionnement.Core.Materiel;
 
 namespace Dimensionnement.Core.Rapport;
 
@@ -44,9 +45,60 @@ public static class ExportExcel
         foreach (var c in r.Controles)
             Remplir(controles, ligne++, c.Fait ? "Oui" : "Non", c.Libelle, c.Reference);
 
+        FeuilleDevis(classeur, r);
+
         foreach (var feuille in classeur.Worksheets)
-            feuille.Columns().AdjustToContents(1, 200, 8, 70);
+            feuille.Columns().AdjustToContents(1, 300, 8, 70);
         classeur.SaveAs(chemin);
+    }
+
+    /// <summary>Classeur à envoyer au fournisseur : la seule liste de matériel, avec l'en-tête du projet.</summary>
+    public static void EnregistrerDevis(ResultatProjet r, string chemin)
+    {
+        using var classeur = new XLWorkbook();
+        var feuille = FeuilleDevis(classeur, r);
+        feuille.Columns().AdjustToContents(1, 300, 8, 70);
+        classeur.SaveAs(chemin);
+    }
+
+    static IXLWorksheet FeuilleDevis(XLWorkbook classeur, ResultatProjet r)
+    {
+        var p = r.Projet;
+        var feuille = classeur.Worksheets.Add("Demande de devis");
+        feuille.Cell(1, 1).Value = "Demande de prix – matériel électrique";
+        feuille.Cell(1, 1).Style.Font.Bold = true;
+        feuille.Cell(1, 1).Style.Font.FontSize = 14;
+        var entete = new (string, string)[]
+        {
+            ("Projet", p.Nom), ("Affaire", p.Affaire), ("Client", p.Client), ("Indice", p.Indice),
+            ("Date", DateTime.Today.ToString("dd/MM/yyyy")), ("Fabricant souhaité", p.References.Fabricant.ToString()),
+        };
+        var ligne = 2;
+        foreach (var (libelle, valeur) in entete)
+        {
+            feuille.Cell(ligne, 1).Value = libelle;
+            feuille.Cell(ligne, 1).Style.Font.Bold = true;
+            feuille.Cell(ligne++, 2).Value = valeur;
+        }
+        feuille.Cell(ligne++, 1).Value = "Références à confirmer par le fournisseur ; équivalences acceptées si signalées.";
+
+        string[] colonnes = { "N°", "Catégorie", "Désignation", "Caractéristiques", "Fabricant", "Référence", "Quantité", "Unité",
+            "Repères", "Remarque", "Prix unitaire HT", "Délai" };
+        var debut = ++ligne;
+        for (var i = 0; i < colonnes.Length; i++)
+            feuille.Cell(debut, i + 1).Value = colonnes[i];
+        var titres = feuille.Range(debut, 1, debut, colonnes.Length);
+        titres.Style.Font.Bold = true;
+        titres.Style.Fill.BackgroundColor = XLColor.FromHtml("#F5A623");
+        feuille.SheetView.FreezeRows(debut);
+
+        var numero = 1;
+        foreach (var d in ListeDevis.Generer(r))
+            Remplir(feuille, ++ligne, numero++, d.Categorie, d.Designation, d.Caracteristiques, d.Fabricant, d.Reference,
+                d.Quantite, d.Unite, d.Reperes, d.Remarque);
+        feuille.Range(debut, 1, ligne, colonnes.Length).Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+        feuille.Range(debut, 1, ligne, colonnes.Length).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+        return feuille;
     }
 
     static IXLWorksheet Feuille(XLWorkbook classeur, string nom, params string[] entetes)

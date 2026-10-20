@@ -121,7 +121,7 @@ public class ExportsTests
             ExportExcel.Enregistrer(CalculProjet.Calculer(projet), chemin);
 
             using var classeur = new ClosedXML.Excel.XLWorkbook(chemin);
-            Assert.Equal(new[] { "Nomenclature", "Départs", "Notes de calcul", "Bilan 24 V", "Contrôles CEM-BT" },
+            Assert.Equal(new[] { "Nomenclature", "Départs", "Notes de calcul", "Bilan 24 V", "Contrôles CEM-BT", "Demande de devis" },
                 classeur.Worksheets.Select(f => f.Name));
             Assert.Equal("D01", classeur.Worksheet("Départs").Cell(2, 1).GetString());
             Assert.Contains(classeur.Worksheet("Contrôles CEM-BT").RowsUsed(),

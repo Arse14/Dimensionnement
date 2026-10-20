@@ -91,7 +91,8 @@ public static class CalculDepart
                     ib, Calibres.Superieur(Calibres.Disjoncteurs, ib) ?? ib, "A", "In ≥ Ib, calibre normalisé supérieur",
                     $"Ib = {A(ib)}", RefProtection);
                 protection = avalProtection = Element($"Q{n}", "Disjoncteur", "Disjoncteur amont variateur",
-                    $"{A(calibreProtection)}, {Poles(m.Alimentation, reseau.Slt)}");
+                    $"{A(calibreProtection)}, {Poles(m.Alimentation, reseau.Slt)}")
+                    .Avec(calibreProtection, NombrePoles(m.Alimentation, reseau.Slt), courbe: "C");
                 courantCable = calibreProtection;
             }
             note.Info("Coordination variateur",
@@ -100,7 +101,7 @@ public static class CalculDepart
             note.Info("CEM", "Câble moteur blindé, blindage repris à 360° aux deux extrémités, filtre CEM côté réseau.",
                 "Directive 2014/30/UE ; NF EN 61800-3");
             avalProtection = avalProtection.Ajouter(Element($"U{n}", "Variateur", "Variateur de fréquence",
-                $"{N(m.PuissanceKw)} kW, sortie ≥ {A(ib)}"));
+                $"{N(m.PuissanceKw)} kW, sortie ≥ {A(ib)}").Avec(ib, puissanceKw: m.PuissanceKw));
         }
         else if (m.Protection == TypeProtection.Fusibles)
         {
@@ -118,7 +119,7 @@ public static class CalculDepart
                 ? DemarreurProgressif(m, note, ib, avalProtection)
                 : Contacteurs(m, note, ib, avalProtection);
             avalProtection = avalProtection.Ajouter(Element($"F{n}", "Relais thermique", "Relais de protection thermique",
-                $"réglé à {A(reglage)}"));
+                $"réglé à {A(reglage)}").Avec(reglage));
         }
         else
         {
@@ -135,7 +136,8 @@ public static class CalculDepart
                     $"Seuil magnétique ≈ {A(im)} ; pointe de démarrage estimée 2 × Id = {A(crete)}",
                     "NF EN 60947-4-1", StatutCalcul.Alerte);
                 protection = Element($"Q{n}", "Disjoncteur moteur", "Disjoncteur moteur magnétothermique",
-                    $"{N(p.Min)}–{N(p.Max)} A, réglé à {A(calibreProtection)}");
+                    $"{N(p.Min)}–{N(p.Max)} A, réglé à {A(calibreProtection)}")
+                    .Avec(calibreProtection, 3, plageMin: p.Min, plageMax: p.Max);
                 avalProtection = protection;
             }
             else
@@ -145,9 +147,10 @@ public static class CalculDepart
                     "In ≥ Ib ; au-delà des disjoncteurs moteurs, disjoncteur courbe D et relais thermique",
                     $"Ib = {A(ib)}", RefProtection);
                 protection = Element($"Q{n}", "Disjoncteur", "Disjoncteur courbe D",
-                    $"{A(calibreProtection)}, {Poles(m.Alimentation, reseau.Slt)}");
+                    $"{A(calibreProtection)}, {Poles(m.Alimentation, reseau.Slt)}")
+                    .Avec(calibreProtection, NombrePoles(m.Alimentation, reseau.Slt), courbe: "D");
                 avalProtection = protection.Ajouter(Element($"F{n}", "Relais thermique", "Relais de protection thermique",
-                    $"réglé à {A(ib)}"));
+                    $"réglé à {A(ib)}").Avec(ib));
             }
             courantCable = calibreProtection;
             avalProtection = m.Demarrage == ModeDemarrage.DemarreurProgressif
@@ -166,7 +169,7 @@ public static class CalculDepart
             m.CosPhi, reseau, chuteAmont);
         var w = avalProtection.Ajouter(ElementCable(n, m, cable, et ? 2 : 1));
         w.Ajouter(Element($"M{n}", "Moteur", m.Designation is { Length: > 0 } d ? d : "Moteur",
-            $"{N(m.PuissanceKw)} kW, In {A(ib)}"));
+            $"{N(m.PuissanceKw)} kW, In {A(ib)}").Avec(ib, m.Alimentation == TypeAlimentation.Mono230 ? 2 : 3, m.PuissanceKw));
 
         return Resultat(m, note, ib, calibreProtection, cable, pAbsorbee, q, protection);
     }
@@ -177,7 +180,8 @@ public static class CalculDepart
             "NF EN 60947-4-2");
         note.Info("Contacteur de ligne", "Prévoir un contacteur de ligne si l'arrêt d'urgence ou la sécurité machine l'exige.",
             "NF EN 60204-1, 9.2");
-        return amont.Ajouter(Element($"U{m.Numero}", "Démarreur progressif", "Démarreur progressif", $"Ie ≥ {A(ib)}"));
+        return amont.Ajouter(Element($"U{m.Numero}", "Démarreur progressif", "Démarreur progressif", $"Ie ≥ {A(ib)}")
+            .Avec(ib, puissanceKw: m.PuissanceKw));
     }
 
     /// <summary>Sectionneur porte-fusibles et cartouches : renvoie le calibre, le sectionneur et les cartouches.</summary>
@@ -204,12 +208,13 @@ public static class CalculDepart
             "NF EN 60947-3");
         note.Info("Pouvoir de coupure", $"Pouvoir de coupure des cartouches ≥ {N(reseau.IccKiloAmperes)} kA (en général 100 kA ou plus).",
             "NF EN 60269");
-        var sectionneur = Element($"Q{d.Numero}", "Sectionneur porte-fusibles", $"Sectionneur porte-fusibles {taille}", poles);
+        var sectionneur = Element($"Q{d.Numero}", "Sectionneur porte-fusibles", $"Sectionneur porte-fusibles {taille}", poles)
+            .Avec(calibre, NombrePoles(d.Alimentation, reseau.Slt), tailleFusible: taille);
         var fusibles = sectionneur.Ajouter(new ElementMateriel
         {
             Repere = $"FU{d.Numero}", Famille = "Fusible", Designation = $"Cartouche fusible {classe} {taille}",
             Calibre = A(calibre), Quantite = cartouches,
-        });
+        }.Avec(calibre, tailleFusible: taille));
         return (calibre, sectionneur, fusibles);
     }
 
@@ -224,9 +229,9 @@ public static class CalculDepart
                 $"Ib = {A(ib)}", RefContacteur);
             var kmEtoile = Calibres.Superieur(Calibres.ContacteursAc3, ib / 3) ?? ib / 3;
             note.Info("Contacteur étoile (AC-3)", $"Ie ≥ Ib / 3 = {A(ib / 3)} → {A(kmEtoile)}", RefContacteur);
-            var ligne = protection.Ajouter(Element($"KM{n}.1", "Contacteur", "Contacteur de ligne", $"AC-3 {A(km)}"));
-            ligne.Ajouter(Element($"KM{n}.2", "Contacteur", "Contacteur étoile", $"AC-3 {A(kmEtoile)}"));
-            ligne.Ajouter(Element($"KM{n}.3", "Contacteur", "Contacteur triangle", $"AC-3 {A(km)}"));
+            var ligne = protection.Ajouter(Element($"KM{n}.1", "Contacteur", "Contacteur de ligne", $"AC-3 {A(km)}").Avec(km, 3));
+            ligne.Ajouter(Element($"KM{n}.2", "Contacteur", "Contacteur étoile", $"AC-3 {A(kmEtoile)}").Avec(kmEtoile, 3));
+            ligne.Ajouter(Element($"KM{n}.3", "Contacteur", "Contacteur triangle", $"AC-3 {A(km)}").Avec(km, 3));
             return ligne;
         }
 
@@ -234,12 +239,12 @@ public static class CalculDepart
             Calibres.Superieur(Calibres.ContacteursAc3, ib) ?? ib, "A", "Ie (AC-3, 400 V) ≥ Ib", $"Ib = {A(ib)}", RefContacteur);
         if (m.Demarrage == ModeDemarrage.Inverseur)
         {
-            var avant = protection.Ajouter(Element($"KM{n}.1", "Contacteur", "Contacteur sens avant", $"AC-3 {A(calibre)}"));
-            protection.Ajouter(Element($"KM{n}.2", "Contacteur", "Contacteur sens arrière", $"AC-3 {A(calibre)}"));
+            var avant = protection.Ajouter(Element($"KM{n}.1", "Contacteur", "Contacteur sens avant", $"AC-3 {A(calibre)}").Avec(calibre, 3));
+            protection.Ajouter(Element($"KM{n}.2", "Contacteur", "Contacteur sens arrière", $"AC-3 {A(calibre)}").Avec(calibre, 3));
             note.Info("Inverseur", "Verrouillage mécanique et électrique entre les deux contacteurs.");
             return avant;
         }
-        return protection.Ajouter(Element($"KM{n}", "Contacteur", "Contacteur de puissance", $"AC-3 {A(calibre)}"));
+        return protection.Ajouter(Element($"KM{n}", "Contacteur", "Contacteur de puissance", $"AC-3 {A(calibre)}").Avec(calibre, 3));
     }
 
     static ResultatDepart Resistif(DepartResistif r, Reseau reseau, double chuteAmont)
@@ -254,12 +259,12 @@ public static class CalculDepart
         {
             var km = note.Valeur(CodesCalcul.CalibreContacteur, "Contacteur de puissance (AC-1)", ib,
                 Calibres.Superieur(Calibres.ContacteursAc1, ib) ?? ib, "A", "Ie (AC-1) ≥ Ib", $"Ib = {A(ib)}", RefContacteur);
-            aval = aval.Ajouter(Element($"KM{r.Numero}", "Contacteur", "Contacteur de puissance", $"AC-1 {A(km)}"));
+            aval = aval.Ajouter(Element($"KM{r.Numero}", "Contacteur", "Contacteur de puissance", $"AC-1 {A(km)}").Avec(km, 3));
         }
         var cable = CalculCable.Dimensionner(note, r.Cable, r.Alimentation, courantCable, ib, 1, reseau, chuteAmont);
         aval.Ajouter(ElementCable(r.Numero, r, cable, 1))
             .Ajouter(Element($"R{r.Numero}", "Récepteur", r.Designation is { Length: > 0 } d ? d : "Résistance",
-                $"{N(r.PuissanceKw)} kW"));
+                $"{N(r.PuissanceKw)} kW").Avec(ib, puissanceKw: r.PuissanceKw));
         return Resultat(r, note, ib, calibre, cable, r.PuissanceKw, 0, protection);
     }
 
@@ -280,7 +285,7 @@ public static class CalculDepart
                 Repere = $"XS{p.Numero}", Famille = "Prise de courant",
                 Designation = p.Designation is { Length: > 0 } d ? d : "Prise de courant",
                 Calibre = A(p.CalibrePrise), Quantite = p.NombrePrises,
-            });
+            }.Avec(p.CalibrePrise));
         return Resultat(p, note, ib, calibre, cable, puissance, 0, protection);
     }
 
@@ -295,7 +300,7 @@ public static class CalculDepart
         var cable = CalculCable.Dimensionner(note, g.Cable, g.Alimentation, courantCable, ib, g.CosPhi, reseau, chuteAmont);
         aval.Ajouter(ElementCable(g.Numero, g, cable, 1))
             .Ajouter(Element($"E{g.Numero}", "Récepteur", g.Designation is { Length: > 0 } d ? d : "Charge",
-                $"{N(g.PuissanceKw)} kW"));
+                $"{N(g.PuissanceKw)} kW").Avec(ib, puissanceKw: g.PuissanceKw));
         var q = g.PuissanceKw * Math.Tan(Math.Acos(g.CosPhi));
         return Resultat(g, note, ib, calibre, cable, g.PuissanceKw, q, protection);
     }
@@ -326,7 +331,8 @@ public static class CalculDepart
         var (courantCable, calibre, protection, aval) = Protection(a, note, reseau, ib, CourbeDisjoncteur.C, "appel des alimentations à découpage");
         var cable = CalculCable.Dimensionner(note, a.Cable, a.Alimentation, courantCable, ib, CosPhiAlimentation, reseau, chuteAmont);
         aval.Ajouter(ElementCable(a.Numero, a, cable, 1))
-            .Ajouter(Element($"G{a.Numero}", "Alimentation", "Alimentation 24 V DC", $"{N(assigne)} A, {N(24 * assigne)} W"));
+            .Ajouter(Element($"G{a.Numero}", "Alimentation", "Alimentation 24 V DC", $"{N(assigne)} A, {N(24 * assigne)} W")
+                .Avec(assigne, puissanceKw: 24 * assigne / 1000));
         return Resultat(a, note, ib, calibre, cable, puissance, puissance * Math.Tan(Math.Acos(CosPhiAlimentation)), protection);
     }
 
@@ -356,7 +362,8 @@ public static class CalculDepart
         Differentiel(d, note, "A");
         var designation = d.Differentiel == SensibiliteDifferentiel.Aucun ? "Disjoncteur" : "Disjoncteur différentiel";
         var element = Element($"Q{d.Numero}", "Disjoncteur", designation,
-            $"{A(calibre)} courbe {courbe}, {Poles(d.Alimentation, reseau.Slt)}");
+            $"{A(calibre)} courbe {courbe}, {Poles(d.Alimentation, reseau.Slt)}")
+            .Avec(calibre, NombrePoles(d.Alimentation, reseau.Slt), courbe: courbe.ToString());
         return (calibre, calibre, element, element);
     }
 
@@ -372,6 +379,14 @@ public static class CalculDepart
         };
         note.Info("Protection différentielle", $"{sensibilite} type {type} ({raison}).", "NF C 15-100, 531.3");
     }
+
+    /// <summary>Nombre de pôles de l'appareil (1P+N compte pour 2 pôles d'encombrement).</summary>
+    public static int NombrePoles(TypeAlimentation alimentation, SchemaLiaisonTerre slt) => alimentation switch
+    {
+        TypeAlimentation.Mono230 => 2,
+        TypeAlimentation.Tri400 => 3,
+        _ => slt == SchemaLiaisonTerre.TNC ? 3 : 4,
+    };
 
     /// <summary>Nombre de pôles coupés selon la distribution et le schéma de liaison à la terre.</summary>
     public static string Poles(TypeAlimentation alimentation, SchemaLiaisonTerre slt) => alimentation switch

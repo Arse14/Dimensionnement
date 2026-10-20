@@ -1,3 +1,4 @@
+using Dimensionnement.Core.Armoire;
 using Dimensionnement.Core.Materiel;
 using Dimensionnement.Core.Modele;
 using Dimensionnement.Core.Normes;
@@ -33,10 +34,14 @@ public class ResultatProjet
     public ResultatSecurite? Securite { get; init; }
     public ResultatAutomate? Automate { get; init; }
     public IReadOnlyList<PointControle> Controles { get; init; } = Array.Empty<PointControle>();
+    public ResultatReferences? References { get; init; }
+    public ResultatSelectivite? Selectivite { get; set; }
+    public ResultatArmoire? Armoire { get; set; }
+    public ResultatThermique? Thermique { get; set; }
 
     /// <summary>Toutes les notes de calcul du projet : départs, arrivée, sécurité, automate.</summary>
     public IEnumerable<NoteDeCalcul> Notes => Departs.Select(d => d.Note).Append(NoteArrivee)
-        .Concat(new[] { Securite?.Note, Automate?.Note }.OfType<NoteDeCalcul>());
+        .Concat(new[] { Securite?.Note, Automate?.Note, References?.Note, Selectivite?.Note, Armoire?.Note, Thermique?.Note }.OfType<NoteDeCalcul>());
 
     public StatutCalcul StatutGlobal => Notes.Select(n => n.StatutGlobal).Max();
 
@@ -46,11 +51,12 @@ public class ResultatProjet
     /// <summary>Nomenclature : appareils de l'arbre regroupés par désignation et calibre.</summary>
     public IReadOnlyList<ElementMateriel> Nomenclature => Arbre.Parcourir()
         .Where(e => e.Famille != "Réseau")
-        .GroupBy(e => (e.Famille, e.Designation, e.Calibre))
+        .GroupBy(e => (e.Famille, e.Designation, e.Calibre, e.Fabricant, e.Reference))
         .Select(g => new ElementMateriel
         {
             Repere = string.Join(", ", g.Select(e => e.Repere)),
             Famille = g.Key.Famille, Designation = g.Key.Designation, Calibre = g.Key.Calibre,
+            Fabricant = g.Key.Fabricant, Reference = g.Key.Reference,
             Quantite = g.Sum(e => e.Quantite),
         })
         .ToList();
@@ -66,7 +72,8 @@ public static class CalculProjet
 
     public static ResultatProjet Calculer(Projet projet) => Calculer(projet, CatalogueAutomates.Charger());
 
-    public static ResultatProjet Calculer(Projet projet, IReadOnlyList<CpuAutomate> catalogue)
+    public static ResultatProjet Calculer(Projet projet, IReadOnlyList<CpuAutomate> catalogue,
+        IReadOnlyList<ReferenceCatalogue>? references = null)
     {
         var reseau = projet.Reseau;
 
@@ -117,14 +124,6 @@ public static class CalculProjet
             note.Verifier("Alimentation 24 V", projet.Departs.OfType<DepartAlimentation24V>().Any(),
                 "Le projet consomme du 24 V DC : ajouter un départ « Alimentation 24 V DC ».", siEchec: StatutCalcul.Alerte);
         }
-        foreach (var d in departs)
-        {
-            var ratio = d.CalibreProtection > 0 ? qg / d.CalibreProtection : double.MaxValue;
-            note.Verifier($"Sélectivité avec D{d.Depart.Numero:00}", ratio >= 1.6,
-                $"Rapport des calibres général / départ = {N(ratio)} (≥ 1,6 conseillé ; à confirmer sur les courbes du fabricant)",
-                "NF C 15-100, 535", StatutCalcul.Alerte);
-        }
-
         var securite = CalculSecurite.Calculer(projet, departs);
         var automate = CalculAutomate.Calculer(projet.Automate, catalogue);
 
@@ -135,9 +134,10 @@ public static class CalculProjet
             .Ajouter(new ElementMateriel { Repere = "W0", Famille = "Câble", Designation = $"Câble d'arrivée cuivre {reseau.CableArrivee.Isolant}",
                 Calibre = $"{conducteurs}G{N(cable.Section)} mm², {N(reseau.CableArrivee.Longueur)} m" })
             .Ajouter(new ElementMateriel { Repere = "QS0", Famille = "Interrupteur-sectionneur", Designation = "Interrupteur-sectionneur général",
-                Calibre = A(qs) })
+                Calibre = A(qs) }.Avec(qs, CalculDepart.NombrePoles(reseau.Alimentation, reseau.Slt)))
             .Ajouter(new ElementMateriel { Repere = "QG", Famille = "Disjoncteur", Designation = "Disjoncteur général",
-                Calibre = $"{A(qg)}, {CalculDepart.Poles(reseau.Alimentation, reseau.Slt)}" });
+                Calibre = $"{A(qg)}, {CalculDepart.Poles(reseau.Alimentation, reseau.Slt)}" }
+                .Avec(qg, CalculDepart.NombrePoles(reseau.Alimentation, reseau.Slt), courbe: "C"));
         foreach (var e in arbre.Parcourir()) e.Statut = note.StatutGlobal;
         foreach (var d in departs) tete.Ajouter(d.Materiel);
 
@@ -154,15 +154,21 @@ public static class CalculProjet
         foreach (var appareil in automate.Appareils)
             alimentation24V.Ajouter(appareil);
 
-        return new ResultatProjet
+        var resultatReferences = CatalogueReferences.Appliquer(arbre, projet.References, references ?? CatalogueReferences.Charger());
+
+        var resultat = new ResultatProjet
         {
             Projet = projet, Departs = departs, NoteArrivee = note,
             PuissanceActive = ks * p, PuissanceReactive = ks * q, PuissanceApparente = s, CosPhiGlobal = cosPhi,
             CoefficientSimultaneite = ks, CourantEmploi = ib, CalibreGeneral = qg,
             SectionArrivee = cable.Section, ChuteTensionArrivee = cable.ChuteTension, Arbre = arbre,
             Consommateurs24V = consommateurs24V, Securite = securite, Automate = automate,
-            Controles = ControlesConformite.Generer(projet),
+            Controles = ControlesConformite.Generer(projet), References = resultatReferences,
         };
+        resultat.Selectivite = CalculSelectivite.Calculer(resultat);
+        resultat.Armoire = CalculArmoire.Calculer(resultat, projet);
+        resultat.Thermique = CalculThermique.Calculer(resultat, resultat.Armoire, projet.Armoire);
+        return resultat;
     }
 
     /// <summary>Consommateurs 24 V DC du projet : ceux déclarés à la main et ceux déduits du matériel.</summary>
