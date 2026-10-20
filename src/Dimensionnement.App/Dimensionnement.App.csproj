@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Permet de compiler l'interface depuis Linux ou macOS (intégration continue) ; l'exécution reste sous Windows. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyTitle>Dimensionnement électrique</AssemblyTitle>
+    <RootNamespace>Dimensionnement.App</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Dimensionnement.Core\Dimensionnement.Core.csproj" />
+  </ItemGroup>
+
+</Project>

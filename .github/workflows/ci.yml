@@ -1,0 +1,30 @@
+name: Compilation et tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Compilation
+        run: dotnet build Dimensionnement.sln -c Release
+
+      - name: Tests du moteur de calcul
+        run: dotnet test tests/Dimensionnement.Core.Tests -c Release --no-build --logger "console;verbosity=normal"
+
+      - name: Publication de l'exécutable Windows
+        run: dotnet publish src/Dimensionnement.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publication
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Dimensionnement-windows-x64
+          path: publication/
