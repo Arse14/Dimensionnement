@@ -549,7 +549,7 @@
   "note": "La variante PV 3NW7013-4 mesure 85x18x65 (datasheet)."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Contacteur",
   "gamme": "TeSys Deca LC1D (bobine 24 V DC)",
   "taille": "D09-D18",
@@ -565,7 +565,7 @@
   "note": "Fiche Schneider LC1D09BD (copie Farnell) : prof. 93 sans capot ; RS JP LC1D18BD 77x45x93. Certains distributeurs donnent 95."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Contacteur",
   "gamme": "TeSys Deca LC1D (bobine 24 V DC)",
   "taille": "D25-D38",
@@ -581,7 +581,7 @@
   "note": "Datasheet : 101 avec capot, 99 sans capot. Concordant RS, Standard Electric Supply (LC1D38BD)."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Contacteur",
   "gamme": "TeSys Deca LC1D (bobine 24 V DC)",
   "taille": "D40A-D65A",
@@ -597,7 +597,7 @@
   "note": "eKatalog Schneider LC1D40ABD : H122 L55 P120 (118 sans capot). LC1D65AM7 identique (datasheets.com)."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Contacteur",
   "gamme": "TeSys Deca LC1D (bobine 24 V DC)",
   "taille": "D80-D95",
@@ -613,7 +613,7 @@
   "note": "Bobine DC : boitier plus profond que la version AC (130). Rapid/Lemu/Standard Electric : 186 ; RS : 181 (LC1D80BD et LC1D95BD)."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Contacteur",
   "gamme": "TeSys Deca LC1D (bobine 24 V DC)",
   "taille": "D115-D150",
@@ -629,7 +629,7 @@
   "note": "RS JP LC1D115BD 120x158x132 ; ibselectronics LC1D150BD prof. 132 / H158. Versions AC (FD, N7) donnees a 136 de profondeur."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Disjoncteur moteur",
   "gamme": "TeSys Deca GV2ME (bouton-poussoir)",
   "taille": "GV2ME",
@@ -645,7 +645,7 @@
   "note": "45 x 89 x 78.5 (certaines fiches 44.5 / 78.2). Concordant sur plusieurs distributeurs (GV2ME01-03, GV2ME14)."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Disjoncteur moteur",
   "gamme": "TeSys Deca GV3P",
   "taille": "GV3P",
@@ -661,7 +661,7 @@
   "note": "GV3P65 (CEF, RS 132x55x136) et GV3P80 (proshop H132 L55 P136). Une fiche RS donne H160 (probablement avec manette)."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Disjoncteur moteur",
   "gamme": "TeSys GV4P",
   "taille": "GV4P",
@@ -677,7 +677,7 @@
   "note": "plc-direct : H155 W81 D165 ; RS : 81 x 165 x 155 sans attribution claire des axes. Orientation H/P a confirmer."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Relais thermique",
   "gamme": "TeSys Deca LRD (D09-D38)",
   "taille": "LRD01-35",
@@ -693,7 +693,7 @@
   "note": "Montage direct sous contacteur ; eshop se.com LRD10/LRD32 H66 P70, largeur 45."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Relais thermique",
   "gamme": "TeSys Deca LRD3xx Everlink (D40A-D65A)",
   "taille": "LRD313-365",
@@ -709,7 +709,7 @@
   "note": "LRD350 : Steiner et Stokes 55 W x 123 D x 70 H ; LRD350L idem (one-elec). Cotes a recouper (profondeur 123 incluant l'arriere du contacteur ?)."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Disjoncteur",
   "gamme": "Acti9 iC60N",
   "taille": "iC60N",
@@ -725,7 +725,7 @@
   "note": "18 mm/pole ; A9F74206 2P 36 x 85 x 78.5 (fiche Romstal)."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Disjoncteur",
   "gamme": "Acti9 C120N",
   "taille": "C120N",
@@ -741,7 +741,7 @@
   "note": "27 mm/pole (3P = 9 modules de 9 mm = 81) ; H81 P73 eshop se.com A9N18386. C120H 100 A donne H86 sur une fiche."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Disjoncteur",
   "gamme": "ComPacT NSX",
   "taille": "NSX100-250 3P",
@@ -757,7 +757,7 @@
   "note": "105 x 161 x 86 (3P). 4P : 140 x 161 x 86 (electrika C25F4, prof-elec C25N4)."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Disjoncteur",
   "gamme": "ComPacT NSX",
   "taille": "NSX400-630 3P",
@@ -773,7 +773,7 @@
   "note": "140 x 255 x 110 (3P, Clipsal + RS). 4P : 185 x 255 x 110 (fiche NSX630N 4P)."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Interrupteur-sectionneur",
   "gamme": "TeSys Vario (commande sur porte)",
   "taille": "VCF01",
@@ -789,7 +789,7 @@
   "note": "Largeur 55 (corps V01) ; profondeur 60 du corps V0 ; hauteur estimee depuis VCF2 (74). Plastron porte 60x60."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Interrupteur-sectionneur",
   "gamme": "TeSys Vario (commande sur porte)",
   "taille": "VCF0",
@@ -805,7 +805,7 @@
   "note": "Corps V0 : L55 P60 (prof-elec). Hauteur estimee depuis VCF2 (74). Plastron porte 60x60 (Rexel)."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Interrupteur-sectionneur",
   "gamme": "TeSys Vario (commande sur porte)",
   "taille": "VCF1",
@@ -821,7 +821,7 @@
   "note": "Estime depuis VCF2 (60 x 74) et profondeur corps V0 (60)."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Interrupteur-sectionneur",
   "gamme": "TeSys Vario (commande sur porte)",
   "taille": "VCF2",
@@ -837,7 +837,7 @@
   "note": "L60 H74 (fiche Square D + one-elec) ; profondeur non publiee, estimee depuis corps V0 (60)."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Interrupteur-sectionneur",
   "gamme": "TeSys Vario (commande sur porte)",
   "taille": "VCF3",
@@ -853,7 +853,7 @@
   "note": "Corps V3 eshop se.com 60 x 83 x 65 ; fiche VCF3 60 x 83. Profondeur hors manette de porte."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Interrupteur-sectionneur",
   "gamme": "TeSys Vario (commande sur porte)",
   "taille": "VCF4",
@@ -869,7 +869,7 @@
   "note": "eshop se.com VCF4 H83 L60 ; corps V4 P65 (one-elec)."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Interrupteur-sectionneur",
   "gamme": "TeSys Vario (commande sur porte)",
   "taille": "VCF5",
@@ -885,7 +885,7 @@
   "note": "Estime depuis VCF6 (meme famille de corps V5/V6, accessoires VZ13 H125 communs)."
  },
  {
-  "fabricant": "Schneider Electric",
+  "fabricant": "Schneider",
   "famille": "Interrupteur-sectionneur",
   "gamme": "TeSys Vario (commande sur porte)",
   "taille": "VCF6",
