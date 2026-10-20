@@ -404,6 +404,11 @@
                     <ComboBox ItemsSource="{x:Static inf:Listes.MarquesAlimentation}" SelectedItem="{inf:Lien Marque}"/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Sortie réglable (24-28 V)" Style="{StaticResource Etiquette}"/>
+                    <CheckBox IsChecked="{inf:Lien Reglable}"
+                              ToolTip="Préfère une alimentation à tension de sortie réglable, pour compenser la chute de tension des longues lignes 24 V."/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Partie de la commande desservie" Style="{StaticResource Etiquette}"/>
                     <ComboBox ItemsSource="{x:Static inf:Listes.Usages24V}" SelectedItem="{inf:Lien Usage}"
                               ToolTip="Plusieurs sources de même usage et de même tension se partagent la charge."/>

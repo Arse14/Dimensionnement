@@ -45,6 +45,8 @@ public class ModeleVuePrincipal : Observable
     IReadOnlyList<ModeleSecurite> _securite = CatalogueSecurite.Charger(CheminSecurite);
     static readonly string CheminCapteurs = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueCapteursSecurite.NomFichier);
+    static readonly string CheminEncombrements = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueEncombrements.NomFichier);
     IReadOnlyList<ModeleCapteurSecurite> _capteurs = CatalogueCapteursSecurite.Charger(CheminCapteurs);
     IReadOnlyList<CarteEs> _cartes = CatalogueCartesEs.Charger(CheminCartes);
     IReadOnlyList<ChoixCpu> _cpus = Array.Empty<ChoixCpu>();
@@ -69,6 +71,7 @@ public class ModeleVuePrincipal : Observable
     public ModeleVuePrincipal()
     {
         _selection = _projet;
+        CatalogueEncombrements.Actif = CatalogueEncombrements.Charger(CheminEncombrements);
         _cpus = ListerCpus(_catalogue);
         Resultat = CalculerProjet();
 
@@ -380,7 +383,17 @@ public class ModeleVuePrincipal : Observable
         Resultat = CalculerProjet();
         if (_projet.AjoutAutomatiqueSources && Resultat.SourcesManquantes.Count > 0)
         {
+            _choixAlimentation = null;
             var ajoutees = SourcesCommande.Completer(_projet, Resultat.Consommateurs24V, ChoisirSource, _sourcesIgnorees);
+            // Primaire triphasé ou sortie réglable choisis dans la question : appliqués à l'alimentation 24 V DC ajoutée.
+            if (_choixAlimentation is { } c)
+                foreach (var a in ajoutees.Where(a => a.Sortie == TensionCommande.Continu24 && a.Source == SourceAlimentation.Decoupage))
+                {
+                    a.Reglable = c.Reglable;
+                    if (c.Primaire == TypeAlimentation.Tri400) a.Alimentation = TypeAlimentation.Tri400;
+                    a.Designation = DepartAlimentation24V.Libelle(a.Sortie, false, a.Alimentation) + (a.Reglable ? " réglable" : "")
+                        + (a.Alimentation == TypeAlimentation.Tri400 ? ", primaire triphasé" : "");
+                }
             // Un besoin sans ajout (refusé) ou rattaché à un transformateur existant demande aussi un recalcul.
             Resultat = CalculerProjet();
             if (ajoutees.Count > 0)
@@ -390,6 +403,8 @@ public class ModeleVuePrincipal : Observable
         }
         SignalerTout();
     }
+
+    (TypeAlimentation Primaire, bool Reglable)? _choixAlimentation;
 
     /// <summary>Technologie d'une source 24 V DC à ajouter : préférence du projet, ou question à l'utilisateur.</summary>
     SourceAlimentation? ChoisirSource(BesoinSource besoin)
@@ -406,6 +421,7 @@ public class ModeleVuePrincipal : Observable
             _sourcesIgnorees.Add(besoin.Tension);
             return null;
         }
+        _choixAlimentation = (question.Primaire, question.Reglable);
         if (question.Retenu)
             _projet.PreferenceSource = choix == SourceAlimentation.Decoupage ? PreferenceSource.Decoupage : PreferenceSource.Transformateur;
         return choix;
@@ -662,6 +678,7 @@ public class ModeleVuePrincipal : Observable
         _enveloppes = CatalogueEnveloppes.Charger(CheminEnveloppes);
         _securite = CatalogueSecurite.Charger(CheminSecurite);
         _capteurs = CatalogueCapteursSecurite.Charger(CheminCapteurs);
+        CatalogueEncombrements.Actif = CatalogueEncombrements.Charger(CheminEncombrements);
         _cartes = CatalogueCartesEs.Charger(CheminCartes);
         _alimentations = CatalogueAlimentations.Charger(CheminAlimentations);
         _ihm = CatalogueIhm.Charger(CheminIhm);

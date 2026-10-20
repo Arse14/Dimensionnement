@@ -584,12 +584,14 @@
   "courant": 1.8,
   "largeur": 73,
   "hauteur": 173,
-  "profondeur": 155,
+  "profondeur": 178,
   "pertes": 40,
   "reference": "6SL3210-1KE11-8AF2",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://mall.industry.siemens.com/mall/sv/se/Catalog/Product/6SL3210-1KE11-8AF2"
  },
  {
   "fabricant": "Siemens",
@@ -600,12 +602,14 @@
   "courant": 2.6,
   "largeur": 73,
   "hauteur": 173,
-  "profondeur": 155,
+  "profondeur": 178,
   "pertes": 46,
   "reference": "6SL3210-1KE12-3AF2",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://mall.industry.siemens.com/mall/sv/se/Catalog/Product/6SL3210-1KE11-8AF2"
  },
  {
   "fabricant": "Siemens",
@@ -616,12 +620,14 @@
   "courant": 3.3,
   "largeur": 73,
   "hauteur": 173,
-  "profondeur": 155,
+  "profondeur": 178,
   "pertes": 56,
   "reference": "6SL3210-1KE13-2AF2",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://mall.industry.siemens.com/mall/sv/se/Catalog/Product/6SL3210-1KE11-8AF2"
  },
  {
   "fabricant": "Siemens",
@@ -632,12 +638,14 @@
   "courant": 4.0,
   "largeur": 73,
   "hauteur": 173,
-  "profondeur": 155,
+  "profondeur": 178,
   "pertes": 67,
   "reference": "6SL3210-1KE14-3AF2",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://mall.industry.siemens.com/mall/sv/se/Catalog/Product/6SL3210-1KE11-8AF2"
  },
  {
   "fabricant": "Siemens",
@@ -648,12 +656,14 @@
   "courant": 5.6,
   "largeur": 73,
   "hauteur": 173,
-  "profondeur": 155,
+  "profondeur": 178,
   "pertes": 87,
   "reference": "6SL3210-1KE15-8AF2",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://mall.industry.siemens.com/mall/sv/se/Catalog/Product/6SL3210-1KE11-8AF2"
  },
  {
   "fabricant": "Siemens",
@@ -669,7 +679,9 @@
   "reference": "6SL3210-1KE17-5AF1",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": false,
+  "source": "https://www.euautomation.com/gh/siemens/product/6sl32101ke188af1"
  },
  {
   "fabricant": "Siemens",
@@ -685,7 +697,9 @@
   "reference": "6SL3210-1KE18-8AF1",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": false,
+  "source": "https://www.euautomation.com/gh/siemens/product/6sl32101ke188af1"
  },
  {
   "fabricant": "Siemens",
@@ -697,11 +711,13 @@
   "largeur": 100,
   "hauteur": 196,
   "profondeur": 225,
-  "pertes": 179,
+  "pertes": 169,
   "reference": "6SL3210-1KE21-3AF1",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://www.conrad.com/p/siemens-frequency-inverter-6sl3210-1ke21-7af1-55-kw-380-v-480-v-1748288"
  },
  {
   "fabricant": "Siemens",
@@ -717,7 +733,9 @@
   "reference": "6SL3210-1KE21-7AF1",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://www.conrad.com/p/siemens-frequency-inverter-6sl3210-1ke21-7af1-55-kw-380-v-480-v-1748288"
  },
  {
   "fabricant": "Siemens",
@@ -733,7 +751,9 @@
   "reference": "6SL3210-1KE22-6AF1",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": false,
+  "source": "https://www.euautomation.com/index.php/ph/siemens/product/6sl32101ke238af1"
  },
  {
   "fabricant": "Siemens",
@@ -749,7 +769,9 @@
   "reference": "6SL3210-1KE23-2AF1",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": false,
+  "source": "https://www.euautomation.com/index.php/ph/siemens/product/6sl32101ke238af1"
  },
  {
   "fabricant": "Siemens",
@@ -765,7 +787,9 @@
   "reference": "6SL3210-1KE23-8AF1",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": false,
+  "source": "https://www.euautomation.com/index.php/ph/siemens/product/6sl32101ke238af1"
  },
  {
   "fabricant": "Siemens",
@@ -781,7 +805,9 @@
   "reference": "6SL3210-1KE24-4AF1",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://automa.net/product/siemens/6sl3210-1ke27-0af1-63a38189ca04b4f2593174c9"
  },
  {
   "fabricant": "Siemens",
@@ -797,7 +823,9 @@
   "reference": "6SL3210-1KE26-0AF1",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://automa.net/product/siemens/6sl3210-1ke27-0af1-63a38189ca04b4f2593174c9"
  },
  {
   "fabricant": "Siemens",
@@ -813,7 +841,9 @@
   "reference": "6SL3210-1KE27-0AF1",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://automa.net/product/siemens/6sl3210-1ke27-0af1-63a38189ca04b4f2593174c9"
  },
  {
   "fabricant": "Siemens",
@@ -829,7 +859,9 @@
   "reference": "6SL3210-1KE28-4AF1",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": false,
+  "source": "https://shop.adegis.com/product/6sl3210-1ke31-1af1-siemens-sinamics"
  },
  {
   "fabricant": "Siemens",
@@ -845,7 +877,9 @@
   "reference": "6SL3210-1KE31-1AF1",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": false,
+  "source": "https://shop.adegis.com/product/6sl3210-1ke31-1af1-siemens-sinamics"
  },
  {
   "fabricant": "Siemens",
@@ -861,7 +895,9 @@
   "reference": "6SL3210-1KE31-4AF1",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": false,
+  "source": "https://automa.net/product/siemens/6sl3210-1ke32-4af1-63a37d00ca04b4f2592e7dad"
  },
  {
   "fabricant": "Siemens",
@@ -877,7 +913,9 @@
   "reference": "6SL3210-1KE31-7AF1",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": false,
+  "source": "https://automa.net/product/siemens/6sl3210-1ke32-4af1-63a37d00ca04b4f2592e7dad"
  },
  {
   "fabricant": "Siemens",
@@ -893,7 +931,9 @@
   "reference": "6SL3210-1KE32-1AF1",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": false,
+  "source": "https://automa.net/product/siemens/6sl3210-1ke32-4af1-63a37d00ca04b4f2592e7dad"
  },
  {
   "fabricant": "Siemens",
@@ -909,199 +949,225 @@
   "reference": "6SL3210-1KE32-4AF1",
   "filtreCemIntegre": true,
   "blindageFourni": false,
-  "servo": false
+  "servo": false,
+  "verifie": false,
+  "source": "https://automa.net/product/siemens/6sl3210-1ke32-4af1-63a37d00ca04b4f2592e7dad"
  },
  {
   "fabricant": "Schneider",
   "gamme": "Altivar Machine ATV320 compact",
   "rang": 1,
-  "taille": "1",
+  "taille": "2C",
   "kw": 0.37,
   "courant": 1.5,
-  "largeur": 72,
-  "hauteur": 145,
-  "profondeur": 140,
+  "largeur": 105,
+  "hauteur": 142,
+  "profondeur": 158,
   "pertes": 35,
   "reference": "ATV320U04N4C",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "verifie": false,
+  "source": "https://www.industrybuying.com/thyristor-schneider-electric-MOT.MOT.84805200"
  },
  {
   "fabricant": "Schneider",
   "gamme": "Altivar Machine ATV320 compact",
   "rang": 1,
-  "taille": "1",
+  "taille": "2C",
   "kw": 0.55,
   "courant": 1.8,
-  "largeur": 72,
-  "hauteur": 145,
-  "profondeur": 140,
+  "largeur": 105,
+  "hauteur": 142,
+  "profondeur": 158,
   "pertes": 40,
   "reference": "ATV320U06N4C",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://automa.net/es/producto/schneider-electric/atv320u15n4c-63a37a76ca04b4f2592be25b"
  },
  {
   "fabricant": "Schneider",
   "gamme": "Altivar Machine ATV320 compact",
   "rang": 1,
-  "taille": "1",
+  "taille": "2C",
   "kw": 0.75,
   "courant": 2.6,
-  "largeur": 72,
-  "hauteur": 145,
-  "profondeur": 140,
-  "pertes": 46,
+  "largeur": 105,
+  "hauteur": 142,
+  "profondeur": 158,
+  "pertes": 32,
   "reference": "ATV320U07N4C",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://automa.net/es/producto/schneider-electric/atv320u15n4c-63a37a76ca04b4f2592be25b"
  },
  {
   "fabricant": "Schneider",
   "gamme": "Altivar Machine ATV320 compact",
   "rang": 1,
-  "taille": "2",
+  "taille": "2C",
   "kw": 1.1,
   "courant": 3.3,
   "largeur": 105,
-  "hauteur": 145,
-  "profondeur": 150,
+  "hauteur": 142,
+  "profondeur": 158,
   "pertes": 56,
   "reference": "ATV320U11N4C",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://automa.net/es/producto/schneider-electric/atv320u15n4c-63a37a76ca04b4f2592be25b"
  },
  {
   "fabricant": "Schneider",
   "gamme": "Altivar Machine ATV320 compact",
   "rang": 1,
-  "taille": "2",
+  "taille": "2C",
   "kw": 1.5,
   "courant": 4.0,
   "largeur": 105,
-  "hauteur": 145,
-  "profondeur": 150,
+  "hauteur": 142,
+  "profondeur": 158,
   "pertes": 67,
   "reference": "ATV320U15N4C",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://automa.net/es/producto/schneider-electric/atv320u15n4c-63a37a76ca04b4f2592be25b"
  },
  {
   "fabricant": "Schneider",
   "gamme": "Altivar Machine ATV320 compact",
   "rang": 1,
-  "taille": "3",
+  "taille": "3C",
   "kw": 2.2,
   "courant": 5.6,
   "largeur": 140,
   "hauteur": 184,
-  "profondeur": 150,
+  "profondeur": 158,
   "pertes": 87,
   "reference": "ATV320U22N4C",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://plc-direct.com/products/atv320u40n4c"
  },
  {
   "fabricant": "Schneider",
   "gamme": "Altivar Machine ATV320 compact",
   "rang": 1,
-  "taille": "3",
+  "taille": "3C",
   "kw": 3,
   "courant": 7.2,
   "largeur": 140,
   "hauteur": 184,
-  "profondeur": 150,
+  "profondeur": 158,
   "pertes": 109,
   "reference": "ATV320U30N4C",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://plc-direct.com/products/atv320u40n4c"
  },
  {
   "fabricant": "Schneider",
   "gamme": "Altivar Machine ATV320 compact",
   "rang": 1,
-  "taille": "3",
+  "taille": "3C",
   "kw": 4,
   "courant": 9.4,
   "largeur": 140,
   "hauteur": 184,
-  "profondeur": 150,
+  "profondeur": 158,
   "pertes": 137,
   "reference": "ATV320U40N4C",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://plc-direct.com/products/atv320u40n4c"
  },
  {
   "fabricant": "Schneider",
   "gamme": "Altivar Machine ATV320 compact",
   "rang": 1,
-  "taille": "4",
+  "taille": "4C",
   "kw": 5.5,
   "courant": 12.7,
-  "largeur": 140,
+  "largeur": 150,
   "hauteur": 232,
-  "profondeur": 180,
+  "profondeur": 178,
   "pertes": 179,
   "reference": "ATV320U55N4C",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://tatmart.com/en/bien-tan-schneider-atv320u75n4c.html"
  },
  {
   "fabricant": "Schneider",
   "gamme": "Altivar Machine ATV320 compact",
   "rang": 1,
-  "taille": "4",
+  "taille": "4C",
   "kw": 7.5,
   "courant": 17,
-  "largeur": 140,
+  "largeur": 150,
   "hauteur": 232,
-  "profondeur": 180,
+  "profondeur": 178,
   "pertes": 235,
   "reference": "ATV320U75N4C",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://tatmart.com/en/bien-tan-schneider-atv320u75n4c.html"
  },
  {
   "fabricant": "Schneider",
   "gamme": "Altivar Machine ATV320 compact",
   "rang": 1,
-  "taille": "5",
+  "taille": "5C",
   "kw": 11,
   "courant": 25,
   "largeur": 180,
   "hauteur": 330,
-  "profondeur": 232,
+  "profondeur": 198,
   "pertes": 333,
   "reference": "ATV320D11N4C",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://www.building-controls.com/products/sch-atv320d15n4c"
  },
  {
   "fabricant": "Schneider",
   "gamme": "Altivar Machine ATV320 compact",
   "rang": 1,
-  "taille": "5",
+  "taille": "5C",
   "kw": 15,
   "courant": 32,
   "largeur": 180,
   "hauteur": 330,
-  "profondeur": 232,
+  "profondeur": 198,
   "pertes": 445,
   "reference": "ATV320D15N4C",
   "filtreCemIntegre": true,
   "blindageFourni": true,
-  "servo": false
+  "servo": false,
+  "verifie": true,
+  "source": "https://www.building-controls.com/products/sch-atv320d15n4c"
  },
  {
   "fabricant": "Schneider",
@@ -1293,7 +1359,9 @@
   "reference": "6SL3210-5FE10-4UA0",
   "servo": true,
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "verifie": true,
+  "source": "https://hkcn.rs-online.com/web/p/motor-controllers/2116972"
  },
  {
   "fabricant": "Siemens",
@@ -1309,23 +1377,27 @@
   "reference": "6SL3210-5FE10-8UA0",
   "servo": true,
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "verifie": true,
+  "source": "https://dattech.com.vn/wp-content/uploads/2022/06/6SL3210-5FE10-8UA0_datasheet_en.pdf"
  },
  {
   "fabricant": "Siemens",
   "gamme": "SINAMICS V90 PROFINET (servo)",
   "rang": 1,
-  "taille": "FSB",
+  "taille": "FSA",
   "kw": 1.0,
   "courant": 3.0,
-  "largeur": 100,
+  "largeur": 80,
   "hauteur": 180,
-  "profondeur": 220,
+  "profondeur": 200,
   "pertes": 45,
   "reference": "6SL3210-5FE11-0UA0",
   "servo": true,
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "verifie": true,
+  "source": "https://dattech.com.vn/wp-content/uploads/2022/06/6SL3210-5FE10-8UA0_datasheet_en.pdf"
  },
  {
   "fabricant": "Siemens",
@@ -1341,7 +1413,9 @@
   "reference": "6SL3210-5FE11-5UA0",
   "servo": true,
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "verifie": true,
+  "source": "https://asset.conrad.com/media10/add/160267/c1/-/en/002874643DS01/karta-katalogowa-2874643-przemiennik-czestotliwosci-siemens-6sl3210-5fe11-5uf0.pdf"
  },
  {
   "fabricant": "Siemens",
@@ -1357,7 +1431,9 @@
   "reference": "6SL3210-5FE12-0UA0",
   "servo": true,
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "verifie": true,
+  "source": "https://asset.conrad.com/media10/add/160267/c1/-/en/002874643DS01/karta-katalogowa-2874643-przemiennik-czestotliwosci-siemens-6sl3210-5fe11-5uf0.pdf"
  },
  {
   "fabricant": "Siemens",
@@ -1373,7 +1449,9 @@
   "reference": "6SL3210-5FE13-5UA0",
   "servo": true,
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "verifie": true,
+  "source": "https://my.goagilix.com/assets/90/a2/90a2245d-1d25-44ca-a15f-85d5d49b3345/Siemens_6SL32105FE170UA0_Specification_Sheet.pdf"
  },
  {
   "fabricant": "Siemens",
@@ -1389,7 +1467,9 @@
   "reference": "6SL3210-5FE15-0UA0",
   "servo": true,
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "verifie": true,
+  "source": "https://my.goagilix.com/assets/90/a2/90a2245d-1d25-44ca-a15f-85d5d49b3345/Siemens_6SL32105FE170UA0_Specification_Sheet.pdf"
  },
  {
   "fabricant": "Siemens",
@@ -1405,7 +1485,9 @@
   "reference": "6SL3210-5FE17-0UA0",
   "servo": true,
   "filtreCemIntegre": true,
-  "blindageFourni": false
+  "blindageFourni": false,
+  "verifie": true,
+  "source": "https://my.goagilix.com/assets/90/a2/90a2245d-1d25-44ca-a15f-85d5d49b3345/Siemens_6SL32105FE170UA0_Specification_Sheet.pdf"
  },
  {
   "fabricant": "Schneider",
@@ -1464,12 +1546,14 @@
   "courant": 10,
   "largeur": 68,
   "hauteur": 270,
-  "profondeur": 225,
+  "profondeur": 237,
   "pertes": 110,
   "reference": "LXM32MD30N4",
   "servo": true,
   "filtreCemIntegre": true,
-  "blindageFourni": true
+  "blindageFourni": true,
+  "verifie": true,
+  "source": "https://m.indiamart.com/proddetail/lxm32md30n4-servo-drive-schneider-2854788476955.html"
  },
  {
   "fabricant": "Schneider",

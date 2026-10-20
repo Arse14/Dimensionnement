@@ -189,6 +189,9 @@ public class DepartAlimentation24V : Depart
     /// <summary>Alimentation à découpage ou transformateur.</summary>
     public SourceAlimentation Source { get; set; } = SourceAlimentation.Decoupage;
 
+    /// <summary>Alimentation à sortie réglable (24-28 V) pour compenser la chute de tension des longues lignes 24 V.</summary>
+    public bool Reglable { get; set; }
+
     /// <summary>Tension de sortie : 24 V DC, 24 V AC ou 230 V AC.</summary>
     public TensionCommande Sortie { get; set; } = TensionCommande.Continu24;
 

@@ -32,6 +32,8 @@ public record ModeleVariateur
     public bool BlindageFourni { get; init; }
 
     /// <summary>Vrai une fois la ligne contrôlée sur la fiche du fabricant.</summary>
+    /// <summary>Page d'où viennent les cotes.</summary>
+    public string Source { get; init; } = "";
     public bool Verifie { get; init; }
 }
 

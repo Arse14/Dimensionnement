@@ -67,7 +67,8 @@ public static class BibliothequeCatalogues
             new[] { T("fabricant", "Fabricant"), T("gamme", "Gamme", true), T("reference", "Référence"),
                     T("type", "Technologie (Decoupage / Transformateur)"), T("secondaire", "Sortie", true), L("entrees", "Primaires admis (230, 400-2P, 400-3P)"),
                     N("courant", "Courant de sortie", "A", true, true), N("va", "Puissance assignée", "VA", true, true),
-                    N("rendement", "Rendement", "", false, true), N("rang", "Rang (1 standard, 2 haut de gamme)", "") }
+                    N("rendement", "Rendement", "", false, true), N("rang", "Rang (1 standard, 2 haut de gamme)", ""),
+                    T("reglage", "Réglage de la sortie (ex. 24-28 V)", true), T("source", "Source des cotes") }
                 .Concat(Cotes(true)).ToArray())
             { LireType = t => CatalogueAlimentations.Lire(t), ChampPrincipal = "courant", Designation = "Alimentation" },
         new FamilleCatalogue("ihm", "Pupitres IHM", CatalogueIhm.NomFichier, CatalogueIhm.TexteEmbarque,
@@ -98,7 +99,8 @@ public static class BibliothequeCatalogues
         new FamilleCatalogue("variateurs", "Variateurs", CatalogueVariateurs.NomFichier, CatalogueVariateurs.TexteEmbarque,
             new[] { T("fabricant", "Fabricant"), T("gamme", "Gamme", true), T("reference", "Référence"), T("taille", "Taille", true),
                     N("kw", "Puissance moteur", "kW", true, true), N("courant", "Courant de sortie", "A", true, true), N("pertes", "Pertes", "W", false, true),
-                    N("rang", "Rang", ""), B("servo", "Servovariateur"), B("filtreCemIntegre", "Filtre CEM intégré"), B("blindageFourni", "Reprise de blindage fournie") }
+                    N("rang", "Rang", ""), B("servo", "Servovariateur"), B("filtreCemIntegre", "Filtre CEM intégré"), B("blindageFourni", "Reprise de blindage fournie"),
+                    T("source", "Source des cotes") }
                 .Concat(Cotes(true)).ToArray())
             { LireType = t => CatalogueVariateurs.Lire(t), ChampPrincipal = "kw", Designation = "Variateur" },
         new FamilleCatalogue("securite", "Sécurité machine", CatalogueSecurite.NomFichier, CatalogueSecurite.TexteEmbarque,
@@ -124,6 +126,13 @@ public static class BibliothequeCatalogues
                     N("plaqueLargeur", "Plaque largeur", "mm", false, true, true), N("plaqueHauteur", "Plaque hauteur", "mm", false, true, true) }
                 .Concat(Cotes(true)).ToArray())
             { LireType = t => CatalogueEnveloppes.Lire(t), ChampPrincipal = "largeur", Designation = "Enveloppe" },
+        new FamilleCatalogue("encombrements", "Appareillage (cotes)", CatalogueEncombrements.NomFichier, CatalogueEncombrements.TexteEmbarque,
+            new[] { T("fabricant", "Fabricant"), T("famille", "Famille d'appareil", true), T("gamme", "Gamme", true), T("taille", "Taille", true),
+                    T("motif", "Références reconnues (expression régulière)"), N("max", "Courant max. couvert (0 = toute la taille)", "A", true, true),
+                    B("parPole", "Largeur donnée par pôle"), T("fiabilite", "Fiabilité (verifie, une_source, estime)", true),
+                    T("source", "Source des cotes"), T("note", "Remarque") }
+                .Concat(Cotes(true)).ToArray())
+            { LireType = t => CatalogueEncombrements.Lire(t), ChampPrincipal = "max", ChampGamme = "famille", Designation = "Taille" },
         new FamilleCatalogue("references", "Appareillage (références)", CatalogueReferences.NomFichier, CatalogueReferences.TexteEmbarque,
             new[] { T("fabricant", "Fabricant"), T("famille", "Famille d'appareil", true), T("gamme", "Gamme", true), T("reference", "Référence"),
                     N("min", "Calibre min.", "A", true, true), N("max", "Calibre max.", "A", true, true), T("courbe", "Courbe"), T("taille", "Taille"),

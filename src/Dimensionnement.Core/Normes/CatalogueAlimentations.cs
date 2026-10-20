@@ -32,6 +32,12 @@ public record ModeleAlimentation
     public double Hauteur { get; init; }
     public double Profondeur { get; init; }
     public bool Verifie { get; init; }
+
+    /// <summary>Plage de réglage de la tension de sortie (« 24-28 V ») ; vide si fixe.</summary>
+    public string Reglage { get; init; } = "";
+
+    /// <summary>Page d'où viennent les cotes.</summary>
+    public string Source { get; init; } = "";
 }
 
 /// <summary>
@@ -92,13 +98,18 @@ public static class CatalogueAlimentations
     /// <summary>
     /// Plus petite alimentation à découpage de la marque qui couvre le courant, avec ce primaire ; gamme standard d'abord.
     /// </summary>
-    public static ModeleAlimentation? Choisir(string fabricant, double courant, string primaire, IReadOnlyList<ModeleAlimentation> catalogue) =>
-        catalogue
+    public static ModeleAlimentation? Choisir(string fabricant, double courant, string primaire, IReadOnlyList<ModeleAlimentation> catalogue,
+        bool reglable = false)
+    {
+        var modeles = catalogue
             .Where(m => m.Type == ModeleAlimentation.Decoupage && m.Secondaire == "24 V DC"
                         && m.Fabricant.Equals(fabricant, StringComparison.OrdinalIgnoreCase) && m.Courant >= courant - 1e-6
                         && m.Entrees.Contains(primaire))
             .OrderBy(m => m.Courant).ThenBy(m => m.Rang).ThenBy(m => m.Largeur)
-            .FirstOrDefault();
+            .ToList();
+        // Une sortie réglable est préférée quand elle est demandée ; à défaut, le modèle fixe convient.
+        return (reglable ? modeles.FirstOrDefault(m => m.Reglage.Length > 0) : null) ?? modeles.FirstOrDefault();
+    }
 
     /// <summary>Plus petit transformateur de la marque de ce secondaire et de ce primaire dont la puissance couvre le besoin.</summary>
     public static ModeleAlimentation? ChoisirTransformateur(string fabricant, string secondaire, double va, string primaire,

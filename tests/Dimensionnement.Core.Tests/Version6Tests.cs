@@ -2,6 +2,7 @@ using Dimensionnement.Core.Armoire;
 using Dimensionnement.Core.Calculs;
 using Dimensionnement.Core.Materiel;
 using Dimensionnement.Core.Modele;
+using Dimensionnement.Core.Normes;
 using Dimensionnement.Core.Persistance;
 
 namespace Dimensionnement.Core.Tests;
@@ -122,5 +123,45 @@ public class Version6Tests
         Assert.Contains("Zones CEM", titres);
         Assert.Contains("Champ magnétique", titres);
         Assert.Contains("Fils et goulottes", titres);
+    }
+
+    [Theory]
+    [InlineData("Contacteur", "3RT2026-1BB40", 25, 3, 45, 85, 107)]
+    [InlineData("Contacteur", "LC1D09BD", 9, 3, 45, 77, 93)]
+    [InlineData("Disjoncteur", "A9F74316", 16, 3, 54, 85, 78.5)]
+    [InlineData("Disjoncteur moteur", "3RV2021-4BA10", 20, 3, 45, 97, 97)]
+    [InlineData("Interrupteur-sectionneur", "VCF3", 63, 3, 60, 83, 65)]
+    public void Cotes_relevees_remplacent_la_moyenne_de_la_famille(string famille, string reference, double courant, int poles,
+        double largeur, double hauteur, double profondeur)
+    {
+        var e = new ElementMateriel { Famille = famille, Reference = reference }.Avec(courant, poles, plageMax: famille == "Disjoncteur moteur" ? courant : 0);
+        var c = Encombrements.Estimer(e)!;
+        Assert.Equal((largeur, hauteur, profondeur), (c.Largeur, c.Hauteur, c.Profondeur));
+    }
+
+    [Fact]
+    public void Catalogue_des_cotes_a_des_motifs_valides_et_des_sources()
+    {
+        var cotes = CatalogueEncombrements.Charger();
+        Assert.True(cotes.Count >= 50);
+        Assert.All(cotes, c =>
+        {
+            _ = new System.Text.RegularExpressions.Regex(c.Motif);
+            Assert.StartsWith("http", c.Source);
+            Assert.True(c.Largeur > 0 && c.Hauteur > 0 && c.Profondeur > 0);
+        });
+    }
+
+    [Fact]
+    public void Alimentation_reglable_prefere_un_modele_a_sortie_reglable()
+    {
+        var catalogue = CatalogueAlimentations.Charger();
+        var fixe = CatalogueAlimentations.Choisir("Siemens", 4, "230", catalogue)!;
+        var reglable = CatalogueAlimentations.Choisir("Siemens", 4, "230", catalogue, reglable: true)!;
+
+        Assert.Equal("", fixe.Reglage);
+        Assert.Equal("24-28 V", reglable.Reglage);
+        Assert.True(reglable.Courant >= 4);
+        Assert.NotNull(CatalogueAlimentations.Choisir("Siemens", 30, "400-3P", catalogue, reglable: true));
     }
 }

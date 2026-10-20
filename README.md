@@ -53,6 +53,10 @@ note de calcul traçable.
 | Bilan de puissance | Onglet dédié qui explique chaque étape, du récepteur au câble d'arrivée |
 | Aperçus | Demande de devis et rapport visibles avant l'export Excel ou PDF ; marques imposables pour les disjoncteurs et les contacteurs, caractéristiques complètes au devis même sans référence |
 | Catalogues | Navigateur commun aux 8 catalogues (automates, cartes d'E/S, IHM, alimentations et transformateurs, variateurs, sécurité, enveloppes, références) : tableau filtrable par marque, gamme et valeur minimale, fiche technique avec chiffres clés, encombrement à l'échelle, photos, fiches PDF et plans, usage dans le projet et historique ; valeurs manquantes signalées et complétées à la main, article marqué « vérifié » une fois contrôlé ; les modifications vont dans `%AppData%\Dimensionnement` et le catalogue livré reste récupérable |
+| Nouveaux matériels | Servomoteurs (SINAMICS V90, Lexium 32, MicroFlex), moteurs deux vitesses (Dahlander ou deux enroulements), moteurs-freins (frein 230 V séparé ou 24 V DC), coffret déporté avec sa simultanéité, éclairage machine, parafoudre type 2 et relais de contrôle de phases en tête, îlots d'électrovannes, colonnes lumineuses et éclairages 24 V |
+| Sécurité | Barrières immatérielles et scrutateurs (Datasensing, Schneider, Sick) hors plaque, avec leurs protections et bornes dans l'armoire |
+| Cotes | Encombrements relevés des gammes Siemens et Schneider (contacteurs, disjoncteurs, disjoncteurs moteurs, relais thermiques, interrupteurs-sectionneurs, démarreurs, porte-fusibles), avec source et fiabilité, dans le catalogue « Appareillage (cotes) » ; variateurs et alimentations Siemens corrigés d'après les fiches |
+| Ergonomie | Chaque appareil se renomme (clic droit dans l'arbre ou sur la plaque) ; une case en rouge explique pourquoi en bas à droite et une valeur inhabituelle peut être forcée ; la vue d'armoire explique comment zones, rangées, borniers, goulottes et champ magnétique sont obtenus |
 
 ## Organisation
 

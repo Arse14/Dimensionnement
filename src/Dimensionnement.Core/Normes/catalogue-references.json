@@ -490,7 +490,7 @@
   "famille": "Interrupteur-sectionneur",
   "min": 0,
   "max": 20,
-  "reference": "VCF0",
+  "reference": "VCF01",
   "gamme": "TeSys Vario / InterPacT INS"
  },
  {
@@ -498,7 +498,7 @@
   "famille": "Interrupteur-sectionneur",
   "min": 0,
   "max": 25,
-  "reference": "VCF1",
+  "reference": "VCF0",
   "gamme": "TeSys Vario / InterPacT INS"
  },
  {
@@ -506,7 +506,7 @@
   "famille": "Interrupteur-sectionneur",
   "min": 0,
   "max": 32,
-  "reference": "VCF2",
+  "reference": "VCF1",
   "gamme": "TeSys Vario / InterPacT INS"
  },
  {
@@ -514,7 +514,7 @@
   "famille": "Interrupteur-sectionneur",
   "min": 0,
   "max": 40,
-  "reference": "VCF3",
+  "reference": "VCF2",
   "gamme": "TeSys Vario / InterPacT INS"
  },
  {
@@ -522,7 +522,7 @@
   "famille": "Interrupteur-sectionneur",
   "min": 0,
   "max": 63,
-  "reference": "VCF4",
+  "reference": "VCF3",
   "gamme": "TeSys Vario / InterPacT INS"
  },
  {
@@ -530,7 +530,7 @@
   "famille": "Interrupteur-sectionneur",
   "min": 0,
   "max": 80,
-  "reference": "VCF5",
+  "reference": "VCF4",
   "gamme": "TeSys Vario / InterPacT INS"
  },
  {
@@ -538,7 +538,7 @@
   "famille": "Interrupteur-sectionneur",
   "min": 0,
   "max": 125,
-  "reference": "VCF6",
+  "reference": "VCF5",
   "gamme": "TeSys Vario / InterPacT INS"
  },
  {

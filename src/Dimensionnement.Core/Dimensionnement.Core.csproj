@@ -13,6 +13,7 @@
     <EmbeddedResource Include="Normes\catalogue-enveloppes.json" LogicalName="Dimensionnement.Core.Normes.catalogue-enveloppes.json" />
     <EmbeddedResource Include="Normes\catalogue-securite.json" LogicalName="Dimensionnement.Core.Normes.catalogue-securite.json" />
     <EmbeddedResource Include="Normes\catalogue-capteurs-securite.json" LogicalName="Dimensionnement.Core.Normes.catalogue-capteurs-securite.json" />
+    <EmbeddedResource Include="Normes\catalogue-encombrements.json" LogicalName="Dimensionnement.Core.Normes.catalogue-encombrements.json" />
     <EmbeddedResource Include="Normes\catalogue-cartes-es.json" LogicalName="Dimensionnement.Core.Normes.catalogue-cartes-es.json" />
     <EmbeddedResource Include="Normes\catalogue-ihm.json" LogicalName="Dimensionnement.Core.Normes.catalogue-ihm.json" />
     <EmbeddedResource Include="Normes\catalogue-alimentations.json" LogicalName="Dimensionnement.Core.Normes.catalogue-alimentations.json" />

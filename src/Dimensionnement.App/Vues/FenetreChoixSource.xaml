@@ -17,18 +17,32 @@
         <TextBlock Text="SOURCE DE COMMANDE À AJOUTER" Style="{StaticResource TitrePanneau}"/>
         <TextBlock x:Name="Raison" TextWrapping="Wrap" Margin="0,0,0,16"/>
         <UniformGrid Columns="2">
-            <Button Style="{StaticResource Choix}" Margin="0,0,6,0" Click="Alimentation" IsDefault="True">
+            <Button Style="{StaticResource Choix}" Margin="0,0,6,6" Click="Monophasee" IsDefault="True">
                 <StackPanel>
                     <TextBlock FontFamily="{StaticResource Icones}" Text="&#xE945;" FontSize="26" Foreground="{StaticResource Accent}" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Alimentation" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,8,0,2"/>
-                    <TextBlock Text="à découpage 24 V DC" Foreground="{StaticResource TexteSecondaire}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Alimentation 230 V" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,8,0,2"/>
+                    <TextBlock Text="à découpage, primaire monophasé" Foreground="{StaticResource TexteSecondaire}" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
                 </StackPanel>
             </Button>
-            <Button Style="{StaticResource Choix}" Margin="6,0,0,0" Click="Transformateur">
+            <Button Style="{StaticResource Choix}" Margin="6,0,0,6" Click="Triphasee">
+                <StackPanel>
+                    <TextBlock FontFamily="{StaticResource Icones}" Text="&#xE945;" FontSize="26" Foreground="{StaticResource Accent}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Alimentation 400 V" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,8,0,2"/>
+                    <TextBlock Text="à découpage, primaire triphasé" Foreground="{StaticResource TexteSecondaire}" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
+                </StackPanel>
+            </Button>
+            <Button Style="{StaticResource Choix}" Margin="0,6,6,0" Click="Reglable_">
+                <StackPanel>
+                    <TextBlock FontFamily="{StaticResource Icones}" Text="&#xE9E9;" FontSize="26" Foreground="{StaticResource Accent}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Alimentation réglable" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,8,0,2"/>
+                    <TextBlock Text="sortie 24-28 V, primaire 230 V" Foreground="{StaticResource TexteSecondaire}" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
+                </StackPanel>
+            </Button>
+            <Button Style="{StaticResource Choix}" Margin="6,6,0,0" Click="Transformateur">
                 <StackPanel>
                     <TextBlock FontFamily="{StaticResource Icones}" Text="&#xE83E;" FontSize="26" Foreground="{StaticResource Accent}" HorizontalAlignment="Center"/>
                     <TextBlock Text="Transformateur" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,8,0,2"/>
-                    <TextBlock Text="avec redresseur 24 V DC" Foreground="{StaticResource TexteSecondaire}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="avec redresseur 24 V DC" Foreground="{StaticResource TexteSecondaire}" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
                 </StackPanel>
             </Button>
         </UniformGrid>

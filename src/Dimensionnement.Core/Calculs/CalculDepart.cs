@@ -446,7 +446,7 @@ public static class CalculDepart
                 Reference = a.ReferenceManuelle, Courant = a.CourantManuel, Rendement = a.Rendement,
                 Largeur = a.LargeurManuelle, Hauteur = a.HauteurManuelle, Profondeur = a.ProfondeurManuelle,
             }
-            : CatalogueAlimentations.Choisir(marque, besoin, primaire, catalogue);
+            : CatalogueAlimentations.Choisir(marque, besoin, primaire, catalogue, a.Reglable);
         var proposee = modele?.Courant ?? Calibres.Superieur(Calibres.Alimentations24V, besoin) ?? besoin;
         var assigne = note.Valeur(CodesCalcul.CalibreAlimentation24V, "Courant assigné de l'alimentation 24 V", besoin,
             proposee, "A", "I ≥ consommation 24 V × (1 + réserve)",
@@ -468,6 +468,12 @@ public static class CalculDepart
                 $"rendement {N(modele.Rendement * 100, 0)} %, {N(modele.Largeur, 0)} × {N(modele.Hauteur, 0)} × {N(modele.Profondeur, 0)} mm" +
                 (modele.Verifie ? "." : " (valeurs indicatives, à vérifier)."), "Catalogue des alimentations 24 V", StatutCalcul.Alerte);
 
+        if (a.Reglable && !a.Manuelle && modele is not null)
+            note.Verifier("Sortie réglable", modele.Reglage.Length > 0,
+                modele.Reglage.Length > 0
+                    ? $"Sortie réglable {modele.Reglage} : remonter la tension compense la chute en ligne des longues liaisons 24 V."
+                    : $"Pas d'alimentation {marque} réglable de ce courant et de ce primaire au catalogue : modèle à sortie fixe retenu.",
+                "Catalogue des alimentations 24 V", StatutCalcul.Alerte);
         var rendement = modele?.Rendement > 0 ? modele.Rendement : a.Rendement;
         var u = Tension(a.Alimentation);
         var puissance = 24 * assigne / rendement / 1000;

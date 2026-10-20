@@ -1,4 +1,5 @@
 using Dimensionnement.Core.Materiel;
+using Dimensionnement.Core.Normes;
 
 namespace Dimensionnement.Core.Armoire;
 
@@ -26,6 +27,17 @@ public static class Encombrements
         if (e.Loge) return new(0, 0, 0, e.PertesW);
         if (e.LargeurMm > 0 && e.HauteurMm > 0)
             return new(e.LargeurMm, e.HauteurMm, e.ProfondeurMm, e.PertesW);
+        var moyen = Moyen(e, q, poles, i);
+        // Cotes relevées de la gamme quand la référence est reconnue ; la dissipation reste l'estimation de la famille.
+        var valeur = e.Famille == "Disjoncteur moteur" && e.PlageMax > 0 ? e.PlageMax : i;
+        if (moyen is { Largeur: > 0 } && CatalogueEncombrements.Trouver(e.Famille, e.Reference, valeur) is { } c)
+            return moyen with { Largeur = c.ParPole ? c.Largeur * poles : c.Largeur, Hauteur = c.Hauteur, Profondeur = c.Profondeur };
+        return moyen;
+    }
+
+    /// <summary>Cotes moyennes de la famille selon le calibre, quand la gamme n'est pas relevée.</summary>
+    static Encombrement? Moyen(ElementMateriel e, int q, int poles, double i)
+    {
         return e.Famille switch
         {
             "Disjoncteur" => Disjoncteur(i, poles),
