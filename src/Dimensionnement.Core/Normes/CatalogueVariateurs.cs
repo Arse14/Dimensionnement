@@ -22,6 +22,12 @@ public record ModeleVariateur
     public double Pertes { get; init; }
     public string Reference { get; init; } = "";
 
+    /// <summary>Filtre CEM réseau (catégorie C2) intégré au variateur : pas de filtre à ajouter au devis.</summary>
+    public bool FiltreCemIntegre { get; init; }
+
+    /// <summary>Plaque ou étriers de reprise de blindage livrés avec le variateur : pas de colliers à ajouter au devis.</summary>
+    public bool BlindageFourni { get; init; }
+
     /// <summary>Vrai une fois la ligne contrôlée sur la fiche du fabricant.</summary>
     public bool Verifie { get; init; }
 }

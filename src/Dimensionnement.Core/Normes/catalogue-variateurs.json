@@ -10,7 +10,9 @@
   "hauteur": 223,
   "profondeur": 176,
   "pertes": 40,
-  "reference": "ACS380-040S-01A8-4"
+  "reference": "ACS380-040S-01A8-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -23,7 +25,9 @@
   "hauteur": 223,
   "profondeur": 176,
   "pertes": 46,
-  "reference": "ACS380-040S-02A6-4"
+  "reference": "ACS380-040S-02A6-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -36,7 +40,9 @@
   "hauteur": 223,
   "profondeur": 176,
   "pertes": 56,
-  "reference": "ACS380-040S-03A3-4"
+  "reference": "ACS380-040S-03A3-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -49,7 +55,9 @@
   "hauteur": 223,
   "profondeur": 176,
   "pertes": 67,
-  "reference": "ACS380-040S-04A0-4"
+  "reference": "ACS380-040S-04A0-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -62,7 +70,9 @@
   "hauteur": 223,
   "profondeur": 176,
   "pertes": 87,
-  "reference": "ACS380-040S-05A6-4"
+  "reference": "ACS380-040S-05A6-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -75,7 +85,9 @@
   "hauteur": 223,
   "profondeur": 183,
   "pertes": 109,
-  "reference": "ACS380-040S-07A2-4"
+  "reference": "ACS380-040S-07A2-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -88,7 +100,9 @@
   "hauteur": 223,
   "profondeur": 183,
   "pertes": 137,
-  "reference": "ACS380-040S-09A4-4"
+  "reference": "ACS380-040S-09A4-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -101,7 +115,9 @@
   "hauteur": 223,
   "profondeur": 183,
   "pertes": 179,
-  "reference": "ACS380-040S-12A6-4"
+  "reference": "ACS380-040S-12A6-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -114,7 +130,9 @@
   "hauteur": 223,
   "profondeur": 183,
   "pertes": 235,
-  "reference": "ACS380-040S-17A0-4"
+  "reference": "ACS380-040S-17A0-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -127,7 +145,9 @@
   "hauteur": 223,
   "profondeur": 183,
   "pertes": 333,
-  "reference": "ACS380-040S-25A0-4"
+  "reference": "ACS380-040S-25A0-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -140,7 +160,9 @@
   "hauteur": 241,
   "profondeur": 212,
   "pertes": 445,
-  "reference": "ACS380-040S-032A-4"
+  "reference": "ACS380-040S-032A-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -153,7 +175,9 @@
   "hauteur": 241,
   "profondeur": 212,
   "pertes": 543,
-  "reference": "ACS380-040S-038A-4"
+  "reference": "ACS380-040S-038A-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -166,7 +190,9 @@
   "hauteur": 241,
   "profondeur": 212,
   "pertes": 641,
-  "reference": "ACS380-040S-045A-4"
+  "reference": "ACS380-040S-045A-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -179,7 +205,9 @@
   "hauteur": 331,
   "profondeur": 229,
   "pertes": 46,
-  "reference": "ACS580-01-02A6-4"
+  "reference": "ACS580-01-02A6-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -192,7 +220,9 @@
   "hauteur": 331,
   "profondeur": 229,
   "pertes": 56,
-  "reference": "ACS580-01-03A3-4"
+  "reference": "ACS580-01-03A3-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -205,7 +235,9 @@
   "hauteur": 331,
   "profondeur": 229,
   "pertes": 67,
-  "reference": "ACS580-01-04A0-4"
+  "reference": "ACS580-01-04A0-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -218,7 +250,9 @@
   "hauteur": 331,
   "profondeur": 229,
   "pertes": 87,
-  "reference": "ACS580-01-05A6-4"
+  "reference": "ACS580-01-05A6-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -231,7 +265,9 @@
   "hauteur": 331,
   "profondeur": 229,
   "pertes": 109,
-  "reference": "ACS580-01-07A2-4"
+  "reference": "ACS580-01-07A2-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -244,7 +280,9 @@
   "hauteur": 331,
   "profondeur": 229,
   "pertes": 137,
-  "reference": "ACS580-01-09A4-4"
+  "reference": "ACS580-01-09A4-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -257,7 +295,9 @@
   "hauteur": 331,
   "profondeur": 229,
   "pertes": 179,
-  "reference": "ACS580-01-12A7-4"
+  "reference": "ACS580-01-12A7-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -270,7 +310,9 @@
   "hauteur": 391,
   "profondeur": 229,
   "pertes": 235,
-  "reference": "ACS580-01-017A-4"
+  "reference": "ACS580-01-017A-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -283,7 +325,9 @@
   "hauteur": 391,
   "profondeur": 229,
   "pertes": 333,
-  "reference": "ACS580-01-025A-4"
+  "reference": "ACS580-01-025A-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -296,7 +340,9 @@
   "hauteur": 497,
   "profondeur": 229,
   "pertes": 445,
-  "reference": "ACS580-01-032A-4"
+  "reference": "ACS580-01-032A-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -309,7 +355,9 @@
   "hauteur": 497,
   "profondeur": 229,
   "pertes": 543,
-  "reference": "ACS580-01-038A-4"
+  "reference": "ACS580-01-038A-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -322,7 +370,9 @@
   "hauteur": 497,
   "profondeur": 229,
   "pertes": 641,
-  "reference": "ACS580-01-045A-4"
+  "reference": "ACS580-01-045A-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -335,7 +385,9 @@
   "hauteur": 597,
   "profondeur": 257,
   "pertes": 865,
-  "reference": "ACS580-01-061A-4"
+  "reference": "ACS580-01-061A-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -348,7 +400,9 @@
   "hauteur": 597,
   "profondeur": 257,
   "pertes": 1061,
-  "reference": "ACS580-01-073A-4"
+  "reference": "ACS580-01-073A-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -361,7 +415,9 @@
   "hauteur": 732,
   "profondeur": 295,
   "pertes": 1285,
-  "reference": "ACS580-01-088A-4"
+  "reference": "ACS580-01-088A-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -374,7 +430,9 @@
   "hauteur": 732,
   "profondeur": 295,
   "pertes": 1565,
-  "reference": "ACS580-01-106A-4"
+  "reference": "ACS580-01-106A-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -387,7 +445,9 @@
   "hauteur": 548,
   "profondeur": 369,
   "pertes": 2125,
-  "reference": "ACS580-01-145A-4"
+  "reference": "ACS580-01-145A-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -400,7 +460,9 @@
   "hauteur": 600,
   "profondeur": 370,
   "pertes": 2545,
-  "reference": "ACS580-01-169A-4"
+  "reference": "ACS580-01-169A-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -413,7 +475,9 @@
   "hauteur": 600,
   "profondeur": 370,
   "pertes": 3105,
-  "reference": "ACS580-01-206A-4"
+  "reference": "ACS580-01-206A-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -426,7 +490,9 @@
   "hauteur": 681,
   "profondeur": 386,
   "pertes": 3721,
-  "reference": "ACS580-01-246A-4"
+  "reference": "ACS580-01-246A-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -439,7 +505,9 @@
   "hauteur": 681,
   "profondeur": 386,
   "pertes": 4505,
-  "reference": "ACS580-01-293A-4"
+  "reference": "ACS580-01-293A-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -452,7 +520,9 @@
   "hauteur": 841,
   "profondeur": 413,
   "pertes": 5625,
-  "reference": "ACS580-01-363A-4"
+  "reference": "ACS580-01-363A-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "ABB",
@@ -465,7 +535,9 @@
   "hauteur": 841,
   "profondeur": 413,
   "pertes": 7025,
-  "reference": "ACS580-01-430A-4"
+  "reference": "ACS580-01-430A-4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Siemens",
@@ -478,7 +550,9 @@
   "hauteur": 173,
   "profondeur": 155,
   "pertes": 40,
-  "reference": "6SL3210-1KE11-8UF2"
+  "reference": "6SL3210-1KE11-8AF2",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -491,7 +565,9 @@
   "hauteur": 173,
   "profondeur": 155,
   "pertes": 46,
-  "reference": "6SL3210-1KE12-3UF2"
+  "reference": "6SL3210-1KE12-3AF2",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -504,7 +580,9 @@
   "hauteur": 173,
   "profondeur": 155,
   "pertes": 56,
-  "reference": "6SL3210-1KE13-2UF2"
+  "reference": "6SL3210-1KE13-2AF2",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -517,7 +595,9 @@
   "hauteur": 173,
   "profondeur": 155,
   "pertes": 67,
-  "reference": "6SL3210-1KE14-3UF2"
+  "reference": "6SL3210-1KE14-3AF2",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -530,7 +610,9 @@
   "hauteur": 173,
   "profondeur": 155,
   "pertes": 87,
-  "reference": "6SL3210-1KE15-8UF2"
+  "reference": "6SL3210-1KE15-8AF2",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -543,7 +625,9 @@
   "hauteur": 196,
   "profondeur": 225,
   "pertes": 109,
-  "reference": "6SL3210-1KE17-5UF1"
+  "reference": "6SL3210-1KE17-5AF1",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -556,7 +640,9 @@
   "hauteur": 196,
   "profondeur": 225,
   "pertes": 137,
-  "reference": "6SL3210-1KE18-8UF1"
+  "reference": "6SL3210-1KE18-8AF1",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -569,7 +655,9 @@
   "hauteur": 196,
   "profondeur": 225,
   "pertes": 179,
-  "reference": "6SL3210-1KE21-3UF1"
+  "reference": "6SL3210-1KE21-3AF1",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -582,7 +670,9 @@
   "hauteur": 196,
   "profondeur": 225,
   "pertes": 235,
-  "reference": "6SL3210-1KE21-7UF1"
+  "reference": "6SL3210-1KE21-7AF1",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -595,7 +685,9 @@
   "hauteur": 295,
   "profondeur": 225,
   "pertes": 333,
-  "reference": "6SL3210-1KE22-6UF1"
+  "reference": "6SL3210-1KE22-6AF1",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -608,7 +700,9 @@
   "hauteur": 295,
   "profondeur": 225,
   "pertes": 445,
-  "reference": "6SL3210-1KE23-2UF1"
+  "reference": "6SL3210-1KE23-2AF1",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -621,7 +715,9 @@
   "hauteur": 295,
   "profondeur": 225,
   "pertes": 543,
-  "reference": "6SL3210-1KE23-8UF1"
+  "reference": "6SL3210-1KE23-8AF1",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -634,7 +730,9 @@
   "hauteur": 472,
   "profondeur": 237,
   "pertes": 641,
-  "reference": "6SL3210-1KE24-4UF1"
+  "reference": "6SL3210-1KE24-4AF1",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -647,7 +745,9 @@
   "hauteur": 472,
   "profondeur": 237,
   "pertes": 865,
-  "reference": "6SL3210-1KE26-0UF1"
+  "reference": "6SL3210-1KE26-0AF1",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -660,7 +760,9 @@
   "hauteur": 472,
   "profondeur": 237,
   "pertes": 1061,
-  "reference": "6SL3210-1KE27-0UF1"
+  "reference": "6SL3210-1KE27-0AF1",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -673,7 +775,9 @@
   "hauteur": 551,
   "profondeur": 237,
   "pertes": 1285,
-  "reference": "6SL3210-1KE28-4UF1"
+  "reference": "6SL3210-1KE28-4AF1",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -686,7 +790,9 @@
   "hauteur": 551,
   "profondeur": 237,
   "pertes": 1565,
-  "reference": "6SL3210-1KE31-1UF1"
+  "reference": "6SL3210-1KE31-1AF1",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -699,7 +805,9 @@
   "hauteur": 708,
   "profondeur": 357,
   "pertes": 2125,
-  "reference": "6SL3210-1KE31-4UF1"
+  "reference": "6SL3210-1KE31-4AF1",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -712,7 +820,9 @@
   "hauteur": 708,
   "profondeur": 357,
   "pertes": 2545,
-  "reference": "6SL3210-1KE31-7UF1"
+  "reference": "6SL3210-1KE31-7AF1",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -725,7 +835,9 @@
   "hauteur": 708,
   "profondeur": 357,
   "pertes": 3105,
-  "reference": "6SL3210-1KE32-1UF1"
+  "reference": "6SL3210-1KE32-1AF1",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Siemens",
@@ -738,7 +850,9 @@
   "hauteur": 708,
   "profondeur": 357,
   "pertes": 3721,
-  "reference": "6SL3210-1KE32-4UF1"
+  "reference": "6SL3210-1KE32-4AF1",
+  "filtreCemIntegre": true,
+  "blindageFourni": false
  },
  {
   "fabricant": "Schneider",
@@ -751,7 +865,9 @@
   "hauteur": 145,
   "profondeur": 140,
   "pertes": 35,
-  "reference": "ATV320U04N4C"
+  "reference": "ATV320U04N4C",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -764,7 +880,9 @@
   "hauteur": 145,
   "profondeur": 140,
   "pertes": 40,
-  "reference": "ATV320U06N4C"
+  "reference": "ATV320U06N4C",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -777,7 +895,9 @@
   "hauteur": 145,
   "profondeur": 140,
   "pertes": 46,
-  "reference": "ATV320U07N4C"
+  "reference": "ATV320U07N4C",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -790,7 +910,9 @@
   "hauteur": 145,
   "profondeur": 150,
   "pertes": 56,
-  "reference": "ATV320U11N4C"
+  "reference": "ATV320U11N4C",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -803,7 +925,9 @@
   "hauteur": 145,
   "profondeur": 150,
   "pertes": 67,
-  "reference": "ATV320U15N4C"
+  "reference": "ATV320U15N4C",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -816,7 +940,9 @@
   "hauteur": 184,
   "profondeur": 150,
   "pertes": 87,
-  "reference": "ATV320U22N4C"
+  "reference": "ATV320U22N4C",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -829,7 +955,9 @@
   "hauteur": 184,
   "profondeur": 150,
   "pertes": 109,
-  "reference": "ATV320U30N4C"
+  "reference": "ATV320U30N4C",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -842,7 +970,9 @@
   "hauteur": 184,
   "profondeur": 150,
   "pertes": 137,
-  "reference": "ATV320U40N4C"
+  "reference": "ATV320U40N4C",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -855,7 +985,9 @@
   "hauteur": 232,
   "profondeur": 180,
   "pertes": 179,
-  "reference": "ATV320U55N4C"
+  "reference": "ATV320U55N4C",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -868,7 +1000,9 @@
   "hauteur": 232,
   "profondeur": 180,
   "pertes": 235,
-  "reference": "ATV320U75N4C"
+  "reference": "ATV320U75N4C",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -881,7 +1015,9 @@
   "hauteur": 330,
   "profondeur": 232,
   "pertes": 333,
-  "reference": "ATV320D11N4C"
+  "reference": "ATV320D11N4C",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -894,7 +1030,9 @@
   "hauteur": 330,
   "profondeur": 232,
   "pertes": 445,
-  "reference": "ATV320D15N4C"
+  "reference": "ATV320D15N4C",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -907,7 +1045,9 @@
   "hauteur": 495,
   "profondeur": 271,
   "pertes": 543,
-  "reference": "ATV630D18N4"
+  "reference": "ATV630D18N4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -920,7 +1060,9 @@
   "hauteur": 495,
   "profondeur": 271,
   "pertes": 641,
-  "reference": "ATV630D22N4"
+  "reference": "ATV630D22N4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -933,7 +1075,9 @@
   "hauteur": 701,
   "profondeur": 297,
   "pertes": 865,
-  "reference": "ATV630D30N4"
+  "reference": "ATV630D30N4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -946,7 +1090,9 @@
   "hauteur": 701,
   "profondeur": 297,
   "pertes": 1061,
-  "reference": "ATV630D37N4"
+  "reference": "ATV630D37N4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -959,7 +1105,9 @@
   "hauteur": 701,
   "profondeur": 297,
   "pertes": 1285,
-  "reference": "ATV630D45N4"
+  "reference": "ATV630D45N4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -972,7 +1120,9 @@
   "hauteur": 960,
   "profondeur": 354,
   "pertes": 1565,
-  "reference": "ATV630D55N4"
+  "reference": "ATV630D55N4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -985,7 +1135,9 @@
   "hauteur": 960,
   "profondeur": 354,
   "pertes": 2125,
-  "reference": "ATV630D75N4"
+  "reference": "ATV630D75N4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -998,7 +1150,9 @@
   "hauteur": 960,
   "profondeur": 354,
   "pertes": 2545,
-  "reference": "ATV630D90N4"
+  "reference": "ATV630D90N4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -1011,7 +1165,9 @@
   "hauteur": 1220,
   "profondeur": 420,
   "pertes": 3105,
-  "reference": "ATV630C11N4"
+  "reference": "ATV630C11N4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -1024,7 +1180,9 @@
   "hauteur": 1220,
   "profondeur": 420,
   "pertes": 3721,
-  "reference": "ATV630C13N4"
+  "reference": "ATV630C13N4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  },
  {
   "fabricant": "Schneider",
@@ -1037,6 +1195,8 @@
   "hauteur": 1220,
   "profondeur": 420,
   "pertes": 4505,
-  "reference": "ATV630C16N4"
+  "reference": "ATV630C16N4",
+  "filtreCemIntegre": true,
+  "blindageFourni": true
  }
 ]

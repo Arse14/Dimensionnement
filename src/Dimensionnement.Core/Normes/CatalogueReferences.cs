@@ -84,7 +84,8 @@ public static class CatalogueReferences
                 completees++;
                 continue;
             }
-            if (e.Reference.Length > 0 || !Commandable(e)) continue;
+            // Barrières et scrutateurs : la référence dépend de la hauteur, relevée au configurateur du fabricant.
+            if (e.Reference.Length > 0 || !Commandable(e) || e.Famille == "Capteur de sécurité") continue;
             if (e.Famille is "Sécurité" or "Entrées/sorties")
             {
                 // Choisis par leur module : la gamme suffit pour la consultation, la référence exacte vient du configurateur.

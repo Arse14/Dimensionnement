@@ -98,7 +98,7 @@ public static class BibliothequeCatalogues
         new FamilleCatalogue("variateurs", "Variateurs", CatalogueVariateurs.NomFichier, CatalogueVariateurs.TexteEmbarque,
             new[] { T("fabricant", "Fabricant"), T("gamme", "Gamme", true), T("reference", "Référence"), T("taille", "Taille", true),
                     N("kw", "Puissance moteur", "kW", true, true), N("courant", "Courant de sortie", "A", true, true), N("pertes", "Pertes", "W", false, true),
-                    N("rang", "Rang", "") }
+                    N("rang", "Rang", ""), B("filtreCemIntegre", "Filtre CEM intégré"), B("blindageFourni", "Reprise de blindage fournie") }
                 .Concat(Cotes(true)).ToArray())
             { LireType = t => CatalogueVariateurs.Lire(t), ChampPrincipal = "kw", Designation = "Variateur" },
         new FamilleCatalogue("securite", "Sécurité machine", CatalogueSecurite.NomFichier, CatalogueSecurite.TexteEmbarque,
@@ -108,6 +108,16 @@ public static class BibliothequeCatalogues
                     N("consommation", "Consommation 24 V DC", "A", false, true), N("extensionsMax", "Extensions max.", ""),
                     N("largeur", "Largeur", "mm", true, false, true) })
             { LireType = t => CatalogueSecurite.Lire(t), ChampPrincipal = "sorties", Designation = "Module" },
+        new FamilleCatalogue("capteurs", "Barrières et scrutateurs", CatalogueCapteursSecurite.NomFichier, CatalogueCapteursSecurite.TexteEmbarque,
+            new[] { T("fabricant", "Fabricant"), T("gamme", "Gamme", true), T("type", "Type (Barrière immatérielle / Scrutateur laser)", true),
+                    T("reference", "Référence"), N("typeIec", "Type IEC 61496", "", true, true), T("pl", "PL maximal"),
+                    N("resolution", "Résolution / espacement", "mm", true, true), N("faisceaux", "Faisceaux (multi-faisceaux)", ""),
+                    N("hauteurMin", "Hauteur protégée min.", "mm"), N("hauteurMax", "Hauteur protégée max.", "mm", true), N("pasHauteur", "Pas de hauteur", "mm"),
+                    N("portee", "Portée / champ de protection", "m", true, true), N("angle", "Angle de balayage", "°"), N("ossd", "Paires OSSD", ""),
+                    N("consommation", "Consommation 24 V DC", "A", false, true), L("connectique", "Connectique (un câble par entrée)"),
+                    N("bornes", "Bornes dans l'armoire", "") }
+                .Concat(Cotes()).ToArray())
+            { LireType = t => CatalogueCapteursSecurite.Lire(t), ChampPrincipal = "portee", Designation = "Capteur" },
         new FamilleCatalogue("enveloppes", "Enveloppes", CatalogueEnveloppes.NomFichier, CatalogueEnveloppes.TexteEmbarque,
             new[] { T("fabricant", "Fabricant"), T("gamme", "Gamme", true), T("type", "Type", true), T("reference", "Référence"),
                     T("referencePlaque", "Référence de la plaque"),

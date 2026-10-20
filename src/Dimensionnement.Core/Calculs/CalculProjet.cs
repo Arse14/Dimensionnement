@@ -37,7 +37,6 @@ public class ResultatProjet
 
     public ResultatSecurite? Securite { get; init; }
     public ResultatAutomate? Automate { get; init; }
-    public IReadOnlyList<PointControle> Controles { get; init; } = Array.Empty<PointControle>();
     public ResultatReferences? References { get; init; }
     public ResultatSelectivite? Selectivite { get; set; }
     public ResultatArmoire? Armoire { get; set; }
@@ -86,8 +85,10 @@ public static class CalculProjet
     public static ResultatProjet Calculer(Projet projet, IReadOnlyList<CpuAutomate> catalogue,
         IReadOnlyList<ReferenceCatalogue>? references = null, IReadOnlyList<ModeleVariateur>? variateurs = null,
         IReadOnlyList<ModeleEnveloppe>? enveloppes = null, IReadOnlyList<ModeleSecurite>? catalogueSecurite = null,
-        IReadOnlyList<CarteEs>? cartes = null, IReadOnlyList<ModeleAlimentation>? alimentations = null, IReadOnlyList<ModeleIhm>? ihm = null)
+        IReadOnlyList<CarteEs>? cartes = null, IReadOnlyList<ModeleAlimentation>? alimentations = null, IReadOnlyList<ModeleIhm>? ihm = null,
+        IReadOnlyList<ModeleCapteurSecurite>? capteursSecurite = null)
     {
+        capteursSecurite ??= CatalogueCapteursSecurite.Charger();
         ihm ??= CatalogueIhm.Charger();
         cartes ??= CatalogueCartesEs.Charger();
         var reseau = projet.Reseau;
@@ -96,7 +97,7 @@ public static class CalculProjet
 
         // Le bilan ne dépend pas des câbles : un premier passage donne les puissances, le second
         // recalcule les départs avec la chute de tension consommée par le câble d'arrivée.
-        var consommateurs24V = Consommateurs24V(projet, catalogueSecurite, catalogue, cartes, ihm);
+        var consommateurs24V = Consommateurs24V(projet, catalogueSecurite, catalogue, cartes, ihm, capteursSecurite);
         var consommation24V = consommateurs24V.Where(c => c.Tension == TensionCommande.Continu24).Sum(c => c.Courant);
         var repartition = Repartir(projet, consommateurs24V);
         var alimentesPar = SourcesCommande.AlimentesPar(projet);
@@ -166,7 +167,7 @@ public static class CalculProjet
         var manquantes = SourcesCommande.Manquantes(projet, consommateurs24V);
         foreach (var b in manquantes)
             note.Verifier($"Source {SourcesCommande.Libelle(b.Tension)}", false, b.Raison, "NF EN 60204-1, 7.2.7 et 9.1.1", StatutCalcul.Alerte);
-        var securite = CalculSecurite.Calculer(projet, departs, catalogueSecurite);
+        var securite = CalculSecurite.Calculer(projet, departs, catalogueSecurite, capteursSecurite);
         var automate = CalculAutomate.Calculer(projet.Automate, catalogue, cartes, ihm);
 
         var arbre = new ElementMateriel { Repere = "Réseau", Famille = "Réseau",
@@ -218,7 +219,7 @@ public static class CalculProjet
             CoefficientSimultaneite = ks, CourantEmploi = ib, CalibreGeneral = qg,
             SectionArrivee = cable.Section, ChuteTensionArrivee = cable.ChuteTension, Arbre = arbre,
             Consommateurs24V = consommateurs24V, SourcesManquantes = manquantes, Securite = securite, Automate = automate,
-            Controles = ControlesConformite.Generer(projet), References = resultatReferences,
+            References = resultatReferences,
         };
         resultat.Selectivite = CalculSelectivite.Calculer(resultat);
         resultat.Armoire = CalculArmoire.Calculer(resultat, projet, enveloppes);
@@ -228,12 +229,13 @@ public static class CalculProjet
 
     /// <summary>Consommateurs 24 V DC du projet : ceux déclarés à la main et ceux déduits du matériel.</summary>
     public static IReadOnlyList<ConsommationCommande> Consommateurs24V(Projet projet, IReadOnlyList<ModeleSecurite>? securite = null,
-        IReadOnlyList<CpuAutomate>? cpus = null, IReadOnlyList<CarteEs>? cartes = null, IReadOnlyList<ModeleIhm>? ihm = null) =>
+        IReadOnlyList<CpuAutomate>? cpus = null, IReadOnlyList<CarteEs>? cartes = null, IReadOnlyList<ModeleIhm>? ihm = null,
+        IReadOnlyList<ModeleCapteurSecurite>? capteurs = null) =>
         projet.Consommateurs24V
             .Where(c => c.CourantMa > 0 && c.Quantite > 0)
             .Select(c => new ConsommationCommande(c.Quantite > 1 ? $"{c.Designation} × {c.Quantite}" : c.Designation,
                 c.CourantMa * c.Quantite / 1000, Tension: c.Tension))
-            .Concat(CalculSecurite.Consommations(projet, securite).Select(c => c with { Poste = ConsommationCommande.Securite }))
+            .Concat(CalculSecurite.Consommations(projet, securite, capteurs).Select(c => c with { Poste = ConsommationCommande.Securite }))
             .Concat(CalculAutomate.Consommations(projet.Automate, cpus, cartes, ihm).Select(c => c with { Poste = ConsommationCommande.Automate }))
             .Concat(projet.EstimerPeripherie24V ? Peripherie24V(projet) : Enumerable.Empty<ConsommationCommande>())
             .ToList();

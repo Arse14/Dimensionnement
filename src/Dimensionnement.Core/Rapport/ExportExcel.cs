@@ -40,11 +40,6 @@ public static class ExportExcel
         Remplir(bilan, ligne, "Total", Math.Round(r.Consommation24V, 3));
         bilan.Row(ligne).Style.Font.Bold = true;
 
-        var controles = Feuille(classeur, "Contrôles CEM-BT", "Vérifié", "Point de contrôle", "Référence");
-        ligne = 2;
-        foreach (var c in r.Controles)
-            Remplir(controles, ligne++, c.Fait ? "Oui" : "Non", c.Libelle, c.Reference);
-
         FeuilleDevis(classeur, r);
 
         foreach (var feuille in classeur.Worksheets)

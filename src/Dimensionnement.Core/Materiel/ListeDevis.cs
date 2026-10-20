@@ -27,6 +27,9 @@ public static class ListeDevis
 
     const string Estimation = "Quantité estimée";
 
+    /// <summary>Longueur de câble moteur blindé au-delà de laquelle une self de sortie est à prévoir, en m.</summary>
+    public const double LongueurSelfSortie = 50;
+
     public static IReadOnlyList<LigneDevis> Generer(ResultatProjet r)
     {
         var lignes = new List<LigneDevis>();
@@ -119,12 +122,22 @@ public static class ListeDevis
         if (modulaires > 1)
             l.Add(new(Accessoires, "Peigne de raccordement", "pour disjoncteurs modulaires", fabricant, "",
                 Math.Max(1, r.Armoire?.Bandes.Count(b => b.Zone == ZoneCem.Intermediaire) ?? 1), "u", Remarque: Estimation));
-        var variateurs = elements.Count(e => e.Famille == "Variateur");
-        if (variateurs > 0)
+        var variateurs = elements.Where(e => e.Famille == "Variateur").ToList();
+        if (variateurs.Count > 0)
         {
-            l.Add(new(Accessoires, "Filtre CEM d'entrée variateur", "si non intégré au variateur", fabricant, "", variateurs, "u",
-                Remarque: "Selon catégorie CEM C2 / C3 visée"));
-            l.Add(new(Accessoires, "Collier de reprise de blindage à 360°", "pour câble moteur blindé", fabricant, "", 2 * variateurs, "u"));
+            // Seuls les accessoires que le variateur n'apporte pas sont chiffrés.
+            var sansFiltre = variateurs.Where(v => !v.FiltreCemIntegre).ToList();
+            if (sansFiltre.Count > 0)
+                l.Add(new(Accessoires, "Filtre CEM d'entrée variateur", "catégorie C2, côté réseau", fabricant, "", sansFiltre.Count, "u",
+                    Reperes(sansFiltre), "Filtre non intégré au variateur retenu"));
+            var sansBlindage = variateurs.Where(v => !v.BlindageFourni).ToList();
+            if (sansBlindage.Count > 0)
+                l.Add(new(Accessoires, "Collier de reprise de blindage à 360°", "pour câble moteur blindé", fabricant, "", 2 * sansBlindage.Count, "u",
+                    Reperes(sansBlindage), "Kit de blindage non livré avec le variateur : barre de reprise et sortie variateur"));
+            // Au-delà de cette longueur, les capacités du câble blindé imposent en général une self de sortie ou un filtre dv/dt.
+            foreach (var d in r.Departs.Where(d => d.Depart is DepartMoteur { Demarrage: ModeDemarrage.Variateur } m && m.Cable.Longueur > LongueurSelfSortie))
+                l.Add(new(Accessoires, "Self de sortie moteur / filtre dv/dt", $"{N(d.CourantEmploi)} A, 400 V", fabricant, "", 1, "u", $"D{d.Depart.Numero:00}",
+                    $"Câble blindé de {N(d.Depart.Cable.Longueur)} m > {N(LongueurSelfSortie)} m : à confirmer selon la notice du variateur"));
         }
     }
 
@@ -227,8 +240,9 @@ public static class ListeDevis
             var blinde = dep is DepartMoteur { Demarrage: ModeDemarrage.Variateur };
             var nombre = dep is DepartMoteur { Demarrage: ModeDemarrage.EtoileTriangle } ? 2 : 1;
             var conducteurs = Conducteurs(dep.Alimentation);
-            var designation = blinde ? "Câble moteur blindé cuivre (CEM)" : $"Câble cuivre {dep.Cable.Isolant}";
-            cables.Add((designation, $"{conducteurs}G{N(d.Section)} mm²", nombre * dep.Cable.Longueur, d.Section, blinde, $"W{dep.Numero}"));
+            var designation = blinde ? "Câble moteur blindé cuivre (CEM), tresse cuivre ≥ 85 %" : $"Câble cuivre {dep.Cable.Isolant}";
+            var composition = blinde ? $"{conducteurs}G{N(d.Section)} mm² + blindage" : $"{conducteurs}G{N(d.Section)} mm²";
+            cables.Add((designation, composition, nombre * dep.Cable.Longueur, d.Section, blinde, $"W{dep.Numero}"));
         }
         foreach (var g in cables.GroupBy(c => (c.Designation, c.Caracteristiques)))
         {
@@ -240,10 +254,28 @@ public static class ListeDevis
         foreach (var g in cables.GroupBy(c => (Taille: PresseEtoupe(c.Section), c.Blinde)).OrderBy(g => g.Key.Taille))
             l.Add(new(Cables, g.Key.Blinde ? "Presse-étoupe CEM laiton" : "Presse-étoupe polyamide", $"{g.Key.Taille}, IP68", "", "", g.Count(), "u",
                 string.Join(", ", g.Select(c => c.Repere)), "Taille selon le diamètre réel du câble"));
+        // Le blindage d'un câble de variateur est repris à 360° aux deux bouts : presse-étoupe CEM aussi à la boîte à bornes du moteur.
+        foreach (var g in cables.Where(c => c.Blinde).GroupBy(c => PresseEtoupe(c.Section)).OrderBy(g => g.Key))
+            l.Add(new(Cables, "Presse-étoupe CEM laiton côté moteur", $"{g.Key}, IP68", "", "", g.Count(), "u",
+                string.Join(", ", g.Select(c => c.Repere)), "Reprise du blindage à la boîte à bornes du moteur"));
+        // Barrières et scrutateurs : un câble de raccordement par connecteur, longueur selon l'implantation sur la machine.
+        var optiques = r.Securite?.Appareils.SelectMany(a => a.Parcourir()).Where(e => e.Famille == "Capteur de sécurité").ToList() ?? new();
+        var connecteurs = new List<(string Connectique, string Repere)>();
+        foreach (var e in optiques)
+            foreach (var c in e.Repere.StartsWith("BI") ? new[] { "M12 5 broches (émetteur)", "M12 8 broches (récepteur)" } : new[] { "M12 / connecteur système 12 broches" })
+                connecteurs.Add((c, e.Repere));
+        foreach (var g in connecteurs.GroupBy(c => c.Connectique))
+            l.Add(new(Cables, "Câble de raccordement capteur de sécurité, connecteur femelle droit", g.Key, "", "", g.Count(), "u",
+                string.Join(", ", g.Select(c => c.Repere).Distinct()), "Longueur selon l'implantation sur la machine"));
+        if (connecteurs.Count > 0)
+            l.Add(new(Cables, "Presse-étoupe polyamide (câbles des barrières et scrutateurs)", "M16 / M20, IP68", "", "", connecteurs.Count, "u",
+                Remarque: "Ou traversée de connecteur M12 en paroi d'armoire"));
         var (commande, _) = CalculArmoire.BornesCommande(r.Projet);
         if (commande > 0)
         {
-            var cablesCommande = (int)Math.Ceiling(commande / 8.0);
+            // Les bornes des barrières et scrutateurs ont déjà leurs câbles M12.
+            var bornesOptiques = optiques.Sum(e => e.Repere.StartsWith("BI") ? 9 : 8);
+            var cablesCommande = (int)Math.Ceiling(Math.Max(0, commande - bornesOptiques) / 8.0);
             l.Add(new(Cables, "Presse-étoupe polyamide (câbles de commande)", "M20, IP68", "", "", cablesCommande, "u", Remarque: Estimation));
         }
     }

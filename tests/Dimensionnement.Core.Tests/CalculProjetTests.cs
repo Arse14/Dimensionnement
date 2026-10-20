@@ -86,7 +86,7 @@ public class CalculProjetTests
         var html = RapportHtml.Generer(CalculProjet.Calculer(ProjetExemple()));
 
         foreach (var titre in new[] { "1. Page de garde", "2. Données d'entrée", "3. Liste des départs", "4. Arbre du matériel",
-                     "5. Notes de calcul", "6. Arrivée générale", "7. Directives CEM", "8. Nomenclature", "9. Historique" })
+                     "5. Notes de calcul", "6. Arrivée générale", "7. Nomenclature", "8. Historique" })
             Assert.Contains(titre, html);
         Assert.Contains("NF EN 61800-3", html);
     }
@@ -108,25 +108,21 @@ public class CalculProjetTests
 public class ExportsTests
 {
     [Fact]
-    public void Export_Excel_contient_nomenclature_departs_notes_bilan_et_controles()
+    public void Export_Excel_contient_nomenclature_departs_notes_bilan_et_devis()
     {
         var projet = new Projet { Nom = "Essai" };
         projet.Ajouter(new DepartMoteur { Designation = "Pompe", PuissanceKw = 4, Demarrage = ModeDemarrage.Variateur });
         projet.Ajouter(new DepartAlimentation24V());
         projet.Consommateurs24V.Add(new Consommateur24V { Designation = "Capteurs", CourantMa = 500 });
-        projet.Controles["CEM-PLAQUE"] = true;
         var chemin = Path.Combine(Path.GetTempPath(), $"essai-{Guid.NewGuid()}.xlsx");
         try
         {
             ExportExcel.Enregistrer(CalculProjet.Calculer(projet), chemin);
 
             using var classeur = new ClosedXML.Excel.XLWorkbook(chemin);
-            Assert.Equal(new[] { "Nomenclature", "Départs", "Notes de calcul", "Bilan 24 V", "Contrôles CEM-BT", "Demande de devis" },
+            Assert.Equal(new[] { "Nomenclature", "Départs", "Notes de calcul", "Bilan 24 V", "Demande de devis" },
                 classeur.Worksheets.Select(f => f.Name));
             Assert.Equal("D01", classeur.Worksheet("Départs").Cell(2, 1).GetString());
-            Assert.Contains(classeur.Worksheet("Contrôles CEM-BT").RowsUsed(),
-                r => r.Cell(1).GetString() == "Oui" && r.Cell(2).GetString().StartsWith("Plaque de montage"));
-            Assert.Contains(classeur.Worksheet("Contrôles CEM-BT").RowsUsed(), r => r.Cell(2).GetString().StartsWith("D01 : câble moteur blindé"));
         }
         finally
         {

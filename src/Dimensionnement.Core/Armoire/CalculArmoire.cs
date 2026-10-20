@@ -319,7 +319,13 @@ public static class CalculArmoire
         var a = projet.Automate;
         var es = a.Actif ? a.EntreesTor + a.SortiesTor + 2 * (a.EntreesAnalogiques + a.SortiesAnalogiques)
             + a.Stations.Where(x => x.DansArmoire).Sum(x => x.EntreesTor + x.SortiesTor + 2 * (x.EntreesAnalogiques + x.SortiesAnalogiques)) : 0;
-        var securite = projet.Securite.Fonctions.Sum(f => 2 * Math.Max(1, f.NombreCapteurs));
+        // Barrière : alimentation de l'émetteur et du récepteur, OSSD, EDM et réarmement ; scrutateur : alimentation, OSSD, EDM et réarmement.
+        var securite = projet.Securite.Fonctions.Sum(f => Math.Max(1, f.NombreCapteurs) * f.Type switch
+        {
+            TypeFonctionSecurite.BarriereImmaterielle => 9,
+            TypeFonctionSecurite.ScrutateurLaser => 8,
+            _ => 2,
+        });
         var distribution = es + securite > 0 || projet.Departs.OfType<DepartAlimentation24V>().Any() ? 10 : 0;
         return (es + securite + distribution, $"{es} E/S, {securite} sécurité, {distribution} distribution 24 V");
     }

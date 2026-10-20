@@ -467,30 +467,6 @@
             </StackPanel>
         </DataTemplate>
 
-        <!-- Liste de contrôle CEM et basse tension -->
-        <DataTemplate DataType="{x:Type mv:PageControles}">
-            <StackPanel>
-                <TextBlock Text="LISTE DE CONTRÔLE CEM 2014/30/UE ET BASSE TENSION 2014/35/UE" Style="{StaticResource TitrePanneau}" TextWrapping="Wrap"/>
-                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
-                           Text="Cochez chaque point vérifié : l'état est enregistré dans le projet et repris dans le rapport."/>
-                <ItemsControl ItemsSource="{Binding DataContext.Resultat.Controles, RelativeSource={RelativeSource AncestorType=Window}}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="{x:Type calc:PointControle}">
-                            <Border BorderBrush="{StaticResource Bordure}" BorderThickness="0,0,0,1" Padding="0,6">
-                                <DockPanel>
-                                    <CheckBox DockPanel.Dock="Left" Margin="0,2,10,0" VerticalAlignment="Top" IsChecked="{inf:Lien Fait}"/>
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding Libelle}" TextWrapping="Wrap"/>
-                                        <TextBlock Text="{Binding Reference}" FontSize="11" FontStyle="Italic" Foreground="{StaticResource TexteSecondaire}"/>
-                                    </StackPanel>
-                                </DockPanel>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
-        </DataTemplate>
-
         <!-- Sécurité machine -->
         <DataTemplate DataType="{x:Type mod:ConfigurationSecurite}">
             <StackPanel>
@@ -531,6 +507,55 @@
                                         <TextBlock Text="Nombre de capteurs / boutons" Style="{StaticResource Etiquette}"/>
                                         <TextBox Text="{inf:Lien NombreCapteurs}"/>
                                     </DockPanel>
+                                    <!-- Barrière immatérielle ou scrutateur : choisis au catalogue, montés sur la machine -->
+                                    <StackPanel>
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Type}" Value="{x:Static mod:TypeFonctionSecurite.BarriereImmaterielle}">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Type}" Value="{x:Static mod:TypeFonctionSecurite.ScrutateurLaser}">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
+                                        <DockPanel Style="{StaticResource Ligne}">
+                                            <TextBlock Text="Marque du capteur" Style="{StaticResource Etiquette}"/>
+                                            <ComboBox ItemsSource="{x:Static inf:Listes.FabricantsCapteur}" SelectedItem="{inf:Lien FabricantCapteur}"/>
+                                        </DockPanel>
+                                        <StackPanel>
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Type}" Value="{x:Static mod:TypeFonctionSecurite.ScrutateurLaser}">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
+                                            <DockPanel Style="{StaticResource Ligne}">
+                                                <TextBlock Text="Détection" Style="{StaticResource Etiquette}"/>
+                                                <ComboBox ItemsSource="{x:Static inf:Listes.Detections}" SelectedItem="{inf:Lien Detection}"/>
+                                            </DockPanel>
+                                            <DockPanel Style="{StaticResource Ligne}">
+                                                <TextBlock Text="Hauteur protégée (mm)" Style="{StaticResource Etiquette}"/>
+                                                <TextBox Text="{inf:Lien HauteurProtegee}"/>
+                                            </DockPanel>
+                                        </StackPanel>
+                                        <DockPanel Style="{StaticResource Ligne}">
+                                            <TextBlock Text="Portée / champ de protection (m)" Style="{StaticResource Etiquette}"/>
+                                            <TextBox Text="{inf:Lien Portee}"/>
+                                        </DockPanel>
+                                        <DockPanel Style="{StaticResource Ligne}">
+                                            <TextBlock Text="Référence imposée (facultatif)" Style="{StaticResource Etiquette}"/>
+                                            <TextBox Text="{inf:Lien ReferenceCapteur}"/>
+                                        </DockPanel>
+                                        <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource TexteSecondaire}" Margin="0,2,0,0"
+                                                   Text="Monté sur la machine, hors plaque : sa protection 24 V DC, ses bornes, ses câbles M12 et ses presse-étoupes sont ajoutés à l'armoire et au devis."/>
+                                    </StackPanel>
                                     <DockPanel Style="{StaticResource Ligne}">
                                         <TextBlock Text="Départs coupés (ex. 1, 3, 4)" Style="{StaticResource Etiquette}"/>
                                         <TextBox Text="{inf:Lien DepartsTexte}"/>
@@ -585,6 +610,8 @@
                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                     <Button Content="Ouvrir le catalogue de sécurité"
                             Command="{Binding DataContext.OuvrirCatalogueSecurite, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <Button Content="Barrières et scrutateurs"
+                            Command="{Binding DataContext.OuvrirCatalogues, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="capteurs"/>
                     <Button Content="Recharger les catalogues"
                             Command="{Binding DataContext.RechargerCatalogueReferences, RelativeSource={RelativeSource AncestorType=Window}}"/>
                 </StackPanel>
@@ -1188,6 +1215,12 @@
                     </Button>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal">
+                    <Button Command="{Binding AfficherBilanPuissance}" ToolTip="Bilan de puissance expliqué pas à pas, du récepteur au câble d'arrivée">
+                        <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE9D9;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Bilan de puissance"/></StackPanel>
+                    </Button>
+                    <Button Command="{Binding AfficherBilan24V}" ToolTip="Bilan des sources de commande 24 V DC / AC et 230 V">
+                        <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE945;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Bilan 24 V"/></StackPanel>
+                    </Button>
                     <Button Command="{Binding OuvrirCatalogues}" ToolTip="Catalogues du matériel : tableau filtrable, fiches techniques, photos et documents ; complétez les valeurs manquantes">
                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE8F1;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Catalogues"/></StackPanel>
                     </Button>
@@ -1277,12 +1310,13 @@
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Projet et réseau" Command="{Binding AfficherProjet}"/>
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Sécurité machine" Command="{Binding AfficherSecurite}"/>
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Automate" Command="{Binding AfficherAutomate}"/>
-                        <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Bilan de puissance" Command="{Binding AfficherBilanPuissance}"/>
-                        <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Bilan 24 V" Command="{Binding AfficherBilan24V}"/>
-                        <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Contrôles CEM / BT" Command="{Binding AfficherControles}"/>
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Armoire" Command="{Binding AfficherArmoire}"/>
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Thermique" Command="{Binding AfficherThermique}"/>
-                        <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Sélectivité" Command="{Binding AfficherSelectivite}"/>
+                        <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Command="{Binding AfficherSelectivite}"
+                                Visibility="{Binding Resultat.Selectivite.AttentionRequise, Converter={StaticResource VraiVisible}, FallbackValue=Collapsed}"
+                                ToolTip="Un départ approche de la limite de sélectivité avec le disjoncteur général">
+                            <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE7BA;" Foreground="{StaticResource Accent}" Margin="0,0,5,0" VerticalAlignment="Center"/><TextBlock Text="Sélectivité"/></StackPanel>
+                        </Button>
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Références" Command="{Binding AfficherReferences}"/>
                     </WrapPanel>
                     <DockPanel DockPanel.Dock="Top">

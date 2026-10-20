@@ -45,6 +45,12 @@ public class ElementMateriel
 
     /// <summary>Monté hors de l'armoire (station déportée en coffret machine) : repris au devis, absent de la plaque.</summary>
     public bool HorsArmoire { get; set; }
+
+    /// <summary>Variateur livré avec son filtre CEM réseau : le devis n'en ajoute pas.</summary>
+    public bool FiltreCemIntegre { get; set; }
+
+    /// <summary>Variateur livré avec sa plaque ou ses étriers de reprise de blindage : le devis n'ajoute pas de colliers.</summary>
+    public bool BlindageFourni { get; set; }
     public StatutCalcul Statut { get; set; } = StatutCalcul.Info;
 
     /// <summary>Départ auquel l'appareil appartient ; null pour l'arrivée.</summary>
@@ -54,7 +60,7 @@ public class ElementMateriel
     public ZoneCem Zone => Famille switch
     {
         "Variateur" or "Démarreur progressif" or "Contacteur" or "Relais thermique" => ZoneCem.Sale,
-        "Câble" or "Moteur" or "Récepteur" or "Prise de courant" or "Réseau" => ZoneCem.HorsArmoire,
+        "Câble" or "Moteur" or "Récepteur" or "Prise de courant" or "Réseau" or "Capteur de sécurité" => ZoneCem.HorsArmoire,
         "Automate" or "Entrées/sorties" or "Accessoire automate" or "Sécurité" => ZoneCem.Propre,
         _ => ZoneCem.Intermediaire,
     };

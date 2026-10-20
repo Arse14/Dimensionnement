@@ -43,6 +43,9 @@ public class ModeleVuePrincipal : Observable
     static readonly string CheminCartes = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueCartesEs.NomFichier);
     IReadOnlyList<ModeleSecurite> _securite = CatalogueSecurite.Charger(CheminSecurite);
+    static readonly string CheminCapteurs = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueCapteursSecurite.NomFichier);
+    IReadOnlyList<ModeleCapteurSecurite> _capteurs = CatalogueCapteursSecurite.Charger(CheminCapteurs);
     IReadOnlyList<CarteEs> _cartes = CatalogueCartesEs.Charger(CheminCartes);
     IReadOnlyList<ChoixCpu> _cpus = Array.Empty<ChoixCpu>();
 
@@ -97,7 +100,6 @@ public class ModeleVuePrincipal : Observable
         AfficherSecurite = new Commande(() => Selection = _projet.Securite);
         AfficherAutomate = new Commande(() => Selection = _projet.Automate);
         AfficherBilan24V = new Commande(() => Selection = new PageBilan24V(_projet));
-        AfficherControles = new Commande(() => Selection = new PageControles(_projet));
         AjouterConsommateur = new Commande(() => Modifier(() => _projet.Consommateurs24V.Add(new Consommateur24V { Designation = "Consommateur", CourantMa = 100 })));
         SupprimerConsommateur = new Commande(p => Modifier(() => _projet.Consommateurs24V.Remove((Consommateur24V)p!)), p => p is Consommateur24V);
         AjouterFonction = new Commande(() => Modifier(() => _projet.Securite.Fonctions.Add(new FonctionSecurite
@@ -207,7 +209,6 @@ public class ModeleVuePrincipal : Observable
     public Commande AfficherSecurite { get; }
     public Commande AfficherAutomate { get; }
     public Commande AfficherBilan24V { get; }
-    public Commande AfficherControles { get; }
     public Commande AjouterConsommateur { get; }
     public Commande SupprimerConsommateur { get; }
     public Commande AjouterFonction { get; }
@@ -274,7 +275,7 @@ public class ModeleVuePrincipal : Observable
             .ToList();
 
     ResultatProjet CalculerProjet() =>
-        CalculProjet.Calculer(_projet, _catalogue, _references, _variateurs, _enveloppes, _securite, _cartes, _alimentations, _ihm);
+        CalculProjet.Calculer(_projet, _catalogue, _references, _variateurs, _enveloppes, _securite, _cartes, _alimentations, _ihm, _capteurs);
     public Commande RechargerCatalogue { get; }
     public Commande Forcer { get; }
     public Commande AnnulerForcage { get; }
@@ -377,17 +378,16 @@ public class ModeleVuePrincipal : Observable
             case PreferenceSource.Decoupage: return SourceAlimentation.Decoupage;
             case PreferenceSource.Transformateur: return SourceAlimentation.Transformateur;
         }
-        var reponse = MessageBox.Show($"{besoin.Raison}\n\nOui : alimentation à découpage 24 V DC\nNon : transformateur + redresseur\n" +
-                                      "Annuler : ne rien ajouter (la préférence se règle dans « Projet et réseau »).",
-            "Ajouter une source 24 V DC", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
-        switch (reponse)
+        var question = new FenetreChoixSource(besoin.Raison) { Owner = Application.Current.MainWindow };
+        question.ShowDialog();
+        if (question.Choix is not { } choix)
         {
-            case MessageBoxResult.Yes: return SourceAlimentation.Decoupage;
-            case MessageBoxResult.No: return SourceAlimentation.Transformateur;
-            default:
-                _sourcesIgnorees.Add(besoin.Tension);
-                return null;
+            _sourcesIgnorees.Add(besoin.Tension);
+            return null;
         }
+        if (question.Retenu)
+            _projet.PreferenceSource = choix == SourceAlimentation.Decoupage ? PreferenceSource.Decoupage : PreferenceSource.Transformateur;
+        return choix;
     }
 
     static DepartAlimentation24V NouveauTransformateur(TensionCommande sortie)
@@ -626,6 +626,7 @@ public class ModeleVuePrincipal : Observable
         _variateurs = CatalogueVariateurs.Charger(CheminVariateurs);
         _enveloppes = CatalogueEnveloppes.Charger(CheminEnveloppes);
         _securite = CatalogueSecurite.Charger(CheminSecurite);
+        _capteurs = CatalogueCapteursSecurite.Charger(CheminCapteurs);
         _cartes = CatalogueCartesEs.Charger(CheminCartes);
         _alimentations = CatalogueAlimentations.Charger(CheminAlimentations);
         _ihm = CatalogueIhm.Charger(CheminIhm);

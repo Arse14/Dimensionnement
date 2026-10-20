@@ -130,7 +130,7 @@ public static class RapportHtml
         sb.Append(SchemaOrganigramme.Svg(r));
         sb.Append("</div>");
 
-        if (r.Selectivite is { } sel)
+        if (r.Selectivite is { AttentionRequise: true } sel)
         {
             sb.Append("<h2>Sélectivité</h2><table><tr><th>Départ</th><th>Amont</th><th>Aval</th><th>Rapport des calibres</th>" +
                       "<th>Magnétique amont mini</th><th>Magnétique aval maxi</th><th>Sélectivité</th><th>Commentaire</th></tr>");
@@ -169,19 +169,14 @@ public static class RapportHtml
             Note(sb, refs.Note);
         }
 
-        sb.Append("<h2>7. Directives CEM et basse tension</h2><table><tr><th>Vérifié</th><th>Point de contrôle</th><th>Référence</th></tr>");
-        foreach (var c in r.Controles)
-            sb.Append($"<tr><td class=\"{(c.Fait ? "Conforme" : "Alerte")}\">{(c.Fait ? "☑ Oui" : "☐ Non")}</td><td>{E(c.Libelle)}</td><td>{E(c.Reference)}</td></tr>");
-        sb.Append("</table>");
-
-        sb.Append("<h2>8. Nomenclature</h2><table><tr><th>Repères</th><th>Famille</th><th>Désignation</th><th>Calibre</th><th>Qté</th>" +
+        sb.Append("<h2>7. Nomenclature</h2><table><tr><th>Repères</th><th>Famille</th><th>Désignation</th><th>Calibre</th><th>Qté</th>" +
                   "<th>Fabricant</th><th>Référence</th></tr>");
         foreach (var e in r.Nomenclature)
             sb.Append($"<tr><td>{E(e.Repere)}</td><td>{E(e.Famille)}</td><td>{E(e.Designation)}</td><td>{E(e.Calibre)}</td><td>{e.Quantite}</td>" +
                       $"<td>{E(e.Fabricant)}</td><td>{E(e.Reference)}</td></tr>");
         sb.Append("</table>");
 
-        sb.Append("<h2>9. Historique des révisions</h2><table><tr><th>Indice</th><th>Date</th><th>Auteur</th><th>Description</th></tr>");
+        sb.Append("<h2>8. Historique des révisions</h2><table><tr><th>Indice</th><th>Date</th><th>Auteur</th><th>Description</th></tr>");
         foreach (var rev in p.Revisions)
             sb.Append($"<tr><td>{E(rev.Indice)}</td><td>{rev.Date:dd/MM/yyyy}</td><td>{E(rev.Auteur)}</td><td>{E(rev.Description)}</td></tr>");
         sb.Append("</table></body></html>");

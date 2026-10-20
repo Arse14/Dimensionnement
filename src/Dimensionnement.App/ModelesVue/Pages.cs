@@ -6,7 +6,6 @@ namespace Dimensionnement.App.ModelesVue;
 public record PageBilan24V(Projet Projet);
 
 /// <summary>Page de la liste de contrôle CEM et basse tension.</summary>
-public record PageControles(Projet Projet);
 
 /// <summary>Page de l'armoire : enveloppe, réserve, aperçu de l'implantation.</summary>
 public record PageArmoire(Projet Projet);

@@ -128,6 +128,8 @@ public static class CalculDepart
                 variateur.HauteurMm = modele.Hauteur;
                 variateur.ProfondeurMm = modele.Profondeur;
                 variateur.PertesW = modele.Pertes;
+                variateur.FiltreCemIntegre = modele.FiltreCemIntegre;
+                variateur.BlindageFourni = modele.BlindageFourni;
             }
             note.Verifier("Variateur retenu", modele is not null,
                 modele is null

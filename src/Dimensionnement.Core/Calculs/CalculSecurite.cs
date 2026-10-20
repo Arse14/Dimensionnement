@@ -64,9 +64,12 @@ public static class CalculSecurite
     public static int SortiesNecessaires(FonctionSecurite f, Projet projet) =>
         Math.Max(1, f.Departs.Count(n => projet.Departs.Any(d => d.Numero == n)) * (Redondant(f.PLr) ? 2 : 1) + Math.Max(0, f.SortiesSupplementaires));
 
-    /// <summary>Voies d'entrée d'automate : deux par capteur à partir de PL c, quatre par commande bimanuelle.</summary>
+    /// <summary>
+    /// Voies d'entrée d'automate : deux par capteur à partir de PL c, quatre par commande bimanuelle,
+    /// toujours deux (une paire OSSD) par barrière immatérielle ou scrutateur.
+    /// </summary>
     public static int EntreesNecessaires(FonctionSecurite f) =>
-        Math.Max(1, f.NombreCapteurs) * (f.PLr >= NiveauPerformance.c ? 2 : 1) * (f.Type == TypeFonctionSecurite.CommandeBimanuelle ? 2 : 1);
+        Math.Max(1, f.NombreCapteurs) * (f.PLr >= NiveauPerformance.c || f.CapteurOptique ? 2 : 1) * (f.Type == TypeFonctionSecurite.CommandeBimanuelle ? 2 : 1);
 
     /// <summary>
     /// Capteurs à raccorder sur un relais : jusqu'à PL c, plusieurs capteurs peuvent être câblés en série sur une entrée ;
@@ -74,7 +77,8 @@ public static class CalculSecurite
     /// </summary>
     public static int CapteursRelais(FonctionSecurite f) => f.PLr <= NiveauPerformance.c ? 1 : Math.Max(1, f.NombreCapteurs);
 
-    public static ResultatSecurite Calculer(Projet projet, IReadOnlyList<ResultatDepart> departs, IReadOnlyList<ModeleSecurite>? catalogue = null)
+    public static ResultatSecurite Calculer(Projet projet, IReadOnlyList<ResultatDepart> departs, IReadOnlyList<ModeleSecurite>? catalogue = null,
+        IReadOnlyList<ModeleCapteurSecurite>? capteurs = null)
     {
         var config = projet.Securite;
         var note = new NoteDeCalcul("SEC");
@@ -82,7 +86,7 @@ public static class CalculSecurite
         if (config.Fonctions.Count == 0)
             return new ResultatSecurite { Note = note, Fonctions = fonctions, Appareils = new List<ElementMateriel>(), Consommations = new List<ConsommationCommande>() };
 
-        var selection = Selectionner(projet, catalogue ?? CatalogueSecurite.Charger());
+        var selection = Selectionner(projet, catalogue ?? CatalogueSecurite.Charger(), capteurs);
         note.Info("Logique de sécurité", selection.Automate
             ? $"{config.Fonctions.Count} fonction(s) : automate de sécurité {selection.Appareils[0].Fabricant}, {selection.Appareils[0].Reference}" +
               (selection.Appareils.Count > 1 ? $" + {selection.Appareils.Count - 1} module(s)." : ".")
@@ -132,7 +136,15 @@ public static class CalculSecurite
     /// Choisit au catalogue un relais par fonction, avec des extensions de contacts si ses sorties ne suffisent pas,
     /// ou un automate de sécurité et ses modules quand les relais ne conviennent plus (nombre de fonctions, de capteurs ou de sorties).
     /// </summary>
-    public static SelectionSecurite Selectionner(Projet projet, IReadOnlyList<ModeleSecurite> catalogue)
+    public static SelectionSecurite Selectionner(Projet projet, IReadOnlyList<ModeleSecurite> catalogue,
+        IReadOnlyList<ModeleCapteurSecurite>? capteurs = null)
+    {
+        var selection = SelectionnerLogique(projet, catalogue);
+        AjouterCapteursOptiques(projet, capteurs ?? CatalogueCapteursSecurite.Charger(), selection);
+        return selection;
+    }
+
+    static SelectionSecurite SelectionnerLogique(Projet projet, IReadOnlyList<ModeleSecurite> catalogue)
     {
         var config = projet.Securite;
         var appareils = new List<ElementMateriel>();
@@ -260,11 +272,94 @@ public static class CalculSecurite
     };
 
     public static bool AvecAutomate(Projet projet, IReadOnlyList<ModeleSecurite>? catalogue = null) =>
-        Selectionner(projet, catalogue ?? CatalogueSecurite.Charger()).Automate;
+        SelectionnerLogique(projet, catalogue ?? CatalogueSecurite.Charger()).Automate;
 
-    /// <summary>Consommation 24 V de la logique de sécurité retenue.</summary>
-    public static IEnumerable<ConsommationCommande> Consommations(Projet projet, IReadOnlyList<ModeleSecurite>? catalogue = null) =>
-        Selectionner(projet, catalogue ?? CatalogueSecurite.Charger()).Consommations;
+    /// <summary>Consommation 24 V de la logique de sécurité retenue et des barrières et scrutateurs.</summary>
+    public static IEnumerable<ConsommationCommande> Consommations(Projet projet, IReadOnlyList<ModeleSecurite>? catalogue = null,
+        IReadOnlyList<ModeleCapteurSecurite>? capteurs = null) =>
+        Selectionner(projet, catalogue ?? CatalogueSecurite.Charger(), capteurs).Consommations;
+
+    /// <summary>Repère de la protection 24 V DC des barrières et scrutateurs.</summary>
+    public const string ReperePotectionCapteurs = "F-SEC";
+
+    /// <summary>
+    /// Barrières immatérielles et scrutateurs laser choisis au catalogue pour chaque fonction qui en utilise.
+    /// Montés sur la machine (hors plaque), ils sont rattachés à une protection 24 V DC dédiée dans l'armoire,
+    /// dimensionnée sur leur consommation ; leurs câbles et bornes sont repris au devis.
+    /// </summary>
+    static void AjouterCapteursOptiques(Projet projet, IReadOnlyList<ModeleCapteurSecurite> catalogue, SelectionSecurite selection)
+    {
+        var optiques = projet.Securite.Fonctions.Where(f => f.CapteurOptique).ToList();
+        if (optiques.Count == 0) return;
+        var appareils = new List<ElementMateriel>();
+        var total = 0.0;
+        var barrieres = 0;
+        var scrutateurs = 0;
+        foreach (var f in optiques)
+        {
+            var nombre = Math.Max(1, f.NombreCapteurs);
+            var nature = f.Type == TypeFonctionSecurite.ScrutateurLaser ? "scrutateur laser" : "barrière immatérielle";
+            if (CatalogueCapteursSecurite.Choisir(f, catalogue) is not var (m, repli))
+            {
+                selection.Messages.Add(($"Capteur : {f.Nom}", f.Type == TypeFonctionSecurite.ScrutateurLaser
+                    ? $"Aucun scrutateur du catalogue n'a un champ de protection de {N(f.Portee)} m : compléter le catalogue des capteurs."
+                    : $"Aucune barrière du catalogue ne couvre type {CatalogueCapteursSecurite.TypeMinimal(f.PLr)}, détection {Detection(f.Detection)}, " +
+                      $"{N(f.HauteurProtegee)} mm et {N(f.Portee)} m : compléter le catalogue des capteurs.", StatutCalcul.NonConforme));
+                continue;
+            }
+            var hauteur = CatalogueCapteursSecurite.HauteurRetenue(m, f.HauteurProtegee);
+            var calibre = m.EstBarriere
+                ? (m.MultiFaisceaux
+                    ? $"type {m.TypeIec}, {m.Faisceaux} faisceaux espacés de {N(m.Resolution)} mm, hauteur {N(hauteur)} mm, portée {N(m.Portee)} m"
+                    : $"type {m.TypeIec}, résolution {N(m.Resolution)} mm, hauteur protégée {N(hauteur)} mm, portée {N(m.Portee)} m")
+                : $"type {m.TypeIec}, champ de protection {N(m.Portee)} m, {N(m.Angle)}°, {m.Ossd} paire(s) OSSD";
+            for (var k = 1; k <= nombre; k++)
+            {
+                var repere = m.EstBarriere ? $"BI{++barrieres}" : $"BL{++scrutateurs}";
+                appareils.Add(new ElementMateriel
+                {
+                    Repere = repere, Famille = "Capteur de sécurité", Designation = $"{(m.EstBarriere ? "Barrière immatérielle" : "Scrutateur laser")} – {f.Nom}",
+                    Calibre = calibre, Fabricant = $"{m.Fabricant} – {m.Gamme}", Reference = m.Reference, HorsArmoire = true,
+                    PertesW = 24 * m.Consommation,
+                });
+            }
+            total += nombre * m.Consommation;
+            selection.Consommations.Add(new ConsommationCommande($"{(m.EstBarriere ? "Barrière immatérielle" : "Scrutateur laser")} {f.Nom}" +
+                (nombre > 1 ? $" × {nombre}" : ""), nombre * m.Consommation));
+            selection.Messages.Add(($"Capteur : {f.Nom}", $"{nombre} × {nature} {m.Fabricant} {m.Gamme}, {calibre}" +
+                (m.Reference.Length > 0 ? $" ({m.Reference})" : " ; référence selon la hauteur, à relever au configurateur") +
+                (repli ? $". {f.FabricantCapteur} n'en propose pas au catalogue : autre marque retenue." : "."), StatutCalcul.Info));
+            if (m.EstBarriere && !m.MultiFaisceaux && hauteur < f.HauteurProtegee)
+                selection.Messages.Add(($"Hauteur protégée : {f.Nom}", $"{N(f.HauteurProtegee)} mm demandés, {N(hauteur)} mm au plus dans la gamme " +
+                    "retenue : prévoir deux barrières en cascade.", StatutCalcul.Alerte));
+            // Un scrutateur type 3 ne dépasse pas PL d (NF EN IEC 61496-3).
+            if (!m.EstBarriere && f.PLr > NiveauPerformance.d)
+                selection.Messages.Add(($"PL du scrutateur : {f.Nom}", $"Un scrutateur type {m.TypeIec} atteint au plus PL {m.Pl} : " +
+                    $"PLr {f.PLr} impossible, prévoir une barrière type 4 ou réduire le risque.", StatutCalcul.NonConforme));
+            selection.Messages.Add(($"Distance de sécurité : {f.Nom}", "Calculer la distance minimale au danger S = K × T + C (NF EN ISO 13855) " +
+                "avec le temps de réponse du capteur et le temps d'arrêt de la machine.", StatutCalcul.Info));
+        }
+        if (appareils.Count == 0) return;
+
+        // Protection dédiée : un défaut sur un câble de capteur ne doit pas couper le 24 V de l'automate.
+        var calibreProtection = Calibres.Superieur(Calibres.Disjoncteurs, Math.Max(1, 1.25 * total)) ?? Calibres.Disjoncteurs[^1];
+        var protection = new ElementMateriel
+        {
+            Repere = ReperePotectionCapteurs, Famille = "Disjoncteur", Designation = "Protection 24 V DC des barrières et scrutateurs",
+            Calibre = $"{N(calibreProtection)} A, 1P, courbe C, 24 V DC",
+        }.Avec(calibreProtection, 1, courbe: "C");
+        protection.Enfants.AddRange(appareils);
+        selection.Appareils.Add(protection);
+        selection.Messages.Add(("Protection des capteurs", $"{ReperePotectionCapteurs} : {N(calibreProtection)} A courbe C pour {A(total)} consommés " +
+            "par les barrières et scrutateurs (marge 25 %), hors charge des sorties OSSD.", StatutCalcul.Info));
+    }
+
+    static string Detection(DetectionBarriere d) => d switch
+    {
+        DetectionBarriere.Doigt => "doigt (14 mm)",
+        DetectionBarriere.Main => "main (30 mm)",
+        _ => "corps (multi-faisceaux)",
+    };
 
     /// <summary>Ajoute à un départ les appareils de coupure qu'impose la fonction de sécurité.</summary>
     static void PartiePuissance(FonctionSecurite f, ResultatDepart depart, NoteDeCalcul note)
@@ -312,6 +407,7 @@ public static class CalculSecurite
         TypeFonctionSecurite.BarriereImmaterielle => "barrière type 4 pour PL e, type 2 jusqu'à PL c, sorties OSSD (NF EN IEC 61496).",
         TypeFonctionSecurite.CommandeBimanuelle => "commande bimanuelle type IIIC pour PL e (NF EN ISO 13851).",
         TypeFonctionSecurite.ArretSurCouple => "fonction STO du variateur (NF EN 61800-5-2).",
+        TypeFonctionSecurite.ScrutateurLaser => "scrutateur laser type 3, PL d au plus, sorties OSSD (NF EN IEC 61496-3).",
         _ => "capteurs à définir.",
     };
 

@@ -61,6 +61,11 @@ public class LibelleEnum : IValueConverter
         TypeFonctionSecurite.BarriereImmaterielle => "Barrière immatérielle",
         TypeFonctionSecurite.CommandeBimanuelle => "Commande bimanuelle",
         TypeFonctionSecurite.ArretSurCouple => "STO variateur",
+        TypeFonctionSecurite.ScrutateurLaser => "Scrutateur laser",
+        FabricantCapteurSecurite.Datasensing => "Datasensing (ex-Datalogic)",
+        DetectionBarriere.Doigt => "Doigt (résolution 14 mm)",
+        DetectionBarriere.Main => "Main (résolution 30 mm)",
+        DetectionBarriere.Corps => "Corps (multi-faisceaux, accès)",
         TypeFonctionSecurite.Autre => "Autre fonction",
         NiveauPerformance p => $"PLr {p}",
         MarqueAutomate.Siemens => "Siemens (S7-1200, S7-1500)",
@@ -150,6 +155,8 @@ public static class Listes
     public static TypeProtection[] Protections { get; } = Enum.GetValues<TypeProtection>();
     public static FabricantSecurite[] FabricantsSecurite { get; } = Enum.GetValues<FabricantSecurite>();
     public static TypeFonctionSecurite[] TypesFonction { get; } = Enum.GetValues<TypeFonctionSecurite>();
+    public static FabricantCapteurSecurite[] FabricantsCapteur { get; } = Enum.GetValues<FabricantCapteurSecurite>();
+    public static DetectionBarriere[] Detections { get; } = Enum.GetValues<DetectionBarriere>();
     public static NiveauPerformance[] NiveauxPerformance { get; } = Enum.GetValues<NiveauPerformance>();
     public static MarqueAutomate[] MarquesAutomate { get; } = Enum.GetValues<MarqueAutomate>();
     public static MateriauEnveloppe[] Materiaux { get; } = Enum.GetValues<MateriauEnveloppe>();

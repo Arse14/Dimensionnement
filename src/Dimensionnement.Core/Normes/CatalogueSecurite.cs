@@ -32,7 +32,9 @@ public record ModeleSecurite
     public int ExtensionsMax { get; init; }
     public bool Verifie { get; init; }
 
-    public bool Traite(TypeFonctionSecurite type) => Fonctions.Contains(type.ToString());
+    /// <summary>Un scrutateur laser se raccorde comme une barrière : deux sorties OSSD.</summary>
+    public bool Traite(TypeFonctionSecurite type) => Fonctions.Contains(type.ToString()) ||
+        type == TypeFonctionSecurite.ScrutateurLaser && Fonctions.Contains(nameof(TypeFonctionSecurite.BarriereImmaterielle));
 }
 
 /// <summary>

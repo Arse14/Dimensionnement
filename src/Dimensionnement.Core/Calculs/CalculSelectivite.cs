@@ -15,6 +15,12 @@ public class ResultatSelectivite
 {
     public required NoteDeCalcul Note { get; init; }
     public IReadOnlyList<LigneSelectivite> Lignes { get; init; } = Array.Empty<LigneSelectivite>();
+
+    /// <summary>
+    /// Vrai quand un départ approche de la limite : sélectivité absente, à vérifier ou seulement partielle,
+    /// ou rapport des calibres sous <see cref="CalculSelectivite.RapportVigilance"/>. Sinon la section reste masquée.
+    /// </summary>
+    public bool AttentionRequise => Lignes.Any(l => l.Niveau != NiveauSelectivite.Totale || l.RapportSurcharge < CalculSelectivite.RapportVigilance);
 }
 
 /// <summary>
@@ -28,6 +34,9 @@ public static class CalculSelectivite
 
     /// <summary>Rapport minimal des seuils de surcharge amont / aval.</summary>
     public const double RapportSurchargeMini = 1.6;
+
+    /// <summary>Rapport des calibres sous lequel la sélectivité est signalée, avant d'atteindre le minimum.</summary>
+    public const double RapportVigilance = 2;
 
     public static ResultatSelectivite Calculer(ResultatProjet r)
     {

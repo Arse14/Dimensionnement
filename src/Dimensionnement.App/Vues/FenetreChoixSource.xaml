@@ -1,0 +1,41 @@
+<Window x:Class="Dimensionnement.App.Vues.FenetreChoixSource"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Ajouter une source 24 V DC" Width="560" SizeToContent="Height" ResizeMode="NoResize"
+        Icon="/Ressources/icone.ico" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner" Background="{StaticResource Fond}"
+        Foreground="{StaticResource Texte}" FontFamily="Segoe UI" FontSize="13">
+    <Window.Resources>
+        <Style x:Key="Choix" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Padding" Value="14,12"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Background" Value="{StaticResource Panneau}"/>
+        </Style>
+    </Window.Resources>
+    <StackPanel Margin="20">
+        <TextBlock Text="SOURCE DE COMMANDE À AJOUTER" Style="{StaticResource TitrePanneau}"/>
+        <TextBlock x:Name="Raison" TextWrapping="Wrap" Margin="0,0,0,16"/>
+        <UniformGrid Columns="2">
+            <Button Style="{StaticResource Choix}" Margin="0,0,6,0" Click="Alimentation" IsDefault="True">
+                <StackPanel>
+                    <TextBlock FontFamily="{StaticResource Icones}" Text="&#xE945;" FontSize="26" Foreground="{StaticResource Accent}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Alimentation" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,8,0,2"/>
+                    <TextBlock Text="à découpage 24 V DC" Foreground="{StaticResource TexteSecondaire}" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+            <Button Style="{StaticResource Choix}" Margin="6,0,0,0" Click="Transformateur">
+                <StackPanel>
+                    <TextBlock FontFamily="{StaticResource Icones}" Text="&#xE83E;" FontSize="26" Foreground="{StaticResource Accent}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Transformateur" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,8,0,2"/>
+                    <TextBlock Text="avec redresseur 24 V DC" Foreground="{StaticResource TexteSecondaire}" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+        </UniformGrid>
+        <DockPanel Margin="0,18,0,0">
+            <Button DockPanel.Dock="Right" Content="Ne rien ajouter" IsCancel="True" Margin="0" Click="Annuler"/>
+            <CheckBox x:Name="Retenir" Content="Retenir ce choix pour le projet" VerticalAlignment="Center"
+                      ToolTip="Modifiable ensuite dans « Projet et réseau »"/>
+        </DockPanel>
+    </StackPanel>
+</Window>
