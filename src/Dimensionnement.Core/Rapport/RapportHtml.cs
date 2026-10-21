@@ -42,6 +42,7 @@ public static class RapportHtml
 
             <h2>1. Page de garde</h2>
             <table class="garde">
+            <tr><td>Fabricant</td><td>{{E(p.Fabricant)}}</td></tr>
             <tr><td>Affaire</td><td>{{E(p.Affaire)}}</td></tr>
             <tr><td>Client</td><td>{{E(p.Client)}}</td></tr>
             <tr><td>Auteur</td><td>{{E(p.Auteur)}}</td></tr>

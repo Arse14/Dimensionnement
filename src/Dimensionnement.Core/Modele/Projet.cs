@@ -10,6 +10,10 @@ public class Projet
     public string Nom { get; set; } = "Nouveau projet";
     public string Affaire { get; set; } = "";
     public string Client { get; set; } = "";
+
+    /// <summary>Société qui fabrique la machine et l'armoire.</summary>
+    public string Fabricant { get; set; } = FabricantParDefaut;
+    public const string FabricantParDefaut = "ITP INTERPIPE";
     public string Auteur { get; set; } = "";
 
     /// <summary>Indice de révision (A, B, C…).</summary>

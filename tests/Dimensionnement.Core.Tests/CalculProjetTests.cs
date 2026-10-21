@@ -93,6 +93,14 @@ public class CalculProjetTests
     }
 
     [Fact]
+    public void Fabricant_ITP_INTERPIPE_par_defaut_et_sur_le_rapport()
+    {
+        var projet = ProjetExemple();
+        Assert.Equal("ITP INTERPIPE", projet.Fabricant);
+        Assert.Contains("ITP INTERPIPE", RapportHtml.Generer(CalculProjet.Calculer(projet)));
+    }
+
+    [Fact]
     public void Projets_recents_gardent_le_plus_recent_en_tete_sans_doublon()
     {
         var dossier = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());

@@ -96,6 +96,11 @@
                     <TextBox Text="{inf:Lien Affaire}"/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Fabricant" Style="{StaticResource Etiquette}"/>
+                    <ComboBox IsEditable="True" Text="{inf:Lien Fabricant}" ItemsSource="{x:Static inf:Listes.FabricantsProjet}"
+                              ToolTip="Société qui fabrique la machine ; reprise sur le rapport et la demande de devis."/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Client" Style="{StaticResource Etiquette}"/>
                     <TextBox Text="{inf:Lien Client}"/>
                 </DockPanel>
@@ -167,7 +172,7 @@
 
                 <TextBlock Text="Marques du matériel" Style="{StaticResource Section}"/>
                 <DockPanel Style="{StaticResource Ligne}">
-                    <TextBlock Text="Fabricant du projet" Style="{StaticResource Etiquette}"/>
+                    <TextBlock Text="Marque du matériel" Style="{StaticResource Etiquette}"/>
                     <ComboBox ItemsSource="{x:Static inf:Listes.FabricantsMateriel}" SelectedItem="{inf:Lien References.Fabricant}"/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">

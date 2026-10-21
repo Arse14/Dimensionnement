@@ -97,7 +97,7 @@ public class LibelleEnum : IValueConverter
         MateriauEnveloppe.Polyester => "Polyester (k = 3,5)",
         InstallationEnveloppe i => Core.Armoire.CalculThermique.LibelleInstallation(i) is var l ? char.ToUpper(l[0]) + l[1..] : "",
         FabricantMateriel.Schneider => "Schneider Electric",
-        MarqueFamille.Projet => "Fabricant du projet",
+        MarqueFamille.Projet => "Marque du projet",
         MarqueFamille.Schneider => "Schneider Electric",
         MarqueAlimentation.Projet => "Selon le projet (Siemens, sinon Schneider)",
         MarqueAlimentation.Schneider => "Schneider Electric (Phaseo)",
@@ -175,6 +175,7 @@ public static class Listes
     public static MateriauEnveloppe[] Materiaux { get; } = Enum.GetValues<MateriauEnveloppe>();
     public static InstallationEnveloppe[] Installations { get; } = Enum.GetValues<InstallationEnveloppe>();
     public static FabricantMateriel[] FabricantsMateriel { get; } = Enum.GetValues<FabricantMateriel>();
+    public static string[] FabricantsProjet { get; } = { Projet.FabricantParDefaut };
     public static MarqueVariateur[] MarquesVariateur { get; } = Enum.GetValues<MarqueVariateur>();
     public static FabricantMateriel[] FabricantsVariateurs { get; } = Core.Normes.CatalogueVariateurs.Fabricants;
     public static MarqueEnveloppe[] MarquesEnveloppe { get; } = Enum.GetValues<MarqueEnveloppe>();

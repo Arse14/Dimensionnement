@@ -65,8 +65,8 @@ public static class ExportExcel
         feuille.Cell(1, 1).Style.Font.FontSize = 14;
         var entete = new (string, string)[]
         {
-            ("Projet", p.Nom), ("Affaire", p.Affaire), ("Client", p.Client), ("Indice", p.Indice),
-            ("Date", DateTime.Today.ToString("dd/MM/yyyy")), ("Fabricant souhaité", p.References.Fabricant.ToString()),
+            ("Fabricant", p.Fabricant), ("Projet", p.Nom), ("Affaire", p.Affaire), ("Client", p.Client), ("Indice", p.Indice),
+            ("Date", DateTime.Today.ToString("dd/MM/yyyy")), ("Marque souhaitée", p.References.Fabricant.ToString()),
         };
         var ligne = 2;
         foreach (var (libelle, valeur) in entete)
