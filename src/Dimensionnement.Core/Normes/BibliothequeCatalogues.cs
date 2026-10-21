@@ -155,9 +155,56 @@ public static class BibliothequeCatalogues
         (JsonNode.Parse(json, documentOptions: LectureJson) as JsonArray ?? new JsonArray())
         .OfType<JsonObject>().Select(o => (JsonObject)o.DeepClone()).ToList();
 
-    /// <summary>Charge le catalogue de l'utilisateur s'il existe, sinon celui livré.</summary>
-    public static List<JsonObject> Charger(FamilleCatalogue famille, string? fichierUtilisateur) =>
-        Lire(fichierUtilisateur is not null && File.Exists(fichierUtilisateur) ? File.ReadAllText(fichierUtilisateur) : famille.TexteEmbarque());
+    /// <summary>
+    /// Charge le catalogue de l'utilisateur s'il existe, complété des articles livrés qu'il n'a pas (nouveautés d'une mise à jour),
+    /// sinon celui livré.
+    /// </summary>
+    public static List<JsonObject> Charger(FamilleCatalogue famille, string? fichierUtilisateur)
+    {
+        var livre = Lire(famille.TexteEmbarque());
+        if (fichierUtilisateur is null || !File.Exists(fichierUtilisateur)) return livre;
+        var utilisateur = Lire(File.ReadAllText(fichierUtilisateur));
+        var connues = utilisateur.Select(a => Chaine(a, "reference")).Where(r => r.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return utilisateur.Concat(livre.Where(a => Chaine(a, "reference") is { Length: > 0 } r && !connues.Contains(r))).ToList();
+    }
+
+    /// <summary>Références encore indicatives (non vérifiées) dans l'ensemble des catalogues.</summary>
+    public static HashSet<string> ReferencesIndicatives(Func<FamilleCatalogue, string?> fichierUtilisateur)
+    {
+        var verifiees = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var indicatives = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var famille in Familles)
+            foreach (var article in Charger(famille, fichierUtilisateur(famille)))
+                if (Chaine(article, "reference") is { Length: > 0 } reference)
+                    (EstVerifie(article) ? verifiees : indicatives).Add(reference);
+        // Une référence vérifiée dans un catalogue l'est partout.
+        indicatives.ExceptWith(verifiees);
+        return indicatives;
+    }
+
+    /// <summary>
+    /// Passe une référence en « vérifié » dans chaque catalogue qui la contient, en écrivant le catalogue de l'utilisateur.
+    /// Renvoie le nombre d'articles validés.
+    /// </summary>
+    public static int Valider(string reference, Func<FamilleCatalogue, string> fichierUtilisateur, string auteur)
+    {
+        var total = 0;
+        foreach (var famille in Familles)
+        {
+            var fichier = fichierUtilisateur(famille);
+            var articles = Charger(famille, fichier);
+            var cibles = articles.Where(a => Chaine(a, "reference").Equals(reference, StringComparison.OrdinalIgnoreCase) && !EstVerifie(a)).ToList();
+            if (cibles.Count == 0) continue;
+            foreach (var article in cibles)
+            {
+                article[Verifie] = true;
+                Tracer(article, auteur);
+            }
+            Enregistrer(famille, fichier, articles);
+            total += cibles.Count;
+        }
+        return total;
+    }
 
     /// <summary>Texte JSON du catalogue : un article par objet, avec un en-tête qui rappelle d'où il vient.</summary>
     public static string Ecrire(FamilleCatalogue famille, IEnumerable<JsonObject> articles)

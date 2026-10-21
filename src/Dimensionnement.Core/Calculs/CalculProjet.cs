@@ -159,7 +159,24 @@ public static class CalculProjet
         note.Verifier("Sectionneur et disjoncteur général", qs >= qg,
             $"Interrupteur-sectionneur {A(qs)}, disjoncteur général {A(qg)}", siEchec: StatutCalcul.Alerte);
 
-        var cable = CalculCable.Dimensionner(note, reseau.CableArrivee, reseau.Alimentation, qg, ib, cosPhi, reseau, 0);
+        // Extension prévue : le câble est choisi pour la protection qu'il faudrait avec Ib × k ; le disjoncteur reste sur le besoin actuel.
+        var k = Math.Max(1, reseau.CoefficientExtension);
+        var protectionCable = qg;
+        if (k > 1)
+        {
+            var ibFutur = ib * k;
+            protectionCable = Math.Max(qg, Calibres.Superieur(Calibres.Disjoncteurs, ibFutur) ?? ibFutur);
+            note.Info("Coefficient d'extension", $"Ib × k = {A(ib)} × {N(k)} = {A(ibFutur)} : câble choisi pour une protection de {A(protectionCable)} " +
+                $"(disjoncteur général actuel {A(qg)}).", "Choix du bureau d'études");
+        }
+        var cable = CalculCable.Dimensionner(note, reseau.CableArrivee, reseau.Alimentation, protectionCable, ib, cosPhi, reseau, 0);
+        if (k > 1)
+        {
+            var sansExtension = CalculCable.Dimensionner(new NoteDeCalcul("TMP"), reseau.CableArrivee, reseau.Alimentation, qg, ib, cosPhi, reseau, 0);
+            note.Info("Marge en intensité", $"Iz corrigé = {A(cable.CourantAdmissible)} pour Ib = {A(ib)} : marge de {A(cable.CourantAdmissible - ib)} " +
+                $"({N(100 * (cable.CourantAdmissible / Math.Max(ib, 1e-6) - 1), 0)} %). Sans coefficient : {N(sansExtension.Section)} mm², " +
+                $"Iz = {A(sansExtension.CourantAdmissible)}, marge {A(sansExtension.CourantAdmissible - ib)}.", "Voir le glossaire : Iz, K1, K2");
+        }
 
         var departs = Passe(cable.ChuteTension);
         if (consommation24V > 0)
@@ -195,10 +212,20 @@ public static class CalculProjet
         MarquerBobines(arbre, projet.TensionBobines);
 
         // Les appareils de commande sont rattachés à l'alimentation 24 V DC qui les alimente.
+        // Sans alimentation 24 V DC dans le projet, la commande est rattachée à une alimentation « à ajouter », signalée en rouge.
+        ElementMateriel? manquante = null;
         ElementMateriel Alimentation(string poste) =>
             departs.Where(d => d.Depart is DepartAlimentation24V { Sortie: TensionCommande.Continu24 } && repartition.TryGetValue(d.Depart.Id, out var l) && l.Any(p => p.Poste == poste))
                 .Concat(departs.Where(d => d.Depart is DepartAlimentation24V { Sortie: TensionCommande.Continu24 }))
-                .SelectMany(d => d.Materiel.Parcourir()).FirstOrDefault(e => e.Famille == "Alimentation") ?? tete;
+                .SelectMany(d => d.Materiel.Parcourir()).FirstOrDefault(e => e.Famille == "Alimentation")
+            ?? (consommateurs24V.Any(c => c.Tension == TensionCommande.Continu24 && c.Courant > 0)
+                ? manquante ??= tete.Ajouter(new ElementMateriel
+                {
+                    Repere = "G?", Famille = SourceManquante, Designation = "Alimentation 24 V DC à ajouter", HorsArmoire = true,
+                    Calibre = $"{A(consommateurs24V.Where(c => c.Tension == TensionCommande.Continu24).Sum(c => c.Courant))} nécessaires",
+                    Statut = StatutCalcul.NonConforme,
+                })
+                : tete);
         foreach (var appareil in securite.Appareils)
         {
             appareil.Statut = securite.Note.StatutGlobal;
@@ -489,6 +516,9 @@ public static class CalculProjet
     }
 
     /// <summary>Coefficient de simultanéité d'une armoire de distribution selon son nombre de circuits.</summary>
+    /// <summary>Famille de l'alimentation 24 V DC qui manque au projet : visible dans l'arborescence, absente de l'armoire et du devis.</summary>
+    public const string SourceManquante = "Source manquante";
+
     public static double Simultaneite(int departs) => departs switch
     {
         <= 1 => 1,

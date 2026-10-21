@@ -61,8 +61,10 @@ public class AutomateTests
     {
         var r = CalculAutomate.Calculer(SansEs(5, securite: true), Catalogue);
 
-        Assert.Equal("CPU 1212C", r.Cpu!.Cpu);
-        Assert.EndsWith("F", r.Appareils.Single().Designation);
+        // La CPU F du catalogue remplace la version standard.
+        Assert.Equal("CPU 1212FC DC/DC/DC G2", r.Cpu!.Cpu);
+        Assert.Equal("6ES7212-1AF50-0XB0", r.Cpu.Reference);
+        Assert.True(r.Cpu.Securite);
     }
 
     [Fact]
@@ -246,5 +248,17 @@ public class AutomateTests
         Assert.Contains(r.Consommateurs24V, c => c.Designation.StartsWith("Automate CPU"));
         var alimentation = r.Arbre.Parcourir().Single(e => e.Famille == "Alimentation");
         Assert.Contains(alimentation.Enfants, e => e.Repere == "API1");
+    }
+}
+
+public class CpuSecuriteTests
+{
+    [Fact]
+    public void ET200SP_avec_securite_prend_la_1510SP_F()
+    {
+        var catalogue = CatalogueAutomates.Charger();
+        Assert.Contains(catalogue, c => c.Cpu == "CPU 1510SP F-1 PN" && c.Securite && c.Compacte);
+        Assert.Contains(catalogue, c => c.Cpu == "CPU 1512SP F-1 PN" && c.Securite && c.Compacte);
+        Assert.DoesNotContain(catalogue, c => c.Reference == "6ES7510-1DJ01-0AB0");
     }
 }

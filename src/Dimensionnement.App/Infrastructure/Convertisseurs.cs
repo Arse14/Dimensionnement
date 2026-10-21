@@ -136,6 +136,16 @@ public class LibelleEnum : IValueConverter
         throw new NotSupportedException();
 }
 
+/// <summary>Montre le bouton « ? » d'une ligne de note de calcul quand le glossaire explique une de ses notions.</summary>
+public class AvecGlossaire : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        value is LigneCalcul l && Glossaire.Pour(l).Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
 /// <summary>Masque un élément dont la valeur est vide ou nulle.</summary>
 public class VideMasque : IValueConverter
 {

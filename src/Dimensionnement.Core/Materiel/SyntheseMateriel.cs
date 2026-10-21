@@ -22,23 +22,39 @@ public static class SyntheseMateriel
 
     static readonly string[] Commande = { "Automate", "Entrées/sorties", "Accessoire automate", "Sécurité" };
 
+    /// <summary>
+    /// Couleurs de l'arborescence : rouge pour un départ non conforme, orange pour un appareil dont la référence est encore
+    /// indicative au catalogue (à vérifier), vert sinon. Les alertes restent dans les notes de calcul.
+    /// </summary>
+    public static void MarquerAVerifier(ResultatProjet r, ISet<string> referencesIndicatives)
+    {
+        foreach (var e in r.Arbre.Parcourir())
+        {
+            e.AVerifier = e.Reference.Length > 0 && referencesIndicatives.Contains(e.Reference);
+            if (e.Statut == StatutCalcul.NonConforme) continue;
+            e.Statut = e.AVerifier ? StatutCalcul.Alerte : StatutCalcul.Conforme;
+        }
+    }
+
+    static StatutCalcul Pire(IEnumerable<MaillonMateriel> chaine) =>
+        chaine.Select(m => m.Element.Statut).DefaultIfEmpty(StatutCalcul.Conforme).Max();
+
     public static IReadOnlyList<GroupeMateriel> Grouper(ResultatProjet r)
     {
         var groupes = new List<GroupeMateriel>();
         var arrivee = r.Arbre.Parcourir().Where(e => e.RepereOrigine is "W0" or "QS0" or "QG").Select(e => new MaillonMateriel(e, false)).ToList();
         groupes.Add(new GroupeMateriel("ARRIVÉE", new[]
         {
-            new CarteMateriel(r.Arbre.Designation, r.Arbre.Calibre, r.NoteArrivee.StatutGlobal, arrivee, null),
+            new CarteMateriel(r.Arbre.Designation, r.Arbre.Calibre, Pire(arrivee), arrivee, null),
         }));
 
         foreach (var rubrique in r.Departs.GroupBy(d => d.Depart.Rubrique is { Length: > 0 } x ? x : "Puissance"))
         {
-            var cartes = rubrique.Select(d => new CarteMateriel(
-                $"{d.Depart.Code}  {d.Depart.Designation}".TrimEnd(),
-                d.Depart.TypeLibelle,
-                d.Note.StatutGlobal,
-                Chaine(d.Materiel),
-                d.Depart)).ToList();
+            var cartes = rubrique.Select(d =>
+            {
+                var chaine = Chaine(d.Materiel);
+                return new CarteMateriel($"{d.Depart.Code}  {d.Depart.Designation}".TrimEnd(), d.Depart.TypeLibelle, Pire(chaine), chaine, d.Depart);
+            }).ToList();
             groupes.Add(new GroupeMateriel($"{rubrique.Key.ToUpperInvariant()} ({cartes.Count})", cartes));
         }
 
@@ -46,7 +62,10 @@ public static class SyntheseMateriel
         foreach (var racine in r.Arbre.Parcourir().Where(e => e.Famille is "Automate" || (e.Famille == "Sécurité" && !e.RepereOrigine.StartsWith("KM"))))
         {
             var maillons = racine.Parcourir().Where(e => e.Famille != "Accessoire automate").Select(e => new MaillonMateriel(e, false)).ToList();
-            commande.Add(new CarteMateriel($"{racine.Repere}  {racine.Designation}", racine.Calibre, racine.Statut, maillons, null));
+            // L'alimentation 24 V DC qui alimente l'automate ou la sécurité ouvre la chaîne.
+            if (r.Arbre.Parcourir().FirstOrDefault(p => p.Enfants.Contains(racine)) is { Famille: "Alimentation" or CalculProjet.SourceManquante } source)
+                maillons.Insert(0, new MaillonMateriel(source, false));
+            commande.Add(new CarteMateriel($"{racine.Repere}  {racine.Designation}", racine.Calibre, Pire(maillons), maillons, null));
         }
         if (commande.Count > 0) groupes.Add(new GroupeMateriel(TitreCommande, commande));
         return groupes;

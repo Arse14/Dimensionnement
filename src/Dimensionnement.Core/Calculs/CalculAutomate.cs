@@ -269,7 +269,7 @@ public static class CalculAutomate
             return new ResultatAutomate { Note = note, Appareils = appareils, Consommations = estimation };
         }
 
-        var nom = c.SecuriteIntegree && choix.Marque == "Siemens" ? $"{choix.Cpu} F" : choix.Cpu;
+        var nom = c.SecuriteIntegree && choix.Marque == "Siemens" && !choix.Securite ? $"{choix.Cpu} F" : choix.Cpu;
         note.Info("CPU retenue", $"{choix.Gamme} {nom} ({choix.Reference}) : " +
             $"{Capacite(choix.PeripheriquesReseauMax)} périphériques, {Capacite(choix.ConnexionsMax)} connexions, " +
             $"OPC UA {(choix.OpcUa switch { true => "oui", false => "non", _ => "non renseigné" })}.", Ref);

@@ -102,6 +102,8 @@ public partial class ModeleVuePrincipal : Observable
             new PeripheriqueMachine { Nom = $"Îlot {_projet.PeripheriquesMachine.Count + 1}" })));
         SupprimerPeripherique = new Commande(p => Modifier(() => _projet.PeripheriquesMachine.Remove((PeripheriqueMachine)p!)), p => p is PeripheriqueMachine);
         RenommerElement = new Commande(p => Renommer((ElementMateriel)p!), p => p is ElementMateriel);
+        ValiderElement = new Commande(p => ValiderReference((ElementMateriel)p!), p => p is ElementMateriel { AVerifier: true });
+        OuvrirGlossaire = new Commande(p => Afficher(new FenetreGlossaire(p as LigneCalcul)));
         AjouterAlimentation = new Commande(() => AjouterDepart(new DepartAlimentation24V()));
         AjouterTransformateur = new Commande(p => AjouterDepart(NouveauTransformateur(p is TensionCommande t ? t : TensionCommande.Alternatif24)));
         AjouterSource = new Commande(p => AjouterDepart(NouvelleSource(p as string ?? "")));
@@ -311,10 +313,43 @@ public partial class ModeleVuePrincipal : Observable
             .Prepend(new ChoixCpu("", "Automatique, selon la charge et les cartes"))
             .ToList();
 
-    ResultatProjet CalculerProjet() =>
-        CalculProjet.Calculer(_projet, _catalogue, _references, _variateurs, _enveloppes, _securite, _cartes, _alimentations, _ihm, _capteurs);
+    ResultatProjet CalculerProjet()
+    {
+        var r = CalculProjet.Calculer(_projet, _catalogue, _references, _variateurs, _enveloppes, _securite, _cartes, _alimentations, _ihm, _capteurs);
+        SyntheseMateriel.MarquerAVerifier(r, _indicatives);
+        return r;
+    }
+
+    /// <summary>Dossier des catalogues modifiés par l'utilisateur.</summary>
+    static readonly string DossierCatalogues = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement");
+
+    /// <summary>Références encore indicatives dans les catalogues : leurs appareils sont en orange dans l'arborescence.</summary>
+    HashSet<string> _indicatives = LireIndicatives();
+
+    static HashSet<string> LireIndicatives() =>
+        BibliothequeCatalogues.ReferencesIndicatives(f => Path.Combine(DossierCatalogues, f.NomFichier));
+
+    /// <summary>Passe la référence d'un appareil en « vérifié » dans les catalogues, après contrôle sur la fiche du fabricant.</summary>
+    void ValiderReference(ElementMateriel e)
+    {
+        if (MessageBox.Show($"Les valeurs de la référence {e.Reference} ({e.Designation}) ont-elles été contrôlées sur la fiche du fabricant ?\n\n" +
+                            "Elle passera de « indicatif » à « vérifié » dans le catalogue, pour ce projet et les suivants.",
+                "Valider une référence", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        try
+        {
+            BibliothequeCatalogues.Valider(e.Reference, f => Path.Combine(DossierCatalogues, f.NomFichier), Environment.UserName);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            MessageBox.Show(ex.Message, "Valider une référence", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        RechargerCatalogues();
+    }
     public Commande RechargerCatalogue { get; }
     public Commande Forcer { get; }
+    public Commande ValiderElement { get; }
+    public Commande OuvrirGlossaire { get; }
     public Commande AnnulerForcage { get; }
 
     public ObservableCollection<string> Recents { get; }
@@ -820,6 +855,7 @@ public partial class ModeleVuePrincipal : Observable
         _alimentations = CatalogueAlimentations.Charger(CheminAlimentations);
         _ihm = CatalogueIhm.Charger(CheminIhm);
         _cpus = ListerCpus(_catalogue);
+        _indicatives = LireIndicatives();
         Signaler(nameof(CpusDisponibles));
         Signaler(nameof(IhmDisponibles));
         Recalculer();

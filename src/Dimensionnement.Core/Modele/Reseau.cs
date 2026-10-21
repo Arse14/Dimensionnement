@@ -17,6 +17,12 @@ public class Reseau
     /// <summary>Câble entre la source et l'armoire.</summary>
     public CaracteristiquesCable CableArrivee { get; set; } = new() { Longueur = 20 };
 
+    /// <summary>
+    /// Coefficient d'extension du câble d'arrivée (1 = aucun) : sa section est choisie pour le courant d'emploi × ce coefficient,
+    /// pour pouvoir ajouter des départs plus tard sans tirer un nouveau câble.
+    /// </summary>
+    public double CoefficientExtension { get; set; } = 1;
+
     /// <summary>Répartiteur de puissance en aval du disjoncteur général, dimensionné sur les départs qu'il alimente.</summary>
     public bool Repartiteur { get; set; } = true;
 

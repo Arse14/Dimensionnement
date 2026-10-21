@@ -60,6 +60,9 @@ public class ElementMateriel
     public bool BlindageFourni { get; set; }
     public StatutCalcul Statut { get; set; } = StatutCalcul.Info;
 
+    /// <summary>Sa référence vient d'un catalogue dont les valeurs sont encore indicatives (à vérifier sur la fiche du fabricant).</summary>
+    public bool AVerifier { get; set; }
+
     /// <summary>Départ auquel l'appareil appartient ; null pour l'arrivée.</summary>
     public Guid? DepartId { get; set; }
 

@@ -95,7 +95,7 @@ public static class ListeDevis
     {
         // Une ligne par référence : le fournisseur chiffre un article, quels que soient les repères qui l'utilisent.
         var articles = r.Nomenclature
-            .Where(e => e.Famille is not ("Câble" or "Moteur" or "Récepteur"))
+            .Where(e => e.Famille is not ("Câble" or "Moteur" or "Récepteur" or CalculProjet.SourceManquante))
             .GroupBy(e => e.Reference.Length > 0 ? $"{e.Fabricant}|{e.Reference}" : $"|{e.Designation}|{e.Calibre}");
         var elementsArbre = r.Arbre.Parcourir().ToList();
         foreach (var g in articles)

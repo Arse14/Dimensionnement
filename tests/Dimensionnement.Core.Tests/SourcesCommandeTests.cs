@@ -80,3 +80,60 @@ public class BorniersTests
         Assert.Equal(sans + 2, avec);
     }
 }
+
+public class ExtensionArriveeTests
+{
+    [Fact]
+    public void Coefficient_d_extension_grossit_le_cable_d_arrivee_et_donne_la_marge()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        var sans = CalculProjet.Calculer(projet).Arbre.Parcourir().Single(e => e.Repere == "W0").Calibre;
+        projet.Reseau.CoefficientExtension = 2;
+        var r = CalculProjet.Calculer(projet);
+        Assert.NotEqual(sans, r.Arbre.Parcourir().Single(e => e.Repere == "W0").Calibre);
+        Assert.Contains(r.NoteArrivee.Lignes, l => l.Libelle == "Marge en intensité");
+    }
+}
+
+public class CommandeAlimenteeTests
+{
+    static Projet AvecAutomate()
+    {
+        var projet = new Projet();
+        projet.Ajouter(new DepartMoteur { PuissanceKw = 2.2 });
+        projet.Automate.Actif = true;
+        projet.Automate.EntreesTor = 16;
+        return projet;
+    }
+
+    [Fact]
+    public void Automate_relie_a_son_alimentation_24_V()
+    {
+        var projet = AvecAutomate();
+        projet.Ajouter(new DepartAlimentation24V());
+        var carte = Dimensionnement.Core.Materiel.SyntheseMateriel.Grouper(CalculProjet.Calculer(projet))
+            .Single(g => g.Titre == Dimensionnement.Core.Materiel.SyntheseMateriel.TitreCommande).Cartes[0];
+        Assert.Equal("Alimentation", carte.Chaine[0].Element.Famille);
+    }
+
+    [Fact]
+    public void Sans_alimentation_la_commande_pend_a_une_alimentation_a_ajouter()
+    {
+        var r = CalculProjet.Calculer(AvecAutomate());
+        var carte = Dimensionnement.Core.Materiel.SyntheseMateriel.Grouper(r)
+            .Single(g => g.Titre == Dimensionnement.Core.Materiel.SyntheseMateriel.TitreCommande).Cartes[0];
+        Assert.Equal(CalculProjet.SourceManquante, carte.Chaine[0].Element.Famille);
+        Assert.Equal(StatutCalcul.NonConforme, carte.Statut);
+        Assert.DoesNotContain(Dimensionnement.Core.Materiel.ListeDevis.Generer(r), l => l.Designation.Contains("à ajouter"));
+    }
+
+    [Fact]
+    public void Seul_le_materiel_indicatif_passe_en_orange()
+    {
+        var r = CalculProjet.Calculer(Version3Tests.ProjetMachine());
+        var g = r.Arbre.Parcourir().First(e => e.Famille == "Alimentation" && e.Reference.Length > 0);
+        Dimensionnement.Core.Materiel.SyntheseMateriel.MarquerAVerifier(r, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { g.Reference });
+        Assert.Equal(StatutCalcul.Alerte, g.Statut);
+        Assert.All(r.Arbre.Parcourir().Where(e => !e.AVerifier && e.Statut != StatutCalcul.NonConforme), e => Assert.Equal(StatutCalcul.Conforme, e.Statut));
+    }
+}
