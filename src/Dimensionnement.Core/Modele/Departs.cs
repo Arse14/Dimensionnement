@@ -60,6 +60,9 @@ public abstract class Depart : System.ComponentModel.INotifyPropertyChanged
     /// <summary>Coefficient d'utilisation ku.</summary>
     public double CoefficientUtilisation { get; set; } = 1;
 
+    /// <summary>Coefficient de sécurité électrique : le câble du départ est choisi pour Ib × k, jamais moins que la préconisation (k ≥ 1).</summary>
+    public double CoefficientSecurite { get; set; } = 1;
+
     /// <summary>Valeurs forcées par l'utilisateur, indexées par code de calcul (voir <see cref="Calculs.CodesCalcul"/>).</summary>
     public Dictionary<string, Forcage> Forcages { get; set; } = new();
 

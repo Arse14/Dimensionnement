@@ -244,6 +244,7 @@ public static class CalculDepart
         // En deux vitesses, un câble par vitesse (deux enroulements, ou les deux couplages Dahlander).
         var et = m.Demarrage == ModeDemarrage.EtoileTriangle;
         note.Groupe = "Câble";
+        courantCable = CourantCable(note, m, courantCable, ib);
         var cable = CalculCable.Dimensionner(note, m.Cable, m.Alimentation,
             et ? courantCable / Math.Sqrt(3) : courantCable, et ? ib / Math.Sqrt(3) : ib,
             m.CosPhi, reseau, chuteAmont);
@@ -559,6 +560,7 @@ public static class CalculDepart
             aval = aval.Ajouter(Element($"KM{r.Numero}", "Contacteur", "Contacteur de puissance", $"AC-1 {A(km)}").Avec(km, 3));
         }
         note.Groupe = "Câble";
+        courantCable = CourantCable(note, r, courantCable, ib);
         var cable = CalculCable.Dimensionner(note, r.Cable, r.Alimentation, courantCable, ib, 1, reseau, chuteAmont);
         aval.Ajouter(ElementCable(r.Numero, r, cable, reseau.Slt, 1))
             .Ajouter(Element($"R{r.Numero}", "Récepteur", r.Designation is { Length: > 0 } d ? d : "Résistance",
@@ -575,6 +577,7 @@ public static class CalculDepart
             "Les prises de courant jusqu'à 32 A sont protégées par un différentiel 30 mA.", "NF C 15-100, 411.3.3");
         var (courantCable, calibre, protection, aval) = Protection(p, note, reseau, ib, CourbeDisjoncteur.C, "circuit prises");
         note.Groupe = "Câble";
+        courantCable = CourantCable(note, p, courantCable, ib);
         var cable = CalculCable.Dimensionner(note, p.Cable, p.Alimentation, courantCable, ib, 1, reseau, chuteAmont);
         var u = Tension(p.Alimentation);
         var puissance = Racine(p.Alimentation) * u * ib / 1000;
@@ -603,6 +606,7 @@ public static class CalculDepart
             FormuleCourant(g.Alimentation, " × cos φ", puissance * 1000, u, g.CosPhi), $"P = {N(puissance)} kW, U = {N(u)} V, cos φ = {N(g.CosPhi)}");
         var (courantCable, calibre, protection, aval) = Protection(g, note, reseau, ib, g.Courbe, "choix utilisateur");
         note.Groupe = "Câble";
+        courantCable = CourantCable(note, g, courantCable, ib);
         var cable = CalculCable.Dimensionner(note, g.Cable, g.Alimentation, courantCable, ib, g.CosPhi, reseau, chuteAmont);
         note.Groupe = "Coffret déporté";
         if (coffret is not null)
@@ -680,6 +684,7 @@ public static class CalculDepart
             "Documentation fabricant");
         var (courantCable, calibre, protection, aval) = Protection(a, note, reseau, ib, CourbeDisjoncteur.C, "appel des alimentations à découpage");
         note.Groupe = "Câble";
+        courantCable = CourantCable(note, a, courantCable, ib);
         var cable = CalculCable.Dimensionner(note, a.Cable, a.Alimentation, courantCable, ib, CosPhiAlimentation, reseau, chuteAmont);
         var alimentation = Element($"G{a.Numero}", "Alimentation", DepartAlimentation24V.Libelle(TensionCommande.Continu24, false, a.Alimentation), $"{N(assigne)} A, {N(24 * assigne)} W")
             .Avec(assigne, puissanceKw: 24 * assigne / 1000);
@@ -785,6 +790,7 @@ public static class CalculDepart
         var (courantCable, calibre, protection, avalElement) = Protection(t, note, reseau, ib, CourbeDisjoncteur.D, "appel du transformateur");
         var cosPhi = 0.9;
         note.Groupe = "Câble";
+        courantCable = CourantCable(note, t, courantCable, ib);
         var cable = CalculCable.Dimensionner(note, t.Cable, t.Alimentation, courantCable, ib, cosPhi, reseau, chuteAmont);
         var transfo = Element($"T{t.Numero}", "Alimentation", DepartAlimentation24V.Libelle(sortie, true, t.Alimentation),
                 $"{N(va, 0)} VA, {CatalogueAlimentations.LibellePrimaire(primaire)} / {secondaire}")
@@ -814,6 +820,22 @@ public static class CalculDepart
     /// Protection d'un départ non moteur : disjoncteur ou fusibles gG. Renvoie le courant que le câble doit
     /// supporter (In, ou k3 × In pour les fusibles gG), le calibre, le premier appareil et l'appareil aval.
     /// </summary>
+    /// <summary>Coefficient de sécurité électrique du départ : le câble est choisi pour Ib × k, jamais pour moins
+    /// que la préconisation (courant de la protection ou du réglage thermique).</summary>
+    static double CourantCable(NoteDeCalcul note, Depart d, double preconise, double ib)
+    {
+        if (d.CoefficientSecurite < 1)
+            note.Verifier("Coefficient de sécurité électrique", false,
+                $"k = {N(d.CoefficientSecurite)} est sous la préconisation : k = 1 est retenu.", "Choix du bureau d'études", StatutCalcul.Alerte);
+        var k = Math.Max(1, d.CoefficientSecurite);
+        if (k <= 1) return preconise;
+        var ibMajore = ib * k;
+        var retenu = Math.Max(preconise, Calibres.Superieur(Calibres.Disjoncteurs, ibMajore) ?? ibMajore);
+        note.Info("Coefficient de sécurité électrique", $"Ib × k = {A(ib)} × {N(k)} = {A(ibMajore)} : câble choisi pour {A(retenu)} " +
+            $"(préconisation sans coefficient : {A(preconise)}). La protection du départ ne change pas.", "Choix du bureau d'études");
+        return retenu;
+    }
+
     static (double CourantCable, double Calibre, ElementMateriel Element, ElementMateriel Aval) Protection(Depart d,
         NoteDeCalcul note, Reseau reseau, double ib, CourbeDisjoncteur courbe, string raisonCourbe)
     {

@@ -101,6 +101,24 @@ public class CalculDepartTests
     }
 
     [Fact]
+    public void Coefficient_de_securite_grossit_le_cable_sans_changer_la_protection()
+    {
+        var r = CalculDepart.Calculer(new DepartResistif { Numero = 3, PuissanceKw = 9, CoefficientSecurite = 1.5 }, Reseau);
+
+        Assert.Equal(13, r.CalibreProtection);
+        Assert.Equal(2.5, r.Section);
+    }
+
+    [Fact]
+    public void Coefficient_de_securite_sous_1_garde_la_preconisation()
+    {
+        var r = CalculDepart.Calculer(new DepartResistif { Numero = 3, PuissanceKw = 9, CoefficientSecurite = 0.5 }, Reseau);
+
+        Assert.Equal(13, r.CalibreProtection);
+        Assert.Equal(1.5, r.Section);
+    }
+
+    [Fact]
     public void Prise_sans_differentiel_30_mA_est_non_conforme()
     {
         var p = new DepartPrise { Numero = 4, Differentiel = SensibiliteDifferentiel.Aucun };
