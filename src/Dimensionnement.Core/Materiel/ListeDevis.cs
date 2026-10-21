@@ -62,17 +62,17 @@ public static class ListeDevis
             $"{N(a.Largeur)} × {N(a.Hauteur)} × {N(a.Profondeur)} mm, {CalculThermique.LibelleMateriau(config.Materiau)}, IP55",
             marque, a.Reference, a.Cellules, "u", nom,
             string.Join(" ; ", new[] { a.Cellules > 1 ? "Cellules juxtaposables" : "", a.Id is null ? "" : "Coffret déporté" }.Where(t => t.Length > 0))));
-        l.Add(new(Enveloppe, "Plaque de montage", $"surface utile {N(a.PlaqueLargeur)} × {N(a.PlaqueHauteur)} mm", marque, a.ReferencePlaque, a.Cellules, "u"));
+        l.Add(new(Enveloppe, "Plaque de montage", $"surface utile {N(a.PlaqueLargeur)} × {N(a.PlaqueHauteur)} mm", marque, a.ReferencePlaque, a.Cellules, "u", nom));
         if (sol)
         {
-            l.Add(new(Enveloppe, "Socle", $"hauteur 100 mm, largeur {N(a.Largeur)} mm", fabricant, "", a.Cellules, "u"));
+            l.Add(new(Enveloppe, "Socle", $"hauteur 100 mm, largeur {N(a.Largeur)} mm", fabricant, "", a.Cellules, "u", nom));
             if (a.Cellules > 1)
-                l.Add(new(Enveloppe, "Kit de juxtaposition", "", fabricant, "", a.Cellules - 1, "u"));
+                l.Add(new(Enveloppe, "Kit de juxtaposition", "", fabricant, "", a.Cellules - 1, "u", nom));
         }
         if (config.EclairageArmoire)
             l.Add(new(Enveloppe, "Éclairage d'armoire LED avec contact de porte", "", fabricant, "", a.Cellules, "u", nom));
-        l.Add(new(Enveloppe, "Plaque passe-câbles / bride d'entrée", "bas d'enveloppe", fabricant, "", a.Cellules, "u"));
-        l.Add(new(Enveloppe, "Pochette à schémas", "format A4", fabricant, "", 1, "u"));
+        l.Add(new(Enveloppe, "Plaque passe-câbles / bride d'entrée", "bas d'enveloppe", fabricant, "", a.Cellules, "u", nom));
+        l.Add(new(Enveloppe, "Pochette à schémas", "format A4", fabricant, "", 1, "u", nom));
 
         if (a.Thermique is not { } t) return;
         switch (t.Solution)
