@@ -186,3 +186,62 @@ public class RendementTests
         Assert.Null(CalculRendement.Calculer(new DepartMoteur { PuissanceKw = 1 }, MethodeRendement.Plaque));
     }
 }
+
+public class FreinTests
+{
+    static (ResultatDepart D, ResultatProjet R) Calculer(DepartMoteur m)
+    {
+        var projet = new Projet();
+        projet.Ajouter(m);
+        var r = CalculProjet.Calculer(projet);
+        return (r.Departs[0], r);
+    }
+
+    static DepartMoteur MoteurFrein() => new()
+    {
+        PuissanceKw = 0.75, CourantPlaque = 1.79, CosPhi = 0.72, Frein = true, AlimentationFrein = AlimentationFrein.Separee230,
+        PuissanceFreinW = 30, TensionFreinV = 400, TensionBobineFreinV = 180,
+    };
+
+    [Fact]
+    public void Frein_180_V_sous_400_V_demi_onde_dans_le_moteur()
+    {
+        var (d, r) = Calculer(MoteurFrein());
+        Assert.Contains(d.Note.Lignes, l => l.Libelle == "Tension de bobine du frein" && l.Statut == StatutCalcul.Conforme && l.Message.Contains("demi-onde"));
+        var q = r.Arbre.Parcourir().Single(e => e.Repere == "Q1.F");
+        Assert.Contains("2P", q.Calibre);
+        Assert.Equal(1, q.Courant); // 2 × 30 / 400 = 0,15 A : 1 A minimum
+        Assert.DoesNotContain(r.Arbre.Parcourir(), e => e.Famille == "Redresseur");
+    }
+
+    [Fact]
+    public void Sans_redresseur_dans_le_moteur_l_armoire_en_recoit_un()
+    {
+        var m = MoteurFrein();
+        m.RedresseurDansMoteur = false;
+        var (_, r) = Calculer(m);
+        Assert.Contains(r.Arbre.Parcourir(), e => e.Repere == "V1.F" && e.Designation.Contains("demi-onde"));
+
+        m.TensionBobineFreinV = 24;
+        Assert.Contains(Calculer(m).R.Arbre.Parcourir(), e => e.Repere == "G1.F" && e.Famille == "Alimentation");
+
+        m.TensionBobineFreinV = 96;
+        var (d, r3) = Calculer(m);
+        Assert.Contains(r3.Arbre.Parcourir(), e => e.Repere == "T1.F" && e.Famille == "Transformateur");
+        Assert.Contains(r3.Arbre.Parcourir(), e => e.Repere == "V1.F" && e.Designation.Contains("pont"));
+        Assert.Contains(d.Note.Lignes, l => l.Libelle == "Alimentation du frein" && l.Statut == StatutCalcul.Alerte);
+    }
+
+    [Fact]
+    public void Frein_pilote_par_le_variateur()
+    {
+        var m = MoteurFrein();
+        m.Demarrage = ModeDemarrage.Variateur;
+        m.CommandeFrein = CommandeFrein.Variateur;
+        var (d, _) = Calculer(m);
+        Assert.Contains(d.Note.Lignes, l => l.Libelle == "Frein" && l.Message.Contains("logique de frein du variateur"));
+
+        m.Demarrage = ModeDemarrage.Direct;
+        Assert.Contains(Calculer(m).D.Note.Lignes, l => l.Libelle == "Commande du frein" && l.Statut == StatutCalcul.Alerte);
+    }
+}

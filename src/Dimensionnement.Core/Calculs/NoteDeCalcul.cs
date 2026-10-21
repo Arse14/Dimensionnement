@@ -15,6 +15,7 @@ public static class CodesCalcul
     public const string CalibreSectionneur = "QS";
     public const string SectionArrivee = "SA";
     public const string CalibreAlimentation24V = "G24";
+    public const string CalibreFrein = "QF";
 }
 
 /// <summary>Une ligne de note de calcul : la valeur, d'où elle vient et si elle est conforme.</summary>

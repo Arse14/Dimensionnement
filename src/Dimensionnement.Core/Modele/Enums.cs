@@ -35,11 +35,14 @@ public enum AlimentationFrein
 {
     /// <summary>Redresseur dans la boîte à bornes, alimenté par le moteur (démarrage direct seulement).</summary>
     BoiteABornes,
-    /// <summary>Alimentation séparée 230 V AC (redresseur dans la boîte à bornes), commandée par un contacteur.</summary>
+    /// <summary>Alimentation séparée, tension et nature à préciser (230 V AC par défaut), protégée et commandée par un contacteur.</summary>
     Separee230,
     /// <summary>Frein 24 V DC, commandé par un relais depuis l'alimentation de commande.</summary>
     Continu24,
 }
+
+/// <summary>Qui commande le frein : l'automate (contacteur ou relais) ou la logique de frein du variateur.</summary>
+public enum CommandeFrein { Automate, Variateur }
 
 /// <summary>Appareil de protection du départ contre les surintensités.</summary>
 public enum TypeProtection { Disjoncteur, Fusibles }

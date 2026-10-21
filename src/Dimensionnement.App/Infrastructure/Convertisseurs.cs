@@ -61,7 +61,9 @@ public class LibelleEnum : IValueConverter
         TypeDeuxVitesses.Dahlander => "Dahlander (un enroulement)",
         TypeDeuxVitesses.DeuxEnroulements => "Deux enroulements séparés",
         AlimentationFrein.BoiteABornes => "Par la boîte à bornes du moteur",
-        AlimentationFrein.Separee230 => "Séparée 230 V AC (redresseur du moteur)",
+        AlimentationFrein.Separee230 => "Séparée (tension à préciser)",
+        CommandeFrein.Automate => "Automate (contacteur ou relais)",
+        CommandeFrein.Variateur => "Variateur (logique de frein du variateur)",
         AlimentationFrein.Continu24 => "24 V DC",
         TypePeripherique.IlotElectrovannes => "Îlot d'électrovannes",
         TypePeripherique.ColonneLumineuse => "Colonne lumineuse",
@@ -164,6 +166,7 @@ public static class Listes
     public static MethodeRendement[] MethodesRendement { get; } = Enum.GetValues<MethodeRendement>();
     public static TypeDeuxVitesses[] TypesDeuxVitesses { get; } = Enum.GetValues<TypeDeuxVitesses>();
     public static AlimentationFrein[] AlimentationsFrein { get; } = Enum.GetValues<AlimentationFrein>();
+    public static CommandeFrein[] CommandesFrein { get; } = Enum.GetValues<CommandeFrein>();
     public static TypePeripherique[] TypesPeripherique { get; } = Enum.GetValues<TypePeripherique>();
     public static MethodePose[] Poses { get; } = Enum.GetValues<MethodePose>();
     public static Isolant[] Isolants { get; } = Enum.GetValues<Isolant>();

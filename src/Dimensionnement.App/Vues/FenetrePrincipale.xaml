@@ -331,7 +331,7 @@
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Moteur-frein" Style="{StaticResource Etiquette}"/>
                     <CheckBox IsChecked="{inf:Lien Frein}"
-                              ToolTip="Ajoute la commande du frein : protection et contacteur en 230 V, ou relais en 24 V DC."/>
+                              ToolTip="Ajoute la commande du frein : disjoncteur dimensionné sur le courant du frein et contacteur, ou relais en 24 V DC ; tension, bobine et commande se précisent dessous."/>
                 </DockPanel>
                 <DockPanel>
                     <DockPanel.Style>
@@ -362,6 +362,71 @@
                     </DockPanel.Style>
                     <TextBlock Text="Puissance du frein (W)" Style="{StaticResource Etiquette}"/>
                     <TextBox Text="{inf:Lien PuissanceFreinW}"/>
+                </DockPanel>
+                <StackPanel>
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding Frein}" Value="True"/>
+                                        <Condition Binding="{Binding AlimentationFrein}" Value="{x:Static mod:AlimentationFrein.Separee230}"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <DockPanel Style="{StaticResource Ligne}">
+                        <TextBlock Text="Tension d'alimentation du frein (V)" Style="{StaticResource Etiquette}"/>
+                        <CheckBox DockPanel.Dock="Right" Content="continu (DC)" IsChecked="{inf:Lien FreinEnContinu}" Margin="8,0,0,0" VerticalAlignment="Center"
+                                  ToolTip="Coché : alimentation en courant continu (disjoncteur et contacteur DC). Décoché : alternatif, par exemple 400 V AC vers le redresseur."/>
+                        <TextBox Text="{inf:Lien TensionFreinV}"
+                                 ToolTip="Tension qui arrive au frein ou à son redresseur, par exemple 400 V AC pour un redresseur GHE40 ; elle dimensionne le disjoncteur."/>
+                    </DockPanel>
+                    <DockPanel>
+                        <DockPanel.Style>
+                            <Style TargetType="DockPanel" BasedOn="{StaticResource Ligne}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding FreinEnContinu}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DockPanel.Style>
+                        <TextBlock Text="Tension de la bobine (V DC, 0 = non connue)" Style="{StaticResource Etiquette}"/>
+                        <CheckBox DockPanel.Dock="Right" Content="redresseur dans le moteur" IsChecked="{inf:Lien RedresseurDansMoteur}" Margin="8,0,0,0"
+                                  VerticalAlignment="Center" ToolTip="Décoché : un redresseur de frein est ajouté dans l'armoire (demi-onde ou pont selon les tensions)."/>
+                        <TextBox Text="{inf:Lien TensionBobineFreinV}"
+                                 ToolTip="Tension de la bobine du frein, par exemple 180 V DC : demi-onde sous 400 V AC (0,45 × U), pont sous 230 V AC donne 205 V."/>
+                    </DockPanel>
+                </StackPanel>
+                <DockPanel>
+                    <DockPanel.Style>
+                        <Style TargetType="DockPanel" BasedOn="{StaticResource Ligne}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding Frein}" Value="True"/>
+                                        <Condition Binding="{Binding Demarrage}" Value="{x:Static mod:ModeDemarrage.Variateur}"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </MultiDataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding Frein}" Value="True"/>
+                                        <Condition Binding="{Binding Demarrage}" Value="{x:Static mod:ModeDemarrage.Servomoteur}"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DockPanel.Style>
+                    <TextBlock Text="Commande du frein" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.CommandesFrein}" SelectedItem="{inf:Lien CommandeFrein}"
+                              ToolTip="Variateur : sa logique de frein (Altivar : fonction commande de frein sur le relais R2 ; SINAMICS : frein de maintien) ouvre le frein quand le couple est établi et le fait retomber à l'arrêt, sans passer par l'automate."/>
                 </DockPanel>
                 <TextBlock Text="Départ" Style="{StaticResource Section}"/>
                 <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ChampsDepart}"/>

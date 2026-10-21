@@ -269,8 +269,9 @@ public static class CalculDepart
     }
 
     /// <summary>
-    /// Frein d'un moteur-frein : par la boîte à bornes (démarrage direct), ou alimentation séparée 230 V protégée et commandée
-    /// par contacteur, ou frein 24 V DC commandé par relais. Un variateur ne peut pas alimenter le frein par sa sortie.
+    /// Frein d'un moteur-frein : par la boîte à bornes (démarrage direct), par une alimentation séparée (tension et nature
+    /// saisies) protégée par un disjoncteur dimensionné sur le courant du frein et commandée par contacteur, ou en 24 V DC
+    /// par relais. Sur variateur, le frein peut être piloté par la logique de frein du variateur au lieu de l'automate.
     /// </summary>
     static void Frein(DepartMoteur m, NoteDeCalcul note, ElementMateriel protection)
     {
@@ -282,9 +283,24 @@ public static class CalculDepart
         if (alimentation == AlimentationFrein.BoiteABornes && !direct)
         {
             note.Verifier("Frein", false, "Le frein ne peut pas être alimenté par la boîte à bornes avec ce démarrage (tension variable ou couplage) : " +
-                "alimentation séparée 230 V retenue.", RefFrein, StatutCalcul.Alerte);
+                "alimentation séparée retenue.", RefFrein, StatutCalcul.Alerte);
             alimentation = AlimentationFrein.Separee230;
         }
+
+        var parVariateur = m.CommandeFrein == CommandeFrein.Variateur;
+        if (parVariateur && !m.SurVariateur)
+        {
+            note.Verifier("Commande du frein", false, "Pas de variateur sur ce départ : le frein est commandé par l'automate.", RefFrein, StatutCalcul.Alerte);
+            parVariateur = false;
+        }
+        var servo = m.Demarrage == ModeDemarrage.Servomoteur;
+        var commande = parVariateur
+            ? servo
+                ? "piloté par le servovariateur (sortie frein intégrée, Lexium 32 ou SINAMICS V90) : il s'ouvre quand le couple est établi et retombe à l'arrêt"
+                : "piloté par la logique de frein du variateur (Altivar : fonction « commande de frein » affectée au relais R2 ; SINAMICS G120 : " +
+                  "commande du frein de maintien sur une sortie TOR) : ouverture quand le courant moteur est établi, retombée à vitesse nulle, sans automate"
+            : "commandé par une sortie de l'automate, avec la marche du moteur";
+
         switch (alimentation)
         {
             case AlimentationFrein.BoiteABornes:
@@ -292,14 +308,34 @@ public static class CalculDepart
                     RefFrein);
                 break;
             case AlimentationFrein.Separee230:
-                var courant = m.PuissanceFreinW / 230;
-                note.Info("Frein", $"Frein {N(m.PuissanceFreinW)} W en 230 V séparé ({A(courant)}) : disjoncteur Q{n}.F 2 A et contacteur KM{n}.F " +
-                    "commandé avec la marche du moteur (coupure côté continu pour un serrage rapide).", RefFrein);
-                protection.Ajouter(Element($"Q{n}.F", "Disjoncteur", "Disjoncteur du frein", "2 A, 1P+N, courbe C").Avec(2, 2, courbe: "C"))
-                    .Ajouter(Element($"KM{n}.F", "Contacteur", "Contacteur de frein", "AC-3 9 A").Avec(9, 3));
+            {
+                var u = m.TensionFreinV > 0 ? m.TensionFreinV : 230;
+                var nature = m.FreinEnContinu ? "DC" : "AC";
+                var courant = m.PuissanceFreinW / u;
+                // Bobine surexcitée à l'appel par les redresseurs rapides : calibre ≥ 2 × I, 1 A au minimum, courbe C.
+                var calibre = Calibres.Superieur(Calibres.Disjoncteurs, Math.Max(1, 2 * courant)) ?? 2;
+                const int poles = 2;
+                var libellePoles = m.FreinEnContinu ? "2P" : u > 250 ? "2P (entre phases)" : "1P+N";
+                calibre = note.Valeur(CodesCalcul.CalibreFrein, "Disjoncteur du frein", 2 * courant, calibre, "A",
+                    "In ≥ 2 × P / U (appel de la bobine), 1 A minimum, courbe C",
+                    $"P = {N(m.PuissanceFreinW)} W, U = {N(u, 0)} V {nature}, I = {A(courant)}", RefFrein);
+                note.Info("Frein", $"Frein {N(m.PuissanceFreinW)} W alimenté en {N(u, 0)} V {nature} ({A(courant)}) par Q{n}.F et KM{n}.F, {commande}." +
+                    (m.FreinEnContinu ? " Disjoncteur et contacteur prévus pour le courant continu (tension DC assignée ≥ " + N(u, 0) + " V, coupure DC-13)." :
+                        " Coupure côté continu du redresseur pour un serrage rapide."), RefFrein);
+                var km = protection.Ajouter(Element($"Q{n}.F", "Disjoncteur", "Disjoncteur du frein",
+                        $"{A(calibre)}, {libellePoles}, courbe C" + (m.FreinEnContinu ? ", pour courant continu" : "")).Avec(calibre, poles, courbe: "C"))
+                    .Ajouter(Element($"KM{n}.F", "Contacteur", "Contacteur de frein", m.FreinEnContinu ? "DC-13, pôles en série" : "AC-3 9 A").Avec(9, 3));
+                Redresseur(m, note, km, u, RefFrein);
                 break;
+            }
             default:
-                note.Info("Frein", $"Frein {N(m.PuissanceFreinW)} W en 24 V DC ({A(m.PuissanceFreinW / 24)} au bilan 24 V) commandé par le relais KA{n}.F.",
+                if (parVariateur && servo)
+                {
+                    note.Info("Frein", $"Frein {N(m.PuissanceFreinW)} W en 24 V DC ({A(m.PuissanceFreinW / 24)} au bilan 24 V), {commande} : pas de relais.",
+                        RefFrein);
+                    break;
+                }
+                note.Info("Frein", $"Frein {N(m.PuissanceFreinW)} W en 24 V DC ({A(m.PuissanceFreinW / 24)} au bilan 24 V) commandé par le relais KA{n}.F, {commande}.",
                     RefFrein);
                 protection.Ajouter(new ElementMateriel
                 {
@@ -308,6 +344,86 @@ public static class CalculDepart
                 });
                 break;
         }
+    }
+
+    /// <summary>Redresseurs de frein : demi-onde (U DC ≈ 0,45 × U AC) ou pont (≈ 0,9 × U AC).</summary>
+    public static (string Type, double Rapport)[] Redresseurs { get; } = { ("demi-onde", 0.45), ("pont", 0.9) };
+
+    /// <summary>
+    /// Bobine en courant continu alimentée en alternatif. Avec le redresseur du moteur, on contrôle seulement que la tension de bobine
+    /// correspond à un demi-onde (0,45 × U) ou à un pont (0,9 × U), par exemple 180 V DC sous 400 V AC. Sans redresseur dans le moteur,
+    /// l'armoire reçoit : une alimentation à découpage pour une bobine 24 ou 48 V DC ; un redresseur de frein quand le rapport tombe
+    /// juste ; sinon un transformateur d'adaptation suivi d'un redresseur en pont (les alimentations à découpage du catalogue
+    /// ne sortent pas de 100 à 200 V DC).
+    /// </summary>
+    static void Redresseur(DepartMoteur m, NoteDeCalcul note, ElementMateriel amont, double u, string reference)
+    {
+        if (m.FreinEnContinu || m.TensionBobineFreinV <= 0) return;
+        var bobine = m.TensionBobineFreinV;
+        var courant = m.PuissanceFreinW / bobine;
+        var (type, rapport) = Redresseurs.MinBy(r => Math.Abs(bobine / u - r.Rapport));
+        var obtenue = rapport * u;
+        var accord = Math.Abs(obtenue / bobine - 1) <= 0.1;
+        var n = m.Numero;
+
+        if (m.RedresseurDansMoteur)
+        {
+            note.Verifier("Tension de bobine du frein", accord,
+                accord
+                    ? $"Bobine {N(bobine, 0)} V DC sous {N(u, 0)} V AC : redresseur {type} dans la boîte à bornes ({N(rapport)} × {N(u, 0)} = {N(obtenue, 0)} V DC)."
+                    : $"Bobine {N(bobine, 0)} V DC sous {N(u, 0)} V AC : aucun redresseur courant ne donne cette tension " +
+                      $"(demi-onde {N(0.45 * u, 0)} V, pont {N(0.9 * u, 0)} V). Vérifier la tension d'alimentation du frein.",
+                reference, StatutCalcul.Alerte);
+            return;
+        }
+
+        ElementMateriel source;
+        if (Math.Abs(bobine - 24) <= 2.4 || Math.Abs(bobine - 48) <= 4.8)
+        {
+            var sortie = bobine < 36 ? 24 : 48;
+            source = new ElementMateriel
+            {
+                Repere = $"G{n}.F", Famille = "Alimentation", Designation = $"Alimentation à découpage du frein {sortie} V DC",
+                Calibre = $"{N(u, 0)} V AC → {sortie} V DC, ≥ {A(1.5 * m.PuissanceFreinW / sortie)}", Courant = 1.5 * m.PuissanceFreinW / sortie,
+            };
+            note.Info("Alimentation du frein", $"Bobine {N(bobine, 0)} V DC : alimentation à découpage {sortie} V DC dédiée, calibrée à 1,5 × {A(courant)} " +
+                "pour l'appel de la bobine.", reference);
+        }
+        else if (accord)
+        {
+            source = new ElementMateriel
+            {
+                Repere = $"V{n}.F", Famille = "Redresseur", Designation = $"Redresseur de frein {type}",
+                Calibre = $"{N(u, 0)} V AC → {N(bobine, 0)} V DC, ≥ {A(courant)}",
+                LargeurMm = 22.5, HauteurMm = 90, ProfondeurMm = 100, PertesW = 1,
+            };
+            note.Info("Alimentation du frein", $"Bobine {N(bobine, 0)} V DC sous {N(u, 0)} V AC : redresseur {type} dans l'armoire " +
+                $"({N(rapport)} × {N(u, 0)} = {N(obtenue, 0)} V DC).", reference);
+        }
+        else
+        {
+            // Secondaire qui donne la tension de bobine à travers un pont : U AC = U DC / 0,9.
+            var secondaire = Math.Round(bobine / 0.9 / 5) * 5;
+            var va = Calibres.Superieur(new double[] { 25, 40, 63, 100, 160, 250, 400 }, 1.5 * m.PuissanceFreinW) ?? 1.5 * m.PuissanceFreinW;
+            amont = amont.Ajouter(new ElementMateriel
+            {
+                Repere = $"T{n}.F", Famille = "Transformateur", Designation = "Transformateur d'adaptation du frein",
+                Calibre = $"{N(u, 0)} / {N(secondaire, 0)} V AC, {N(va, 0)} VA", Courant = va / secondaire,
+                LargeurMm = va <= 63 ? 60 : va <= 160 ? 85 : 105, HauteurMm = va <= 63 ? 70 : va <= 160 ? 80 : 95,
+                ProfondeurMm = va <= 63 ? 80 : va <= 160 ? 95 : 110, PertesW = 0.08 * va,
+            });
+            source = new ElementMateriel
+            {
+                Repere = $"V{n}.F", Famille = "Redresseur", Designation = "Redresseur de frein en pont",
+                Calibre = $"{N(secondaire, 0)} V AC → {N(bobine, 0)} V DC, ≥ {A(courant)}",
+                LargeurMm = 22.5, HauteurMm = 90, ProfondeurMm = 100, PertesW = 1,
+            };
+            note.Verifier("Alimentation du frein", false,
+                $"Bobine {N(bobine, 0)} V DC : ni demi-onde ({N(0.45 * u, 0)} V) ni pont ({N(0.9 * u, 0)} V) sous {N(u, 0)} V AC. " +
+                $"Transformateur {N(u, 0)} / {N(secondaire, 0)} V ({N(va, 0)} VA) puis redresseur en pont ; à confirmer avec le fabricant du frein.",
+                reference, StatutCalcul.Alerte);
+        }
+        amont.Ajouter(source);
     }
 
     static ElementMateriel Contacteurs(DepartMoteur m, NoteDeCalcul note, double ib, ElementMateriel protection)

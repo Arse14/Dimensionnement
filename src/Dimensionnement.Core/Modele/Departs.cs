@@ -133,6 +133,17 @@ public class DepartMoteur : Depart
     public AlimentationFrein AlimentationFrein { get; set; } = AlimentationFrein.Separee230;
     public double PuissanceFreinW { get; set; } = 25;
 
+    /// <summary>Alimentation séparée du frein : tension en V et nature (continu ou alternatif), qui dimensionnent sa protection.</summary>
+    public double TensionFreinV { get; set; } = 230;
+    public bool FreinEnContinu { get; set; }
+
+    /// <summary>Tension de la bobine du frein en V DC (ex. 180 V), 0 = non renseignée ; redresseur dans la boîte à bornes du moteur ou non.</summary>
+    public double TensionBobineFreinV { get; set; }
+    public bool RedresseurDansMoteur { get; set; } = true;
+
+    /// <summary>Frein piloté par l'automate, ou par la logique de frein du variateur (départs sur variateur).</summary>
+    public CommandeFrein CommandeFrein { get; set; } = CommandeFrein.Automate;
+
     /// <summary>Moteur commandé par un variateur ou un servovariateur (électronique de puissance, câble blindé).</summary>
     [JsonIgnore] public bool SurVariateur => Demarrage is ModeDemarrage.Variateur or ModeDemarrage.Servomoteur;
 
