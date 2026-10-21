@@ -315,7 +315,7 @@ public static class CalculArmoire
         };
         var reduite = reserveEffective < reserve - 1e-6;
         if (libre)
-            alerte = tientALaMain ? "" : "Ta disposition ne tient pas encore : " + string.Join(" ; ", new[]
+            alerte = tient ? "" : "Ta disposition ne tient pas encore : " + string.Join(" ; ", new[]
             {
                 appareils.Any(a => a.X >= largeur * cellules) ? "à placer : " + string.Join(", ", appareils.Where(a => a.X >= largeur * cellules).Select(a => a.Repere)) : "",
                 appareils.Where(a => a.X < largeur * cellules && !ToutSurLaPlaque(new[] { a }, enveloppe, largeur, cellules)).Select(a => a.Repere).ToList() is { Count: > 0 } hors
@@ -323,7 +323,8 @@ public static class CalculArmoire
                 Chevauchements(appareils) is { Count: > 0 } chl ? "appareils qui se chevauchent : " + string.Join(", ", chl) : "",
             }.Where(t => t.Length > 0)) + ".";
         else if (tientALaMain)
-            alerte = "L'implantation automatique ne tient pas, mais les appareils déplacés à la main font tout entrer : implantation manuelle retenue, sans réserve garantie.";
+            alerte = "L'implantation automatique ne tient pas (elle demanderait " + $"{N(auto.L)} × {N(auto.H)} mm" + (auto.N > 1 ? $" × {auto.N} cellules" : "") +
+                     DegagementManquant(elements, enveloppe) + "), mais les appareils déplacés à la main font tout entrer : implantation manuelle retenue, sans réserve garantie.";
         else if (palier > 0 || (reduite && implantation.Tient))
             alerte = $"Le matériel ne tient dans l'armoire imposée {N(largeur)} × {N(hauteur)} mm qu'" +
                      string.Join(" et ", new[] { allegement, reduite ? $"en réduisant la place libre à {N(reserveEffective * 100)} % au lieu de {N(config.ReservePourcent)} %" : "" }
@@ -373,8 +374,9 @@ public static class CalculArmoire
             $"variateurs et démarreurs regroupés côte à côte sur le côté, fixés sur la plaque avec {N(DegagementVariateur, 0)} mm de dégagement " +
             "en haut et en bas pour la ventilation.", RefCem);
 
-        var bandes = RecalculerZones(bandesPosees, appareils, config.Rails, largeur * cellules, hauteur);
+        var bandes = RognerSurPlaque(RecalculerZones(bandesPosees, appareils, config.Rails, largeur * cellules, hauteur), enveloppe, largeur, cellules);
         ControlerManuel(note, appareils, bandes, largeur * cellules, hauteur);
+        if (appareils.Any(a => a.Manuel) || libre) ControlerDegagementVariateurs(note, appareils, enveloppe, largeur, cellules);
 
         var cablage = CalculCablage.Estimer(r, appareils, bandesPosees, largeur, enveloppe.PlaqueLargeur, enveloppe.PlaqueHauteur,
             hauteur, cellules, gabarit);
@@ -793,6 +795,64 @@ public static class CalculArmoire
             colonne = Math.Max(colonne, a.Largeur);
         }
         return x + colonne + 20 - largeurTotale;
+    }
+
+    /// <summary>
+    /// Raison la plus fréquente d'un refus de l'implantation automatique : un variateur plus haut que la plaque une fois
+    /// ajoutés ses dégagements de ventilation haut et bas.
+    /// </summary>
+    static string DegagementManquant(IEnumerable<AppareilImplante> elements, ModeleEnveloppe enveloppe)
+    {
+        var v = elements.Where(EstVariateur).OrderByDescending(e => e.Hauteur).FirstOrDefault();
+        if (v is null || v.Hauteur + 2 * DegagementVariateur <= enveloppe.PlaqueHauteur) return "";
+        return $" : le variateur {v.Repere} fait {N(v.Hauteur)} mm de haut et demande {N(DegagementVariateur)} mm libres au-dessus et au-dessous " +
+               $"pour sa ventilation, soit {N(v.Hauteur + 2 * DegagementVariateur)} mm pour {N(enveloppe.PlaqueHauteur)} mm de plaque";
+    }
+
+    /// <summary>Limite les zones dessinées à la plaque de montage de leur cellule : une zone ne sort jamais de l'enveloppe.</summary>
+    static List<BandeZone> RognerSurPlaque(IEnumerable<BandeZone> bandes, ModeleEnveloppe enveloppe, double largeur, int cellules)
+    {
+        var dx = (largeur - enveloppe.PlaqueLargeur) / 2;
+        var dy = (enveloppe.Hauteur - enveloppe.PlaqueHauteur) / 2;
+        var resultat = new List<BandeZone>();
+        foreach (var b in bandes)
+        {
+            var c = Math.Clamp((int)Math.Floor((b.X + b.Largeur / 2) / largeur), 0, Math.Max(0, cellules - 1));
+            var x0 = Math.Max(b.X, c * largeur + dx);
+            var x1 = Math.Min(b.X + b.Largeur, c * largeur + dx + enveloppe.PlaqueLargeur);
+            var y0 = Math.Max(b.Y, dy);
+            var y1 = Math.Min(b.Y + b.Hauteur, dy + enveloppe.PlaqueHauteur);
+            if (x1 - x0 >= 1 && y1 - y0 >= 1)
+                resultat.Add(b with { X = x0, Y = y0, Largeur = x1 - x0, Hauteur = y1 - y0 });
+        }
+        return resultat;
+    }
+
+    /// <summary>
+    /// Contrôle, sur une disposition faite à la main, la place libre au-dessus et au-dessous de chaque variateur ou
+    /// démarreur : bord de plaque ou appareil le plus proche dans sa largeur, comparé au dégagement de ventilation.
+    /// </summary>
+    static void ControlerDegagementVariateurs(NoteDeCalcul note, List<AppareilImplante> appareils, ModeleEnveloppe enveloppe, double largeur, int cellules)
+    {
+        var dy = (enveloppe.Hauteur - enveloppe.PlaqueHauteur) / 2;
+        var variateurs = appareils.Where(a => EstVariateur(a) && a.X < largeur * cellules).ToList();
+        if (variateurs.Count == 0) return;
+        var manques = new List<string>();
+        foreach (var v in variateurs)
+        {
+            var voisins = appareils.Where(a => !ReferenceEquals(a, v) && a.X < largeur * cellules
+                                               && a.X < v.X + v.Largeur && a.X + a.Largeur > v.X).ToList();
+            var dessus = v.Y - voisins.Where(a => a.Y + a.Hauteur <= v.Y + PasManuel).Select(a => a.Y + a.Hauteur).Append(dy).Max();
+            var dessous = voisins.Where(a => a.Y >= v.Y + v.Hauteur - PasManuel).Select(a => a.Y).Append(dy + enveloppe.PlaqueHauteur).Min() - (v.Y + v.Hauteur);
+            if (dessus < DegagementVariateur - 1e-6 || dessous < DegagementVariateur - 1e-6)
+                manques.Add($"{v.Repere} : {N(Math.Max(0, dessus))} mm au-dessus et {N(Math.Max(0, dessous))} mm au-dessous");
+        }
+        note.Verifier("Dégagement des variateurs", manques.Count == 0,
+            manques.Count == 0
+                ? $"Chaque variateur garde au moins {N(DegagementVariateur)} mm libres au-dessus et au-dessous pour sa ventilation."
+                : $"Ventilation gênée, {N(DegagementVariateur)} mm demandés au-dessus et au-dessous : " + string.Join(" ; ", manques) +
+                  ". Le variateur risque de chauffer ou de se déclasser ; vérifier la notice du fabricant ou prévoir une ventilation forcée.",
+            RefCem, StatutCalcul.Alerte);
     }
 
     /// <summary>Vrai si chaque appareil est entièrement sur la plaque de montage d'une des cellules.</summary>

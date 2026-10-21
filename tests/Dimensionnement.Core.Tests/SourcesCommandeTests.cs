@@ -278,3 +278,30 @@ public class CalageRailTests
         Assert.Equal(rail.X + 40, a.X, 3);
     }
 }
+
+public class ZonesEtDegagementTests
+{
+    [Fact]
+    public void Les_zones_restent_sur_la_plaque_et_un_variateur_colle_au_bord_est_signale()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        var r = CalculProjet.Calculer(projet);
+        var auto = Dimensionnement.Core.Armoire.CalculArmoire.Calculer(r, projet);
+        var dx = (auto.Largeur - auto.PlaqueLargeur) / 2;
+        var dy = (auto.Hauteur - auto.PlaqueHauteur) / 2;
+        Assert.All(auto.Bandes, b =>
+        {
+            Assert.True(b.Y >= dy - 1e-6 && b.Y + b.Hauteur <= dy + auto.PlaqueHauteur + 1e-6, $"{b.Y} {b.Hauteur}");
+            Assert.True(b.X >= dx - 1e-6);
+        });
+        Assert.DoesNotContain(auto.Note.Lignes, l => l.Libelle == "Dégagement des variateurs");
+
+        // Variateur posé à la main contre le haut de la plaque : plus de dégagement de ventilation au-dessus.
+        var u = auto.Appareils.First(Dimensionnement.Core.Armoire.CalculArmoire.EstVariateur);
+        Dimensionnement.Core.Armoire.CalculArmoire.Figer(auto, projet.Armoire);
+        projet.Armoire.Positions[u.Cle] = new Dimensionnement.Core.Modele.PositionManuelle { X = u.X, Y = dy };
+        var main = Dimensionnement.Core.Armoire.CalculArmoire.Calculer(r, projet);
+        var ligne = Assert.Single(main.Note.Lignes, l => l.Libelle == "Dégagement des variateurs");
+        Assert.Contains(u.Repere, ligne.Message);
+    }
+}
