@@ -74,6 +74,9 @@ public static class CalculDepart
         var u = Tension(m.Alimentation);
         var inCalcule = m.PuissanceKw * 1000 / (Racine(m.Alimentation) * u * m.CosPhi * m.Rendement);
         var entrees = $"Pn = {N(m.PuissanceKw)} kW, U = {N(u)} V, cos φ = {N(m.CosPhi)}, η = {N(m.Rendement)}";
+        if (m.OrigineRendement.Length > 0 && m.RendementCalcule is { } rc)
+            note.Info("Rendement", $"η = {N(m.Rendement * 100, 1)} %, {m.OrigineRendement} : {rc.Detail}." +
+                (rc.Alerte.Length > 0 ? " " + rc.Alerte : ""), "η = puissance utile / puissance absorbée");
         var ib = note.Valeur(CodesCalcul.CourantEmploi, "Courant d'emploi du moteur", inCalcule,
             m.CourantPlaque > 0 ? m.CourantPlaque : inCalcule, "A",
             FormuleCourant(m.Alimentation, " × cos φ × η") + (m.CourantPlaque > 0 ? " ; valeur de plaque retenue" : ""),

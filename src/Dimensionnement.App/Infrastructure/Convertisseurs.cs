@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
+using Dimensionnement.Core.Calculs;
 using Dimensionnement.Core.Materiel;
 using Dimensionnement.Core.Modele;
 
@@ -49,6 +50,8 @@ public class LibelleEnum : IValueConverter
         SchemaLiaisonTerre.IT => "IT",
         OrigineAlimentation.ReseauPublicBT => "Réseau public BT (ΔU 5 %)",
         OrigineAlimentation.PostePrive => "Poste privé HTA/BT (ΔU 8 %)",
+        MethodeRendement.Plaque => "Plaque : P, U, I et cos φ",
+        MethodeRendement.CoupleVitesse => "Couple et vitesse nominaux",
         ModeDemarrage.Direct => "Direct",
         ModeDemarrage.Inverseur => "Inverseur de sens",
         ModeDemarrage.EtoileTriangle => "Étoile-triangle",
@@ -158,6 +161,7 @@ public static class Listes
     public static SchemaLiaisonTerre[] Slt { get; } = Enum.GetValues<SchemaLiaisonTerre>();
     public static OrigineAlimentation[] Origines { get; } = Enum.GetValues<OrigineAlimentation>();
     public static ModeDemarrage[] Demarrages { get; } = Enum.GetValues<ModeDemarrage>();
+    public static MethodeRendement[] MethodesRendement { get; } = Enum.GetValues<MethodeRendement>();
     public static TypeDeuxVitesses[] TypesDeuxVitesses { get; } = Enum.GetValues<TypeDeuxVitesses>();
     public static AlimentationFrein[] AlimentationsFrein { get; } = Enum.GetValues<AlimentationFrein>();
     public static TypePeripherique[] TypesPeripherique { get; } = Enum.GetValues<TypePeripherique>();

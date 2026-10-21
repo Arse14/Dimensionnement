@@ -213,8 +213,63 @@
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Rendement η" Style="{StaticResource Etiquette}"/>
+                    <ToggleButton x:Name="BoutonRendement" DockPanel.Dock="Right" Content="Calculer…" Margin="6,0,0,0" Padding="8,2"
+                                  ToolTip="Rendement absent de la fiche du fournisseur : le retrouver par la plaque (P, U, I, cos φ) ou par le couple et la vitesse."/>
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding OrigineRendement}" Foreground="{StaticResource Accent}" FontSize="11"
+                               VerticalAlignment="Center" Margin="6,0,0,0" Visibility="{Binding OrigineRendement, Converter={StaticResource VideMasque}}"/>
                     <TextBox Text="{inf:Lien Rendement}"/>
                 </DockPanel>
+                <Border BorderBrush="{StaticResource Bordure}" BorderThickness="1" CornerRadius="3" Padding="10,8" Margin="0,2,0,8"
+                        Visibility="{Binding IsChecked, ElementName=BoutonRendement, Converter={StaticResource VraiVisible}}">
+                    <StackPanel>
+                        <TextBlock Text="CALCUL DU RENDEMENT : η = puissance utile / puissance absorbée" FontWeight="SemiBold"
+                                   Foreground="{StaticResource Accent}" Margin="0,0,0,6"/>
+                        <DockPanel Style="{StaticResource Ligne}">
+                            <TextBlock Text="Méthode" Style="{StaticResource Etiquette}"/>
+                            <ComboBox ItemsSource="{x:Static inf:Listes.MethodesRendement}" SelectedItem="{inf:Lien MethodeRendement}"/>
+                        </DockPanel>
+                        <StackPanel>
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding MethodeRendement}" Value="{x:Static calc:MethodeRendement.CoupleVitesse}">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <DockPanel Style="{StaticResource Ligne}">
+                                <TextBlock Text="Couple nominal (N·m)" Style="{StaticResource Etiquette}"/>
+                                <TextBox Text="{inf:Lien CoupleNominal}"/>
+                            </DockPanel>
+                            <DockPanel Style="{StaticResource Ligne}">
+                                <TextBlock Text="Vitesse nominale (tr/min)" Style="{StaticResource Etiquette}"/>
+                                <TextBox Text="{inf:Lien VitesseNominale}"/>
+                            </DockPanel>
+                        </StackPanel>
+                        <TextBlock TextWrapping="Wrap" FontFamily="Consolas, Segoe UI" FontSize="12" Margin="0,4,0,0"
+                                   Text="{Binding RendementCalcule.Detail}" Visibility="{Binding RendementCalcule, Converter={StaticResource NonNulVisible}}"/>
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,4,0,0"
+                                   Text="Renseigner le courant nominal In et le cos φ de la plaque, ainsi que Pn (méthode plaque) ou le couple et la vitesse.">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding RendementCalcule}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock TextWrapping="Wrap" Foreground="#F85149" Margin="0,4,0,0" Text="{Binding RendementCalcule.Alerte}"
+                                   Visibility="{Binding RendementCalcule.Alerte, Converter={StaticResource VideMasque}}"/>
+                        <Button Content="Appliquer ce rendement" HorizontalAlignment="Left" Margin="0,8,0,0"
+                                Command="{Binding DataContext.AppliquerRendement, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"/>
+                    </StackPanel>
+                </Border>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Id / In" Style="{StaticResource Etiquette}"/>
                     <TextBox Text="{inf:Lien RapportId}"/>

@@ -139,3 +139,50 @@ public class ExportsTests
         }
     }
 }
+
+public class RendementTests
+{
+    // Motoréducteur NORD SK9012.1AZD-80LP/4 : 0,75 kW, 1,79 A sous 400 V, cos φ 0,72, 5,1 N·m à 1415 tr/min, rendement non donné.
+    static DepartMoteur Nord() => new() { PuissanceKw = 0.75, CourantPlaque = 1.79, CosPhi = 0.72, CoupleNominal = 5.1, VitesseNominale = 1415 };
+
+    [Fact]
+    public void Rendement_retrouve_par_la_plaque()
+    {
+        var r = CalculRendement.Calculer(Nord(), MethodeRendement.Plaque)!;
+        Assert.Equal(893, r.PuissanceAbsorbeeW, 0);
+        Assert.Equal(0.840, r.Rendement, 3);
+        Assert.Empty(r.Alerte);
+    }
+
+    [Fact]
+    public void Rendement_retrouve_par_le_couple_et_la_vitesse()
+    {
+        var r = CalculRendement.Calculer(Nord(), MethodeRendement.CoupleVitesse)!;
+        Assert.Equal(756, r.PuissanceUtileW, 0);
+        Assert.Equal(0.846, r.Rendement, 3);
+    }
+
+    [Fact]
+    public void Rendement_applique_puis_trace_dans_la_note()
+    {
+        var m = Nord();
+        Assert.True(m.AppliquerRendementCalcule());
+        Assert.Equal(0.84, m.Rendement, 3);
+        Assert.Equal("calculé (plaque)", m.OrigineRendement);
+        var projet = new Projet();
+        projet.Ajouter(m);
+        var d = CalculProjet.Calculer(projet).Departs[0];
+        Assert.Contains(d.Note.Lignes, l => l.Libelle == "Rendement" && l.Message.Contains("893"));
+        m.Rendement = 0.8;
+        Assert.Equal("", m.OrigineRendement);
+    }
+
+    [Fact]
+    public void Plaque_incoherente_signalee()
+    {
+        var m = Nord();
+        m.CourantPlaque = 1.0;
+        Assert.NotEmpty(CalculRendement.Calculer(m, MethodeRendement.Plaque)!.Alerte);
+        Assert.Null(CalculRendement.Calculer(new DepartMoteur { PuissanceKw = 1 }, MethodeRendement.Plaque));
+    }
+}

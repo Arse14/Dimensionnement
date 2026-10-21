@@ -283,6 +283,12 @@ public partial class ModeleVuePrincipal : Observable
                 case "Supprimer": config.Goulottes.Remove(goulotte); break;
             }
     }
+    Commande? _appliquerRendement;
+
+    /// <summary>Reprend le rendement calculé (plaque ou couple et vitesse) dans le départ moteur.</summary>
+    public Commande AppliquerRendement => _appliquerRendement ??= new Commande(
+        p => Modifier(() => ((DepartMoteur)p!).AppliquerRendementCalcule()), p => p is DepartMoteur { RendementCalcule: not null });
+
     public Commande ExporterDevis { get; }
     public Commande ExporterOrganigramme { get; }
     public Commande OuvrirCatalogueReferences { get; }

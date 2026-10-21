@@ -62,6 +62,8 @@ public class RegleVraisemblance : ValidationRule
     {
         ["Rendement"] = (0.3, 1, "Le rendement est un rapport entre 0 et 1 (0,85 pour 85 %) ; un moteur courant est entre 0,70 et 0,97."),
         ["CosPhi"] = (0.3, 1, "Le cos φ est compris entre 0 et 1 ; un moteur asynchrone est entre 0,70 et 0,90 en charge."),
+        ["CoupleNominal"] = (0, 100000, "Le couple nominal du moteur est en N·m (valeur « Couple nominal » ou M de la fiche)."),
+        ["VitesseNominale"] = (0, 12000, "La vitesse nominale est en tr/min (environ 1450 pour un 4 pôles en 50 Hz)."),
         ["RapportId"] = (1, 12, "Le rapport Id / In d'un moteur asynchrone est en général entre 5 et 9 (IE3 : jusqu'à 10)."),
         ["CoefficientUtilisation"] = (0, 1, "Le coefficient d'utilisation ku est compris entre 0 et 1."),
         ["Simultaneite"] = (0, 1, "Un coefficient de simultanéité est compris entre 0 et 1."),

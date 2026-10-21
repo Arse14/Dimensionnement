@@ -14,6 +14,11 @@ public abstract class Depart : System.ComponentModel.INotifyPropertyChanged
 {
     public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
 
+    protected void Signaler(params string[] proprietes)
+    {
+        foreach (var p in proprietes) PropertyChanged?.Invoke(this, new(p));
+    }
+
     public Guid Id { get; set; } = Guid.NewGuid();
 
     /// <summary>Numéro du départ, qui sert à construire les repères (Q1, KM1, M1…).</summary>
@@ -39,7 +44,15 @@ public abstract class Depart : System.ComponentModel.INotifyPropertyChanged
     /// <summary>Rubrique de l'armoire où le départ est rangé (Puissance, Commande, Auxiliaires…).</summary>
     public string Rubrique { get; set; } = "Puissance";
 
-    public TypeAlimentation Alimentation { get; set; } = TypeAlimentation.Tri400;
+    public TypeAlimentation Alimentation
+    {
+        get => _alimentation;
+        set { _alimentation = value; Modifie(); }
+    }
+    TypeAlimentation _alimentation = TypeAlimentation.Tri400;
+
+    /// <summary>Appelé quand une donnée d'entrée change, pour les valeurs dérivées affichées.</summary>
+    protected virtual void Modifie() { }
     public CaracteristiquesCable Cable { get; set; } = new();
     public SensibiliteDifferentiel Differentiel { get; set; } = SensibiliteDifferentiel.Aucun;
     public TypeProtection Protection { get; set; } = TypeProtection.Disjoncteur;
@@ -59,12 +72,50 @@ public abstract class Depart : System.ComponentModel.INotifyPropertyChanged
 public class DepartMoteur : Depart
 {
     /// <summary>Puissance utile en kW (plaque).</summary>
-    public double PuissanceKw { get; set; }
+    public double PuissanceKw { get => _puissance; set { _puissance = value; Modifie(); } }
 
     /// <summary>Courant nominal de plaque en A ; 0 = non renseigné.</summary>
-    public double CourantPlaque { get; set; }
-    public double CosPhi { get; set; } = 0.85;
-    public double Rendement { get; set; } = 0.9;
+    public double CourantPlaque { get => _courant; set { _courant = value; Modifie(); } }
+    public double CosPhi { get => _cosPhi; set { _cosPhi = value; Modifie(); } }
+
+    /// <summary>Rendement (rapport entre 0 et 1) ; saisi, ou calculé avec le bouton « Calculer le rendement ».</summary>
+    public double Rendement
+    {
+        get => _rendement;
+        set
+        {
+            _rendement = value;
+            OrigineRendement = "";
+            Signaler(nameof(Rendement), nameof(OrigineRendement));
+        }
+    }
+
+    /// <summary>D'où vient le rendement : vide si saisi, sinon la méthode de calcul (« plaque », « couple et vitesse »).</summary>
+    public string OrigineRendement { get; set; } = "";
+
+    /// <summary>Couple (N·m) et vitesse (tr/min) nominaux, pour retrouver la puissance utile quand le rendement n'est pas fourni.</summary>
+    public double CoupleNominal { get => _couple; set { _couple = value; Modifie(); } }
+    public double VitesseNominale { get => _vitesse; set { _vitesse = value; Modifie(); } }
+
+    public Calculs.MethodeRendement MethodeRendement { get => _methode; set { _methode = value; Modifie(); } }
+
+    /// <summary>Rendement retrouvé avec la méthode choisie, ou null s'il manque une donnée de plaque.</summary>
+    [JsonIgnore] public Calculs.ResultatRendement? RendementCalcule => Calculs.CalculRendement.Calculer(this, MethodeRendement);
+
+    /// <summary>Applique le rendement calculé et note sa méthode.</summary>
+    public bool AppliquerRendementCalcule()
+    {
+        if (RendementCalcule is not { } r) return false;
+        Rendement = Math.Round(r.Rendement, 3);
+        OrigineRendement = MethodeRendement == Calculs.MethodeRendement.Plaque ? "calculé (plaque)" : "calculé (couple et vitesse)";
+        Signaler(nameof(OrigineRendement));
+        return true;
+    }
+
+    protected override void Modifie() => Signaler(nameof(RendementCalcule));
+
+    double _puissance, _courant, _cosPhi = 0.85, _rendement = 0.9, _couple, _vitesse;
+    Calculs.MethodeRendement _methode;
 
     /// <summary>Rapport courant de démarrage / courant nominal.</summary>
     public double RapportId { get; set; } = 7;
