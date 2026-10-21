@@ -340,8 +340,21 @@ public class VueArmoire : Border
             Placer(bloc, cote ? a.LargeurTotale - l / 2 : a.LargeurTotale - l - 40, (a.Hauteur - h) / 2);
         }
 
+        // Ventilateurs sur un côté : vus par la tranche, à cheval sur la paroi, en bas ; la grille de sortie en haut de la paroi opposée.
+        if (a.Thermique is { ModeleVentilateur: { } mc, NombreVentilateurs: > 0, PositionVentilation: not PositionVentilation.Porte } tc)
+        {
+            const double marge = Core.Armoire.CalculThermique.MargeVentilateur, tranche = 70;
+            var gauche = tc.PositionVentilation == PositionVentilation.CoteGauche;
+            var nombre = tc.NombreVentilateurs > 1 ? $"{tc.NombreVentilateurs} × " : "";
+            var cote = gauche ? "côté gauche" : "côté droit";
+            Ventilation(gauche ? -tranche / 2 : a.LargeurTotale - tranche / 2, a.Hauteur - marge - mc.Hauteur, mc,
+                $"EV {nombre}ventilateur {mc.Debit:0} m³/h, {cote}", true, tranche, $"EV\n{nombre}{mc.Debit:0} m³/h\n({cote})");
+            Ventilation(gauche ? a.LargeurTotale - tranche / 2 : -tranche / 2, marge, mc, "Grille de sortie", false, tranche,
+                $"Sortie\n({(gauche ? "côté droit" : "côté gauche")})");
+        }
+
         // Ventilateurs à filtre en bas de porte, côte à côte à droite, et leurs grilles de sortie en haut, à la même verticale.
-        if (AfficherIhm && a.Thermique is { ModeleVentilateur: { } m, NombreVentilateurs: > 0 } th)
+        if (AfficherIhm && a.Thermique is { ModeleVentilateur: { } m, NombreVentilateurs: > 0, PositionVentilation: PositionVentilation.Porte } th)
         {
             const double marge = Core.Armoire.CalculThermique.MargeVentilateur;
             var parPorte = Math.Max(1, (int)Math.Floor((a.Largeur - marge) / (m.Largeur + marge)));
@@ -355,11 +368,11 @@ public class VueArmoire : Border
         }
     }
 
-    void Ventilation(double x, double y, Core.Normes.ModeleVentilateur m, string texte, bool ventilateur)
+    void Ventilation(double x, double y, Core.Normes.ModeleVentilateur m, string texte, bool ventilateur, double? largeur = null, string? libelle = null)
     {
         var cadre = new Border
         {
-            Width = m.Largeur, Height = m.Hauteur, CornerRadius = new CornerRadius(4), Background = Pinceau("#2214B8A6"), Tag = "Porte",
+            Width = largeur ?? m.Largeur, Height = m.Hauteur, CornerRadius = new CornerRadius(4), Background = Pinceau("#2214B8A6"), Tag = "Porte",
             ToolTip = $"{texte}\n{m.Fabricant} {m.Gamme} {m.Reference}\nDécoupe {m.Decoupe:0} × {m.Decoupe:0} mm, {m.Largeur:0} × {m.Hauteur:0} × {m.Profondeur:0} mm" +
                       (ventilateur ? $", {m.Puissance:0.#} W 230 V" : "") + (m.Verifie ? "" : "\nValeurs indicatives, à vérifier"),
             Child = new Grid
@@ -372,7 +385,7 @@ public class VueArmoire : Border
                         Margin = new Thickness(8), StretchDirection = StretchDirection.DownOnly,
                         Child = new TextBlock
                         {
-                            Text = ventilateur ? $"{m.Debit:0} m³/h\n(porte)" : "Sortie\n(porte)", TextAlignment = TextAlignment.Center,
+                            Text = libelle ?? (ventilateur ? $"{m.Debit:0} m³/h\n(porte)" : "Sortie\n(porte)"), TextAlignment = TextAlignment.Center,
                             FontWeight = FontWeights.Bold, FontSize = 22, Foreground = Pinceau("#14B8A6"),
                         },
                     },

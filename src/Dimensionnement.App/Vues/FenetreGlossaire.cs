@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
+using Dimensionnement.App.Infrastructure;
 using Dimensionnement.Core.Calculs;
 
 namespace Dimensionnement.App.Vues;
@@ -82,12 +83,14 @@ public class FenetreGlossaire : Window
     {
         var pile = new StackPanel();
         pile.Children.Add(new TextBlock { Text = e.Terme, FontSize = 15, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
-        pile.Children.Add(new TextBlock { Text = e.Definition, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
+        var definition = Formules.Bloc(e.Definition);
+        definition.Margin = new Thickness(0, 4, 0, 0);
+        pile.Children.Add(definition);
         if (e.Formule.Length > 0)
         {
             var formule = new Border { CornerRadius = new CornerRadius(3), Padding = new Thickness(10, 6, 10, 6), Margin = new Thickness(0, 8, 0, 0) };
             formule.SetResourceReference(Border.BackgroundProperty, "Champ");
-            formule.Child = new TextBlock { Text = e.Formule, TextWrapping = TextWrapping.Wrap, FontFamily = new FontFamily("Consolas, Segoe UI") };
+            formule.Child = Formules.Bloc(e.Formule, taille: 14);
             pile.Children.Add(formule);
         }
         if (e.Termes.Count > 0)
@@ -98,10 +101,12 @@ public class FenetreGlossaire : Window
             for (var i = 0; i < e.Termes.Count; i++)
             {
                 grille.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-                var symbole = new TextBlock { Text = e.Termes[i].Symbole, FontWeight = FontWeights.SemiBold, FontFamily = new FontFamily("Consolas, Segoe UI"),
-                    Margin = new Thickness(0, 2, 14, 2) };
+                var symbole = Formules.Bloc(e.Termes[i].Symbole, entiere: e.Formule.Length > 0);
+                symbole.TextWrapping = TextWrapping.NoWrap;
+                symbole.Margin = new Thickness(0, 2, 14, 2);
                 symbole.SetResourceReference(TextBlock.ForegroundProperty, "Accent");
-                var sens = new TextBlock { Text = e.Termes[i].Signification, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 2) };
+                var sens = Formules.Bloc(e.Termes[i].Signification);
+                sens.Margin = new Thickness(0, 2, 0, 2);
                 Grid.SetRow(symbole, i);
                 Grid.SetRow(sens, i);
                 Grid.SetColumn(sens, 1);
@@ -112,9 +117,9 @@ public class FenetreGlossaire : Window
         }
         if (e.Exemple.Length > 0)
         {
-            var exemple = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 0) };
-            exemple.Inlines.Add(new Run("Exemple : ") { FontWeight = FontWeights.SemiBold });
-            exemple.Inlines.Add(new Run(e.Exemple));
+            var exemple = Formules.Bloc(e.Exemple);
+            exemple.Margin = new Thickness(0, 8, 0, 0);
+            exemple.Inlines.InsertBefore(exemple.Inlines.FirstInline, new Run("Exemple : ") { FontWeight = FontWeights.SemiBold });
             pile.Children.Add(exemple);
         }
         var reference = new TextBlock { Text = e.Reference, FontSize = 11, FontStyle = FontStyles.Italic, Margin = new Thickness(0, 6, 0, 0) };

@@ -312,16 +312,19 @@ public static class CalculProjet
             var protection = new ElementMateriel { Repere = $"Q-EV{suffixe}", Famille = "Disjoncteur", Designation = "Protection de la ventilation" + lieu,
                 Calibre = "2 A, courbe C", CoffretId = enveloppe.Id }.Avec(2, poles, courbe: "C");
             var thermostat = new ElementMateriel { Repere = $"BT-EV{suffixe}", Famille = "Thermostat",
-                Designation = "Thermostat d'armoire, contact NO, commande des ventilateurs" + lieu, Calibre = "réglage 0 à 60 °C",
+                Designation = "Thermostat d'armoire, contact NO, commande des ventilateurs" + lieu, Calibre = $"réglé à {t.ConsigneThermostat:0} °C (0 à 60 °C)",
                 Fabricant = "Schneider – ClimaSys CC", Reference = ThermostatVentilation, CoffretId = enveloppe.Id,
                 LargeurMm = 33, HauteurMm = 67, ProfondeurMm = 44, AVerifier = true };
             var ventilateur = new ElementMateriel { Repere = $"EV{suffixe}", Famille = "Ventilation",
-                Designation = $"Ventilateur à filtre encastré en porte, {m.Debit:0} m³/h, avec grille de sortie" + lieu,
+                Designation = $"Ventilateur à filtre encastré {Paroi(t.PositionVentilation)}, {m.Debit:0} m³/h, avec grille de sortie" +
+                    (t.CommandeVentilation == CommandeVentilation.Continue ? ", marche continue" : "") + lieu,
                 Calibre = $"{m.Debit:0} m³/h, découpe {m.Decoupe:0} × {m.Decoupe:0} mm, {m.Puissance:0.#} W 230 V",
                 Quantite = t.NombreVentilateurs, Fabricant = $"{m.Fabricant} – {m.Gamme}", Reference = m.Reference,
                 // Ses pertes partent avec l'air extrait : elles ne s'ajoutent pas au bilan.
                 SurParoi = true, ExterieurEnveloppe = true, CoffretId = enveloppe.Id, AVerifier = !m.Verifie };
-            sectionneur.Ajouter(protection).Ajouter(thermostat).Ajouter(ventilateur);
+            // En marche continue, pas de thermostat : les ventilateurs suivent directement leur protection.
+            if (t.CommandeVentilation == CommandeVentilation.Continue) sectionneur.Ajouter(protection).Ajouter(ventilateur);
+            else sectionneur.Ajouter(protection).Ajouter(thermostat).Ajouter(ventilateur);
             ajoutes.Add(protection);
         }
         if (ajoutes.Count == 0) return false;
@@ -330,6 +333,13 @@ public static class CalculProjet
         CatalogueReferences.Appliquer(racine, projet.References, references ?? CatalogueReferences.Charger());
         return true;
     }
+
+    static string Paroi(PositionVentilation p) => p switch
+    {
+        PositionVentilation.CoteGauche => "sur la paroi gauche",
+        PositionVentilation.CoteDroit => "sur la paroi droite",
+        _ => "en porte",
+    };
 
     /// <summary>Remplace repères et désignations par les noms choisis par l'utilisateur ; le repère calculé reste la clé.</summary>
     public static void AppliquerRenommages(ElementMateriel arbre, Projet projet)

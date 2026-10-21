@@ -36,6 +36,11 @@ public class ResultatThermique
     public int NombreVentilateurs { get; init; }
     public double DebitInstalle => ModeleVentilateur is { } m ? m.Debit * NombreVentilateurs : Ventilateur;
 
+    /// <summary>Paroi des ventilateurs réellement retenue (la porte quand le côté est trop étroit).</summary>
+    public PositionVentilation PositionVentilation { get; init; } = PositionVentilation.Porte;
+    public CommandeVentilation CommandeVentilation { get; init; }
+    public double ConsigneThermostat { get; init; }
+
     /// <summary>Température intérieure atteinte avec la ventilation installée, en °C.</summary>
     public double TemperatureVentilee { get; init; }
 
@@ -81,7 +86,7 @@ public static class CalculThermique
         var appareils = postes.Sum(p => p.PuissanceW);
         var calcule = appareils * (1 + PartCablage);
         var p = note.Valeur(CodePuissance, "Puissance dissipée dans l'armoire", calcule, calcule, "W",
-            $"P = Σ pertes des appareils × (Ib / In)² + {N(PartCablage * 100, 0)} % de câblage",
+            $"P = Σ P_{{appareil}} × (Ib / In)² + {N(PartCablage * 100, 0)} % de câblage",
             $"appareils {N(appareils, 0)} W", Encombrements.Source);
 
         var k = Coefficient(c.Materiau);
@@ -96,6 +101,7 @@ public static class CalculThermique
         double debit = 0, ventilateur = 0, froid = 0, climatiseur = 0, ventilee = 0;
         ModeleVentilateur? modele = null;
         var nombre = 0;
+        var position = c.PositionVentilation;
         // Variateurs posés avec un dégagement réduit : la ventilation forcée est imposée, même si la convection suffirait.
         var forcee = armoire.VentilationForcee;
         if (forcee)
@@ -116,10 +122,25 @@ public static class CalculThermique
                 // Ventilation imposée : toute la puissance est évacuée par l'air, sans compter sur les parois.
                 debit = 3.1 * (forcee ? Math.Max(p, p - evacuee) : p - evacuee) / ecart;
                 var besoin = debit * MajorationFiltres;
-                if (ChoisirVentilateur(besoin, armoire, CatalogueVentilateurs.Actif) is { } choix)
+                var catalogue = CatalogueVentilateurs.Actif;
+                if (c.VentilateurImpose.Length > 0)
+                {
+                    var impose = catalogue.Where(m => m.Reference == c.VentilateurImpose).ToList();
+                    if (impose.Count > 0) catalogue = impose;
+                    else note.Info("Ventilateur imposé", $"{c.VentilateurImpose} absent du catalogue des ventilateurs : choix automatique.", Ref);
+                }
+                var choix = ChoisirVentilateur(besoin, armoire, catalogue, position);
+                if (choix is null && position != PositionVentilation.Porte && ChoisirVentilateur(besoin, armoire, catalogue) is { } enPorte)
+                {
+                    note.Verifier("Paroi des ventilateurs", false, $"Paroi latérale trop petite ({N(armoire.Profondeur)} × {N(armoire.Hauteur)} mm) " +
+                        $"pour {N(besoin, 0)} m³/h : ventilateurs reportés sur la porte.", Ref, StatutCalcul.Alerte);
+                    position = PositionVentilation.Porte;
+                    choix = enPorte;
+                }
+                if (choix is { } retenu)
                 {
                     solution = SolutionThermique.Ventilation;
-                    (modele, nombre) = choix;
+                    (modele, nombre) = retenu;
                     ventilateur = modele.Debit;
                     // Débit utile une fois retirées les pertes de charge des filtres : V × ΔT / 3,1 évacués en plus des parois.
                     var utile = nombre * modele.Debit / MajorationFiltres;
@@ -134,18 +155,23 @@ public static class CalculThermique
                         $"{(nombre > 1 ? $"{nombre} × " : "")}{modele.Fabricant} {modele.Gamme} {modele.Reference} : {N(modele.Debit, 0)} m³/h" +
                         (nombre > 1 ? $" chacun, {N(nombre * modele.Debit, 0)} m³/h installés" : "") +
                         $", découpe {N(modele.Decoupe)} × {N(modele.Decoupe)} mm, {N(modele.Largeur)} × {N(modele.Hauteur)} × {N(modele.Profondeur)} mm, " +
-                        $"{N(modele.Puissance, 1)} W en 230 V. Ventilateur en bas de porte, grille de sortie à filtre fournie à poser " +
-                        (GrilleEnPorte(modele, armoire) ? "en haut de porte, " : "en haut d'une paroi latérale (porte trop basse pour les deux), ") +
-                        "commandé par thermostat." + (modele.Verifie ? "" : " Valeurs indicatives, à vérifier sur la fiche."), "Catalogue Schneider ClimaSys ; " + Ref);
+                        $"{N(modele.Puissance, 1)} W en 230 V. " + Emplacement(position, modele, armoire) + " " +
+                        (c.CommandeVentilation == CommandeVentilation.Continue
+                            ? "Marche continue dès la mise sous tension (filtres à contrôler plus souvent)."
+                            : $"Commandé par thermostat réglé à {N(c.ConsigneThermostat, 0)} °C.") +
+                        (modele.Verifie ? "" : " Valeurs indicatives, à vérifier sur la fiche."), "Catalogue Schneider ClimaSys ; " + Ref);
+                    if (c.CommandeVentilation == CommandeVentilation.Thermostat && c.ConsigneThermostat >= c.TemperatureInterieureMax)
+                        note.Verifier("Consigne du thermostat", false, $"Consigne {N(c.ConsigneThermostat, 0)} °C ≥ intérieur maximal admis " +
+                            $"{N(c.TemperatureInterieureMax, 0)} °C : les ventilateurs démarreraient trop tard.", Ref, StatutCalcul.Alerte);
                     note.Verifier("Ventilation", ventilee <= c.TemperatureInterieureMax + 1e-6,
                         $"{N(nombre * modele.Debit, 0)} m³/h installés pour {N(besoin, 0)} m³/h nécessaires : " +
-                        $"Ti = Ta + P / (k × Ae + V utile / 3,1) = {N(ventilee, 1)} °C ≤ {N(c.TemperatureInterieureMax, 0)} °C.", Ref, StatutCalcul.NonConforme);
+                        $"Ti = Ta + P / (k × Ae + V_{{utile}} / 3,1) = {N(ventilee, 1)} °C ≤ {N(c.TemperatureInterieureMax, 0)} °C.", Ref, StatutCalcul.NonConforme);
                 }
                 else if (forcee)
                     note.Verifier("Ventilation", false, $"{N(besoin, 0)} m³/h nécessaires pour les variateurs : aucun ventilateur du catalogue ne tient " +
-                        $"dans la porte {N(armoire.Largeur)} × {N(armoire.Hauteur)} mm. Armoire trop petite.", Ref, StatutCalcul.NonConforme);
+                        $"sur les parois ni dans la porte {N(armoire.Largeur)} × {N(armoire.Hauteur)} mm. Armoire trop petite.", Ref, StatutCalcul.NonConforme);
                 else
-                    note.Info("Ventilation", $"{N(besoin, 0)} m³/h nécessaires : aucun ventilateur du catalogue ne tient dans la porte " +
+                    note.Info("Ventilation", $"{N(besoin, 0)} m³/h nécessaires : aucun ventilateur du catalogue ne tient sur les parois ni dans la porte " +
                         $"{N(armoire.Largeur)} × {N(armoire.Hauteur)} mm, climatisation retenue.", Ref);
             }
             if (solution == SolutionThermique.Aucune && !(forcee && ti <= c.TemperatureInterieureMax))
@@ -169,7 +195,7 @@ public static class CalculThermique
             chauffage = k * ae * (c.TemperatureInterieureMin - c.TemperatureAmbianteMin);
             resistance = Calibres.Superieur(Resistances, chauffage) ?? Resistances[^1];
             note.Info("Chauffage anticondensation",
-                $"Ph = k × Ae × (Ti min − Ta min) = {N(chauffage, 0)} W : résistance de {N(resistance, 0)} W avec thermostat et hygrostat.", Ref);
+                $"Ph = k × Ae × (T_{{i,min}} − T_{{a,min}}) = {N(chauffage, 0)} W : résistance de {N(resistance, 0)} W avec thermostat et hygrostat.", Ref);
         }
 
         return new ResultatThermique
@@ -177,6 +203,7 @@ public static class CalculThermique
             Note = note, Postes = postes, PuissanceDissipee = p, SurfaceEffective = ae, Coefficient = k,
             TemperatureInterieure = ti, Solution = solution, DebitNecessaire = debit, Ventilateur = ventilateur,
             ModeleVentilateur = modele, NombreVentilateurs = nombre, TemperatureVentilee = ventilee,
+            PositionVentilation = position, CommandeVentilation = c.CommandeVentilation, ConsigneThermostat = c.ConsigneThermostat,
             PuissanceFrigorifique = froid, Climatiseur = climatiseur, Chauffage = chauffage, Resistance = resistance,
         };
     }
@@ -191,20 +218,32 @@ public static class CalculThermique
     /// Ventilateur encastrable le plus petit qui fournit le débit : un seul si possible, sinon plusieurs côte à côte en bas de
     /// porte. Il doit tenir dans la largeur de la porte, et ventilateur en bas plus grille en haut dans sa hauteur.
     /// </summary>
-    public static (ModeleVentilateur Modele, int Nombre)? ChoisirVentilateur(double besoin, ResultatArmoire armoire, IReadOnlyList<ModeleVentilateur> catalogue)
+    public static (ModeleVentilateur Modele, int Nombre)? ChoisirVentilateur(double besoin, ResultatArmoire armoire, IReadOnlyList<ModeleVentilateur> catalogue,
+        PositionVentilation position = PositionVentilation.Porte)
     {
-        // Le ventilateur doit tenir dans la porte ; sa grille de sortie va en haut de porte, ou en haut d'une paroi latérale.
+        // Le ventilateur doit tenir dans la hauteur de sa paroi ; sur un côté, la profondeur de l'armoire remplace la largeur de porte.
+        var porte = position == PositionVentilation.Porte;
         var modeles = catalogue.Where(m => m.Debit > 0 && m.Hauteur + 2 * MargeVentilateur / 2 <= armoire.Hauteur)
             .OrderBy(m => m.Debit).ToList();
         for (var n = 1; n <= 4; n++)
             foreach (var m in modeles)
             {
-                var parPorte = (int)Math.Floor((armoire.Largeur - MargeVentilateur / 2) / (m.Largeur + MargeVentilateur / 2));
-                if (parPorte * Math.Max(1, armoire.Cellules) >= n && n * m.Debit >= besoin - 1e-6)
+                var place = porte ? armoire.Largeur : armoire.Profondeur;
+                var parParoi = (int)Math.Floor((place - MargeVentilateur / 2) / (m.Largeur + MargeVentilateur / 2));
+                if (parParoi * (porte ? Math.Max(1, armoire.Cellules) : 1) >= n && n * m.Debit >= besoin - 1e-6)
                     return (m, n);
             }
         return null;
     }
+
+    /// <summary>Où poser ventilateurs et grille de sortie, en clair pour la note.</summary>
+    static string Emplacement(PositionVentilation position, ModeleVentilateur m, ResultatArmoire armoire) => position switch
+    {
+        PositionVentilation.CoteGauche => "Ventilateur en bas de la paroi gauche, grille de sortie à filtre fournie à poser en haut de la paroi droite (balayage en diagonale).",
+        PositionVentilation.CoteDroit => "Ventilateur en bas de la paroi droite, grille de sortie à filtre fournie à poser en haut de la paroi gauche (balayage en diagonale).",
+        _ => "Ventilateur en bas de porte, grille de sortie à filtre fournie à poser " +
+             (GrilleEnPorte(m, armoire) ? "en haut de porte." : "en haut d'une paroi latérale (porte trop basse pour les deux)."),
+    };
 
     /// <summary>Pertes de chaque appareil de l'armoire à son courant de service.</summary>
     public static List<PosteDissipation> Postes(ResultatProjet r, ISet<ElementMateriel>? dedans = null)

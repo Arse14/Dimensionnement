@@ -229,7 +229,7 @@ public static class Glossaire
     /// <summary>Entrées utiles pour comprendre une ligne de la note de calcul, d'après son libellé, sa formule et ses données.</summary>
     public static IReadOnlyList<EntreeGlossaire> Pour(LigneCalcul ligne)
     {
-        var texte = $"{ligne.Libelle} | {ligne.Formule} | {ligne.Entrees} | {ligne.Message}";
+        var texte = EcritureMath.Texte($"{ligne.Libelle} | {ligne.Formule} | {ligne.Entrees} | {ligne.Message}");
         return Entrees.Where(e => e.MotsCles.Any(m => texte.Contains(m, StringComparison.Ordinal))).ToList();
     }
 }

@@ -139,6 +139,7 @@ public partial class ModeleVuePrincipal : Observable
         SupprimerStation = new Commande(p => Modifier(() => _projet.Automate.Stations.Remove((StationDeportee)p!)), p => p is StationDeportee);
         AfficherArmoire = new Commande(() => Selection = new PageArmoire(_projet));
         AfficherThermique = new Commande(() => Selection = new PageThermique(_projet));
+        AfficherVentilation = new Commande(() => Selection = new PageVentilation(_projet, _projet.Armoire, "armoire principale"));
         AfficherSelectivite = new Commande(() => Selection = new PageSelectivite(_projet));
         AfficherReferences = new Commande(() => Selection = new PageReferences(_projet));
         OuvrirVueArmoire = new Commande(() => Afficher(new FenetreArmoire(this)));
@@ -264,6 +265,7 @@ public partial class ModeleVuePrincipal : Observable
     public Commande SupprimerStation { get; }
     public Commande AfficherArmoire { get; }
     public Commande AfficherThermique { get; }
+    public Commande AfficherVentilation { get; }
     public Commande AfficherSelectivite { get; }
     public Commande AfficherReferences { get; }
     public Commande OuvrirVueArmoire { get; }
@@ -514,7 +516,16 @@ public partial class ModeleVuePrincipal : Observable
         }
     }
 
-    public string ResumeThermique => Resultat.Thermique switch
+    /// <summary>Bilan thermique de l'enveloppe de la page Ventilation ouverte (armoire principale ou coffret déporté).</summary>
+    Core.Armoire.ResultatThermique? ThermiqueVentilation => Selection is PageVentilation { Config: CoffretDeporte c }
+        ? Resultat.Armoire?.Coffrets.FirstOrDefault(x => x.Id == c.Id)?.Thermique
+        : Resultat.Thermique;
+
+    public string ResumeVentilation => Resume(ThermiqueVentilation);
+
+    public string ResumeThermique => Resume(Resultat.Thermique);
+
+    static string Resume(Core.Armoire.ResultatThermique? thermique) => thermique switch
     {
         null => "",
         { Solution: Core.Armoire.SolutionThermique.Ventilation } t => $"{(t.NombreVentilateurs > 1 ? $"{t.NombreVentilateurs} × " : "")}ventilateur {t.ModeleVentilateur?.Reference} de {t.Ventilateur:0} m³/h : {t.DebitInstalle:0} m³/h installés pour {t.DebitNecessaire * Core.Armoire.CalculThermique.MajorationFiltres:0} m³/h nécessaires ({t.TemperatureVentilee:0.0} °C à l'intérieur)",
@@ -526,6 +537,7 @@ public partial class ModeleVuePrincipal : Observable
     {
         PageArmoire => Resultat.Armoire?.Note ?? Resultat.NoteArrivee,
         PageThermique => Resultat.Thermique?.Note ?? Resultat.NoteArrivee,
+        PageVentilation => ThermiqueVentilation?.Note ?? Resultat.NoteArrivee,
         PageSelectivite => Resultat.Selectivite?.Note ?? Resultat.NoteArrivee,
         PageReferences => Resultat.References?.Note ?? Resultat.NoteArrivee,
         Depart d => Resultat.Departs.FirstOrDefault(r => r.Depart == d)?.Note ?? Resultat.NoteArrivee,
@@ -541,6 +553,7 @@ public partial class ModeleVuePrincipal : Observable
         ConfigurationAutomate => "NOTE DE CALCUL – AUTOMATE",
         PageArmoire => "NOTE DE CALCUL – ARMOIRE ET IMPLANTATION",
         PageThermique => "NOTE DE CALCUL – BILAN THERMIQUE",
+        PageVentilation v => $"NOTE DE CALCUL – BILAN THERMIQUE ET VENTILATION ({v.Nom})".ToUpperInvariant(),
         PageSelectivite => "NOTE DE CALCUL – SÉLECTIVITÉ",
         PageReferences => "RÉFÉRENCES DU MATÉRIEL",
         PageBilanPuissance => "NOTE DE CALCUL – BILAN DE PUISSANCE",
@@ -729,6 +742,7 @@ public partial class ModeleVuePrincipal : Observable
     {
         Depart d => d.Forcages,
         PageArmoire or PageThermique => _projet.Armoire.Forcages,
+        PageVentilation v => v.Config.Forcages,
         _ => _projet.ForcagesArrivee,
     };
 
@@ -966,6 +980,13 @@ public partial class ModeleVuePrincipal : Observable
         if (carte.Depart is { } d)
         {
             Selection = _projet.Departs.FirstOrDefault(x => x.Id == d.Id) ?? (object)_projet;
+            return;
+        }
+        // Carte de ventilation : sa page de réglages, pour l'enveloppe qu'elle équipe.
+        if (carte.Chaine.FirstOrDefault()?.Element is { } tete && tete.RepereOrigine.StartsWith("Q-EV"))
+        {
+            var coffret = _projet.Armoire.Coffrets.FirstOrDefault(c => c.Id == tete.CoffretId);
+            Selection = new PageVentilation(_projet, coffret ?? _projet.Armoire, coffret?.Nom ?? "armoire principale");
             return;
         }
         Selection = carte.Chaine.FirstOrDefault()?.Element.Famille switch

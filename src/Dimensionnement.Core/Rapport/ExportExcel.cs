@@ -30,7 +30,7 @@ public static class ExportExcel
         ligne = 2;
         foreach (var l in r.Notes.SelectMany(n => n.Lignes))
             Remplir(notes, ligne++, l.Identifiant, l.Libelle, l.ValeurCalculee.HasValue ? Math.Round(l.ValeurCalculee.Value, 3) : "",
-                l.ValeurRetenue.HasValue ? Math.Round(l.ValeurRetenue.Value, 3) : "", l.Unite, l.Formule, l.Entrees, l.Message,
+                l.ValeurRetenue.HasValue ? Math.Round(l.ValeurRetenue.Value, 3) : "", l.Unite, EcritureMath.Texte(l.Formule), EcritureMath.Texte(l.Entrees), EcritureMath.Texte(l.Message),
                 l.Reference, l.Statut.ToString(), l.Forcage?.Auteur ?? "", l.Forcage?.Motif ?? "");
 
         var bilan = Feuille(classeur, "Bilan 24 V", "Consommateur", "Courant (A)");

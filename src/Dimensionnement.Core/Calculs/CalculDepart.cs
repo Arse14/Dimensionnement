@@ -66,8 +66,16 @@ public static class CalculDepart
 
     static double Tension(TypeAlimentation a) => a == TypeAlimentation.Mono230 ? 230 : 400;
     static double Racine(TypeAlimentation a) => a is TypeAlimentation.Mono230 or TypeAlimentation.Bi400 ? 1 : Math.Sqrt(3);
-    static string FormuleCourant(TypeAlimentation a, string suffixe) =>
-        a is TypeAlimentation.Mono230 or TypeAlimentation.Bi400 ? $"I = P / (U{suffixe})" : $"I = P / (√3 × U{suffixe})";
+    /// <summary>La formule du courant, puis la même avec les valeurs et le résultat : « I = P / (√3 × U × cos φ) = 5 500 / (√3 × 400 × 0,85) = 9,34 A ».</summary>
+    static string FormuleCourant(TypeAlimentation a, string suffixe, double puissanceW, double tension, params double[] facteurs)
+    {
+        var mono = a is TypeAlimentation.Mono230 or TypeAlimentation.Bi400;
+        var valeurs = string.Join("", facteurs.Select(f => $" × {N(f)}"));
+        var courant = puissanceW / ((mono ? 1 : Math.Sqrt(3)) * tension * facteurs.Aggregate(1.0, (x, f) => x * f));
+        var denominateur = $"{(mono ? "" : "√3 × ")}{N(tension)}{valeurs}";
+        return (mono ? suffixe.Length > 0 ? $"I = P / (U{suffixe})" : "I = P / U" : $"I = P / (√3 × U{suffixe})") +
+               $" = {N(puissanceW, 0)} / {(denominateur.Contains('×') ? $"({denominateur})" : denominateur)} = {N(courant)} A";
+    }
 
     static NoteDeCalcul NouvelleNote(Depart d) => new($"{d.Code}", d.Forcages);
 
@@ -82,13 +90,13 @@ public static class CalculDepart
                 (rc.Alerte.Length > 0 ? " " + rc.Alerte : ""), "η = puissance utile / puissance absorbée");
         var ib = note.Valeur(CodesCalcul.CourantEmploi, "Courant d'emploi du moteur", inCalcule,
             m.CourantPlaque > 0 ? m.CourantPlaque : inCalcule, "A",
-            FormuleCourant(m.Alimentation, " × cos φ × η") + (m.CourantPlaque > 0 ? " ; valeur de plaque retenue" : ""),
+            FormuleCourant(m.Alimentation, " × cos φ × η", m.PuissanceKw * 1000, u, m.CosPhi, m.Rendement) + (m.CourantPlaque > 0 ? " ; valeur de plaque retenue" : ""),
             entrees, "Plaque signalétique, NF EN 60034-1");
         if (m.CourantPlaque > 0)
         {
             var ecart = Math.Abs(m.CourantPlaque - inCalcule) / m.CourantPlaque;
             note.Verifier("Cohérence avec la plaque", ecart <= 0.10,
-                $"In plaque = {A(m.CourantPlaque)}, In recalculé = {A(inCalcule)}, écart {Pct(ecart * 100)}",
+                $"I_{{n,plaque}} = {A(m.CourantPlaque)}, I_{{n,calc}} = {A(inCalcule)} ; écart ε = |I_{{n,plaque}} − I_{{n,calc}}| / I_{{n,plaque}} = {Pct(ecart * 100)}",
                 siEchec: StatutCalcul.Alerte);
         }
 
@@ -509,7 +517,7 @@ public static class CalculDepart
         var u = Tension(r.Alimentation);
         var calcule = r.PuissanceKw * 1000 / (Racine(r.Alimentation) * u);
         var ib = note.Valeur(CodesCalcul.CourantEmploi, "Courant d'emploi", calcule, calcule, "A",
-            FormuleCourant(r.Alimentation, ""), $"P = {N(r.PuissanceKw)} kW, U = {N(u)} V");
+            FormuleCourant(r.Alimentation, "", r.PuissanceKw * 1000, u), $"P = {N(r.PuissanceKw)} kW, U = {N(u)} V");
         var (courantCable, calibre, protection, aval) = Protection(r, note, reseau, ib, CourbeDisjoncteur.B, "charge résistive");
         if (r.AvecContacteur)
         {
@@ -557,7 +565,7 @@ public static class CalculDepart
                 "Bilan de puissance du coffret");
         var calcule = puissance * 1000 / (Racine(g.Alimentation) * u * g.CosPhi);
         var ib = note.Valeur(CodesCalcul.CourantEmploi, "Courant d'emploi", calcule, calcule, "A",
-            FormuleCourant(g.Alimentation, " × cos φ"), $"P = {N(puissance)} kW, U = {N(u)} V, cos φ = {N(g.CosPhi)}");
+            FormuleCourant(g.Alimentation, " × cos φ", puissance * 1000, u, g.CosPhi), $"P = {N(puissance)} kW, U = {N(u)} V, cos φ = {N(g.CosPhi)}");
         var (courantCable, calibre, protection, aval) = Protection(g, note, reseau, ib, g.Courbe, "choix utilisateur");
         var cable = CalculCable.Dimensionner(note, g.Cable, g.Alimentation, courantCable, ib, g.CosPhi, reseau, chuteAmont);
         if (coffret is not null)
@@ -626,7 +634,7 @@ public static class CalculDepart
         var puissance = 24 * assigne / rendement / 1000;
         var calcule = puissance * 1000 / (Racine(a.Alimentation) * u * CosPhiAlimentation);
         var ib = note.Valeur(CodesCalcul.CourantEmploi, "Courant absorbé au primaire", calcule, calcule, "A",
-            FormuleCourant(a.Alimentation, " × cos φ") + ", P = 24 V × I assigné / η",
+            FormuleCourant(a.Alimentation, " × cos φ", puissance * 1000, u, CosPhiAlimentation) + " ; P = 24 V × I_{assigné} / η",
             $"η = {N(rendement)}, cos φ = {N(CosPhiAlimentation)}");
         note.Info("Appel de courant", "Les alimentations à découpage ont un fort courant d'appel : disjoncteur courbe C au minimum, D si plusieurs alimentations.",
             "Documentation fabricant");

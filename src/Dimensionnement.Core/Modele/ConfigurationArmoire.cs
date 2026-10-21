@@ -26,6 +26,12 @@ public enum MontageSectionneur
 }
 
 /// <summary>Fabricant retenu pour le matériel de puissance et de protection.</summary>
+/// <summary>Commande des ventilateurs : par thermostat d'armoire ou en marche continue dès la mise sous tension.</summary>
+public enum CommandeVentilation { Thermostat, Continue }
+
+/// <summary>Paroi qui reçoit les ventilateurs à filtre ; la grille de sortie va en haut de la paroi opposée (côtés) ou de la porte.</summary>
+public enum PositionVentilation { CoteGauche, CoteDroit, Porte }
+
 public enum FabricantMateriel { Schneider, ABB, Siemens, Legrand }
 
 /// <summary>Fabricant des enveloppes et plaques de montage.</summary>
@@ -76,6 +82,12 @@ public class ConfigurationArmoire
 
     /// <summary>Montage du sectionneur général : hors plaque (porte, côté), il ne prend pas de place et sort des zones CEM.</summary>
     public MontageSectionneur MontageSectionneur { get; set; } = MontageSectionneur.PlaqueCommandeFrontale;
+
+    /// <summary>Ventilation ajoutée par le bilan thermique : commande, consigne du thermostat, paroi et modèle imposé (vide : automatique).</summary>
+    public CommandeVentilation CommandeVentilation { get; set; } = CommandeVentilation.Thermostat;
+    public double ConsigneThermostat { get; set; } = 35;
+    public PositionVentilation PositionVentilation { get; set; } = PositionVentilation.CoteGauche;
+    public string VentilateurImpose { get; set; } = "";
 
     public MarqueEnveloppe Marque { get; set; } = MarqueEnveloppe.Rittal;
 

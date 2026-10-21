@@ -227,7 +227,7 @@
                 <Border BorderBrush="{StaticResource Bordure}" BorderThickness="1" CornerRadius="3" Padding="10,8" Margin="0,2,0,8"
                         Visibility="{Binding IsChecked, ElementName=BoutonRendement, Converter={StaticResource VraiVisible}}">
                     <StackPanel>
-                        <TextBlock Text="CALCUL DU RENDEMENT : η = puissance utile / puissance absorbée" FontWeight="SemiBold"
+                        <TextBlock inf:Formules.Texte="CALCUL DU RENDEMENT : η = Pu / Pabs (puissance utile sur puissance absorbée)" FontWeight="SemiBold"
                                    Foreground="{StaticResource Accent}" Margin="0,0,0,6"/>
                         <DockPanel Style="{StaticResource Ligne}">
                             <TextBlock Text="Méthode" Style="{StaticResource Etiquette}"/>
@@ -253,8 +253,8 @@
                                 <TextBox Text="{inf:Lien VitesseNominale}"/>
                             </DockPanel>
                         </StackPanel>
-                        <TextBlock TextWrapping="Wrap" FontFamily="Consolas, Segoe UI" FontSize="12" Margin="0,4,0,0"
-                                   Text="{Binding RendementCalcule.Detail}" Visibility="{Binding RendementCalcule, Converter={StaticResource NonNulVisible}}"/>
+                        <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,4,0,0"
+                                   inf:Formules.Texte="{Binding RendementCalcule.Detail}" Visibility="{Binding RendementCalcule, Converter={StaticResource NonNulVisible}}"/>
                         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,4,0,0"
                                    Text="Renseigner le courant nominal In et le cos φ de la plaque, ainsi que Pn (méthode plaque) ou le couple et la vitesse.">
                             <TextBlock.Style>
@@ -767,8 +767,8 @@
                                         <Run Text="Étape"/> <Run Text="{Binding Numero, Mode=OneWay}"/><Run Text=" – "/><Run Text="{Binding Titre, Mode=OneWay}"/>
                                     </TextBlock>
                                     <TextBlock Text="{Binding Pourquoi}" TextWrapping="Wrap" Margin="0,6,0,0" Foreground="{StaticResource TexteSecondaire}"/>
-                                    <TextBlock Text="{Binding Formule}" TextWrapping="Wrap" Margin="0,6,0,0" FontFamily="Consolas, Segoe UI"/>
-                                    <TextBlock Text="{Binding Resultat}" TextWrapping="Wrap" Margin="0,6,0,0" FontWeight="SemiBold" Foreground="{StaticResource Accent}"/>
+                                    <TextBlock inf:Formules.Texte="{Binding Formule}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                                    <TextBlock inf:Formules.Texte="{Binding Resultat}" TextWrapping="Wrap" Margin="0,6,0,0" FontWeight="SemiBold" Foreground="{StaticResource Accent}"/>
                                 </StackPanel>
                             </Border>
                         </DataTemplate>
@@ -1215,6 +1215,9 @@
                 <TextBlock Text="BILAN THERMIQUE – IEC TR 60890" Style="{StaticResource TitrePanneau}"/>
                 <TextBlock TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource Accent}" Margin="0,0,0,8"
                            Text="{Binding DataContext.ResumeThermique, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                <Button Content="Réglages de la ventilation…" HorizontalAlignment="Left" Margin="0,0,0,8" Padding="10,3"
+                        ToolTip="Thermostat ou marche continue, position des ventilateurs, modèle imposé"
+                        Command="{Binding DataContext.AfficherVentilation, RelativeSource={RelativeSource AncestorType=Window}}"/>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Matériau de l'enveloppe" Style="{StaticResource Etiquette}"/>
                     <ComboBox ItemsSource="{x:Static inf:Listes.Materiaux}" SelectedItem="{inf:Lien Projet.Armoire.Materiau}"/>
@@ -1256,6 +1259,56 @@
                     <TextBlock DockPanel.Dock="Right" FontWeight="SemiBold" Foreground="{StaticResource Accent}" FontFamily="Consolas, Segoe UI"
                                Text="{Binding DataContext.Resultat.Thermique.PuissanceDissipee, RelativeSource={RelativeSource AncestorType=Window}, StringFormat={}{0:0} W}"/>
                     <TextBlock Text="Total retenu, câblage compris" FontWeight="SemiBold"/>
+                </DockPanel>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- Ventilation d'une enveloppe, ouverte depuis sa carte -->
+        <DataTemplate DataType="{x:Type mv:PageVentilation}">
+            <StackPanel>
+                <TextBlock Style="{StaticResource TitrePanneau}">
+                    <Run Text="VENTILATION –"/> <Run Text="{Binding Nom, Mode=OneWay}"/>
+                </TextBlock>
+                <TextBlock TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource Accent}" Margin="0,0,0,8"
+                           Text="{Binding DataContext.ResumeVentilation, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
+                           Text="Les ventilateurs à filtre sont ajoutés par le bilan thermique quand la convection ne suffit pas, ou quand les variateurs ont un dégagement réduit. Ces réglages s'appliquent à cette enveloppe."/>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Commande des ventilateurs" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.CommandesVentilation}" SelectedItem="{inf:Lien Config.CommandeVentilation}"/>
+                </DockPanel>
+                <DockPanel>
+                    <DockPanel.Style>
+                        <Style TargetType="DockPanel" BasedOn="{StaticResource Ligne}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Config.CommandeVentilation}" Value="{x:Static mod:CommandeVentilation.Continue}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DockPanel.Style>
+                    <TextBlock Text="Consigne du thermostat (°C)" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien Config.ConsigneThermostat}"
+                             ToolTip="Température de démarrage des ventilateurs, en dessous de l'intérieur maximal admis"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Position des ventilateurs" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.PositionsVentilation}" SelectedItem="{inf:Lien Config.PositionVentilation}"
+                              ToolTip="Ventilateur en bas de la paroi choisie ; sur un côté, la grille de sortie va en haut du côté opposé"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Ventilateur" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{Binding Ventilateurs}" DisplayMemberPath="Libelle" SelectedValuePath="Valeur"
+                              SelectedValue="{inf:Lien Config.VentilateurImpose}"
+                              ToolTip="Schneider ClimaSys encastré ; « Automatique » prend le plus petit qui fournit le débit"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Intérieur maximal admis (°C)" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien Config.TemperatureInterieureMax}"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Ambiance maximale (°C)" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien Config.TemperatureAmbianteMax}"/>
                 </DockPanel>
             </StackPanel>
         </DataTemplate>
@@ -1458,11 +1511,11 @@
                                        FontFamily="Consolas, Segoe UI" Foreground="{StaticResource Accent}"/>
                             <TextBlock Text="{Binding Libelle}" FontWeight="SemiBold" TextWrapping="Wrap"/>
                         </DockPanel>
-                        <TextBlock Text="{Binding Formule}" Foreground="{StaticResource TexteSecondaire}" TextWrapping="Wrap"
+                        <TextBlock inf:Formules.Texte="{Binding Formule}" Foreground="{StaticResource TexteSecondaire}" TextWrapping="Wrap"
                                    Visibility="{Binding Formule, Converter={StaticResource VideMasque}}"/>
-                        <TextBlock Text="{Binding Entrees}" Foreground="{StaticResource TexteSecondaire}" TextWrapping="Wrap"
+                        <TextBlock inf:Formules.Texte="{Binding Entrees}" Foreground="{StaticResource TexteSecondaire}" TextWrapping="Wrap"
                                    Visibility="{Binding Entrees, Converter={StaticResource VideMasque}}"/>
-                        <TextBlock Text="{Binding Message}" TextWrapping="Wrap"
+                        <TextBlock inf:Formules.Texte="{Binding Message}" TextWrapping="Wrap"
                                    Visibility="{Binding Message, Converter={StaticResource VideMasque}}"/>
                         <TextBlock Foreground="{StaticResource TexteSecondaire}" FontSize="11" FontStyle="Italic">
                             <Run Text="{Binding Identifiant, Mode=OneWay}"/><Run Text="   "/><Run Text="{Binding Reference, Mode=OneWay}"/>

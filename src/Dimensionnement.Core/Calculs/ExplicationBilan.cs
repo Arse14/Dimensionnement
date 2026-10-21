@@ -47,7 +47,7 @@ public static class ExplicationBilan
             "Un récepteur ne fonctionne pas toujours à pleine charge : un moteur est dimensionné avec une marge, une prise ne débite pas son calibre. " +
             "ku ramène chaque départ à sa charge réelle. Les départs derrière un transformateur 400/230 V ne sont pas comptés deux fois : " +
             "c'est le primaire du transformateur qui les représente.",
-            "P utilisée = P × ku ; Q utilisée = Q × ku",
+            "P_{utilisée} = P × ku ; Q_{utilisée} = Q × ku",
             $"Σ (P × ku) = {N(p)} kW ; Σ (Q × ku) = {N(q)} kvar.");
         Etape("Coefficient de simultanéité ks",
             "Tous les départs ne fonctionnent pas en même temps. Le guide UTE C 15-105 donne ks selon le nombre de circuits d'une armoire " +
@@ -67,7 +67,7 @@ public static class ExplicationBilan
         Etape("Appareils de tête",
             "Le disjoncteur général doit laisser passer le courant d'emploi en permanence : on retient le calibre normalisé immédiatement supérieur. " +
             "L'interrupteur-sectionneur doit être au moins aussi gros que le disjoncteur qu'il précède (NF EN 60204-1, 5.3).",
-            "In ≥ Ib ; Ith sectionneur ≥ In",
+            "In ≥ Ib ; I_{th,sectionneur} ≥ In",
             $"Disjoncteur général {A(r.CalibreGeneral)}.");
         Etape("Câble d'arrivée",
             "La section doit supporter le calibre du disjoncteur dans ses conditions de pose (Iz ≥ In, NF C 15-100, 523) " +
@@ -81,7 +81,7 @@ public static class ExplicationBilan
             "Automates, IHM, relais de sécurité, bobines de contacteurs et capteurs sont regroupés par tension (24 V DC, 24 V AC, 230 V AC). " +
             "Chaque source est dimensionnée sur les consommateurs qui lui sont raccordés, avec sa réserve ; elle apparaît ensuite " +
             "comme un départ du bilan, par sa puissance absorbée au primaire.",
-            "I source ≥ Σ I consommateurs × (1 + réserve) ; S transformateur ≥ U × I × k",
+            "I_{source} ≥ (1 + r) × Σ I_{consommateurs}, r : réserve ; S_{transformateur} ≥ U × I × k",
             commande.Count == 0 ? "Aucun consommateur de commande." : string.Join(" ; ", commande) +
                 (r.SourcesManquantes.Count > 0 ? $". Manque : {string.Join(", ", r.SourcesManquantes.Select(b => SourcesCommande.Libelle(b.Tension)))}." : "."));
         return etapes;

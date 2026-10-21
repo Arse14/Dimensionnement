@@ -48,7 +48,8 @@ public static class RapportHtml
             .schema svg { max-width: 100%; height: auto; border: 1px solid #c9d1d9; }
             .schema.armoire svg { max-height: 900px; width: auto; }
             .avert { background: #fff6e5; border-left: 4px solid #f0a020; padding: 8px 10px; }
-            .glossaire p { margin: 2px 0 8px; } .glossaire .formule { font-family: Consolas, monospace; background: #f3f5f6; padding: 2px 6px; }
+            .glossaire p { margin: 2px 0 8px; } .glossaire .formule { background: #f3f5f6; padding: 6px 10px; display: inline-block; }
+            {{EcritureMath.StyleHtml}}
             a { color: #0f5d5e; }
             @media print { h2, h3 { page-break-after: avoid; } .bloc { page-break-inside: avoid; } .annexes { page-break-before: always; } }
             </style></head><body>
@@ -271,7 +272,7 @@ public static class RapportHtml
         }
         sb.Append("<table><tr><th>Où</th><th>Point</th><th>Détail</th><th>État</th><th>Renvoi</th></tr>");
         foreach (var (ou, l, renvoi, lien) in points)
-            sb.Append($"<tr class=\"l-{l.Statut}\"><td class=\"rep\">{E(ou)}</td><td>{E(l.Libelle)}</td><td>{E(l.Message)}</td>" +
+            sb.Append($"<tr class=\"l-{l.Statut}\"><td class=\"rep\">{E(ou)}</td><td>{E(l.Libelle)}</td><td>{M(l.Message)}</td>" +
                       $"<td class=\"{l.Statut} etat\">{Statut(l.Statut)}</td>" +
                       $"<td>{(lien.Length > 0 ? $"<a href=\"{lien}\">{E(renvoi)}</a>" : E(renvoi))}</td></tr>");
         sb.Append("</table>");
@@ -338,7 +339,7 @@ public static class RapportHtml
             var valeur = l.ValeurRetenue is { } v ? $"<b>{N(v)} {E(l.Unite)}</b>" : "";
             if (l.ValeurCalculee is { } c && l.ValeurRetenue is { } rv && Math.Abs(c - rv) > 1e-9)
                 valeur += $"<span class=\"s\">calcul : {N(c)}</span>";
-            var calcul = string.Join("<br>", new[] { l.Formule, l.Entrees, l.Message }.Where(t => t.Length > 0).Select(E));
+            var calcul = string.Join("<br>", new[] { l.Formule, l.Entrees, l.Message }.Where(t => t.Length > 0).Select(t => M(t)));
             if (l.Forcage is { } f)
                 calcul += $"<br><em>Forcé par {E(f.Auteur)} le {f.Date:dd/MM/yyyy} : {E(f.Motif)}</em>";
             var renvois = new List<string>();
@@ -377,7 +378,7 @@ public static class RapportHtml
         foreach (var g in consignes)
         {
             var messages = g.Select(x => x.l.Message).Distinct().ToList();
-            sb.Append($"<tr><td class=\"rep\" style=\"white-space:normal\">{E(g.Key)}</td><td>{string.Join("<br>", messages.Take(3).Select(E))}" +
+            sb.Append($"<tr><td class=\"rep\" style=\"white-space:normal\">{E(g.Key)}</td><td>{string.Join("<br>", messages.Take(3).Select(t => M(t)))}" +
                       (messages.Count > 3 ? $"<span class=\"s\">… et {messages.Count - 3} variante(s), voir l'annexe C</span>" : "") +
                       $"</td><td>{string.Join(", ", g.Select(x => $"<a href=\"#{annexe[x.d]}\">{x.d.Depart.Code}</a>"))}</td></tr>");
         }
@@ -390,11 +391,11 @@ public static class RapportHtml
         sb.Append("<h2>Annexe E. Glossaire des formules</h2><div class=\"glossaire\">");
         foreach (var g in Glossaire.Entrees)
         {
-            sb.Append($"<div class=\"bloc\"><h3 id=\"{IdGlossaire(g)}\">{IdGlossaire(g)}. {E(g.Terme)}</h3><p>{E(g.Definition)}</p>");
-            if (g.Formule.Length > 0) sb.Append($"<p><span class=\"formule\">{E(g.Formule)}</span></p>");
+            sb.Append($"<div class=\"bloc\"><h3 id=\"{IdGlossaire(g)}\">{IdGlossaire(g)}. {E(g.Terme)}</h3><p>{M(g.Definition)}</p>");
+            if (g.Formule.Length > 0) sb.Append($"<p class=\"formule\">{M(g.Formule)}</p>");
             if (g.Termes.Count > 0)
-                sb.Append("<p>" + string.Join("<br>", g.Termes.Select(t => $"<b>{E(t.Symbole)}</b> : {E(t.Signification)}")) + "</p>");
-            if (g.Exemple.Length > 0) sb.Append($"<p class=\"s\">Exemple : {E(g.Exemple)}</p>");
+                sb.Append("<p>" + string.Join("<br>", g.Termes.Select(t => $"<b>{M(t.Symbole, g.Formule.Length > 0)}</b> : {M(t.Signification)}")) + "</p>");
+            if (g.Exemple.Length > 0) sb.Append($"<p class=\"s\">Exemple : {M(g.Exemple)}</p>");
             if (g.Reference.Length > 0) sb.Append($"<p class=\"s\">{E(g.Reference)}</p>");
             sb.Append("</div>");
         }
@@ -422,4 +423,7 @@ public static class RapportHtml
     };
 
     static string E(string texte) => WebUtility.HtmlEncode(texte);
+
+    /// <summary>Texte dont les formules sont écrites comme sur papier (fractions, racines, indices).</summary>
+    static string M(string texte, bool formule = false) => EcritureMath.Html(texte, formule);
 }

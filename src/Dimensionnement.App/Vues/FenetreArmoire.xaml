@@ -21,7 +21,7 @@
                                        FontFamily="Consolas, Segoe UI" Foreground="{StaticResource Accent}"/>
                             <TextBlock Text="{Binding Libelle}" FontWeight="SemiBold" TextWrapping="Wrap"/>
                         </DockPanel>
-                        <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}"
+                        <TextBlock inf:Formules.Texte="{Binding Message}" TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}"
                                    Visibility="{Binding Message, Converter={StaticResource VideMasque}}"/>
                     </StackPanel>
                 </DockPanel>
@@ -95,7 +95,7 @@
                                     <Border BorderBrush="{StaticResource Bordure}" BorderThickness="0,0,0,1" Padding="0,6">
                                         <StackPanel>
                                             <TextBlock Text="{Binding Titre}" FontWeight="SemiBold" Foreground="{StaticResource Accent}"/>
-                                            <TextBlock Text="{Binding Texte}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                            <TextBlock inf:Formules.Texte="{Binding Texte}" TextWrapping="Wrap" Margin="0,2,0,0"/>
                                         </StackPanel>
                                     </Border>
                                 </DataTemplate>
