@@ -38,6 +38,11 @@ public partial class FenetreSchema : Window
                 "Dimensionnement", "WebView2");
             var environnement = await CoreWebView2Environment.CreateAsync(null, donnees);
             await Vue.EnsureCoreWebView2Async(environnement);
+            // Clic sur un appareil de l'organigramme : sa fiche catalogue s'ouvre pour la contrôler et la valider.
+            Vue.CoreWebView2.WebMessageReceived += (_, e) =>
+            {
+                if (e.TryGetWebMessageAsString() is { Length: > 0 } reference) _modele.OuvrirFiche(reference);
+            };
             _pret = true;
             Afficher();
         }
@@ -54,9 +59,15 @@ public partial class FenetreSchema : Window
         if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == nameof(ModeleVuePrincipal.Resultat)) Afficher();
     }
 
+    /// <summary>Script de la vue intégrée : un clic sur un appareil qui porte une référence l'envoie à l'application.</summary>
+    const string ScriptFiche =
+        "<script>document.addEventListener('click',function(e){var g=e.target.closest&&e.target.closest('[data-reference]');" +
+        "if(g&&window.chrome&&chrome.webview)chrome.webview.postMessage(g.getAttribute('data-reference'));});</script>";
+
     string Html() =>
-        "<!doctype html><html><head><meta charset=\"utf-8\"><style>body{margin:0;background:#fff}</style></head><body>" +
-        _svg(_modele.Resultat) + "</body></html>";
+        "<!doctype html><html><head><meta charset=\"utf-8\"><style>body{margin:0;background:#fff}" +
+        "[data-reference]{cursor:pointer}[data-reference]:hover rect{stroke:#1f6feb;stroke-width:2}</style></head><body>" +
+        _svg(_modele.Resultat) + ScriptFiche + "</body></html>";
 
     void Afficher()
     {

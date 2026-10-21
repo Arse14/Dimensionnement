@@ -34,8 +34,8 @@
             <WrapPanel>
                 <CheckBox x:Name="CaseZones" Content="Zones CEM" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"/>
                 <CheckBox x:Name="CaseChamps" Content="Champ magnétique" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"/>
-                <CheckBox x:Name="CaseIhm" Content="IHM en porte" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"
-                          ToolTip="Affiche ou masque les IHM encastrées dans la porte ; elles restent comptées (découpe, profondeur)"/>
+                <CheckBox x:Name="CaseIhm" Content="Équipements de porte" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"
+                          ToolTip="Affiche ou masque les IHM et les ventilateurs encastrés dans la porte ; ils restent comptés (découpe, profondeur, débit)"/>
                 <Button Content="Ajouter un rail DIN" Command="{Binding AjouterRail}" Margin="0,0,6,0"/>
                 <Button Content="Ajouter une goulotte horizontale" Command="{Binding AjouterGoulotte}" CommandParameter="H" Margin="0,0,6,0"/>
                 <Button Content="Ajouter une goulotte verticale" Command="{Binding AjouterGoulotte}" CommandParameter="V" Margin="0,0,16,0"/>

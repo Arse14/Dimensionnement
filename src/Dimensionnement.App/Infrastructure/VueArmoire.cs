@@ -310,6 +310,48 @@ public class VueArmoire : Border
             Panel.SetZIndex(cadre, 40);
             Placer(cadre, x.X, x.Y);
         }
+
+        // Ventilateurs à filtre en bas de porte, côte à côte à droite, et leurs grilles de sortie en haut, à la même verticale.
+        if (AfficherIhm && a.Thermique is { ModeleVentilateur: { } m, NombreVentilateurs: > 0 } th)
+        {
+            const double marge = Core.Armoire.CalculThermique.MargeVentilateur;
+            var parPorte = Math.Max(1, (int)Math.Floor((a.Largeur - marge) / (m.Largeur + marge)));
+            for (var i = 0; i < th.NombreVentilateurs; i++)
+            {
+                var cellule = i / parPorte;
+                var x = (cellule + 1) * a.Largeur - marge - (i % parPorte + 1) * m.Largeur - (i % parPorte) * marge;
+                Ventilation(x, a.Hauteur - marge - m.Hauteur, m, $"EV ventilateur {m.Debit:0} m³/h", true);
+                Ventilation(x, marge, m, "Grille de sortie", false);
+            }
+        }
+    }
+
+    void Ventilation(double x, double y, Core.Normes.ModeleVentilateur m, string texte, bool ventilateur)
+    {
+        var cadre = new Border
+        {
+            Width = m.Largeur, Height = m.Hauteur, CornerRadius = new CornerRadius(4), Background = Pinceau("#2214B8A6"), Tag = "Porte",
+            ToolTip = $"{texte}\n{m.Fabricant} {m.Gamme} {m.Reference}\nDécoupe {m.Decoupe:0} × {m.Decoupe:0} mm, {m.Largeur:0} × {m.Hauteur:0} × {m.Profondeur:0} mm" +
+                      (ventilateur ? $", {m.Puissance:0.#} W 230 V" : "") + (m.Verifie ? "" : "\nValeurs indicatives, à vérifier"),
+            Child = new Grid
+            {
+                Children =
+                {
+                    new System.Windows.Shapes.Rectangle { Stroke = Pinceau("#14B8A6"), StrokeThickness = 3, StrokeDashArray = new DoubleCollection { 5, 3 }, RadiusX = 4, RadiusY = 4 },
+                    new Viewbox
+                    {
+                        Margin = new Thickness(8), StretchDirection = StretchDirection.DownOnly,
+                        Child = new TextBlock
+                        {
+                            Text = ventilateur ? $"{m.Debit:0} m³/h\n(porte)" : "Sortie\n(porte)", TextAlignment = TextAlignment.Center,
+                            FontWeight = FontWeights.Bold, FontSize = 22, Foreground = Pinceau("#14B8A6"),
+                        },
+                    },
+                },
+            },
+        };
+        Panel.SetZIndex(cadre, 40);
+        Placer(cadre, x, y);
     }
 
     /// <summary>Rend un rail ou une goulotte ajouté déplaçable, avec un menu pour sa longueur, son modèle et sa suppression.</summary>

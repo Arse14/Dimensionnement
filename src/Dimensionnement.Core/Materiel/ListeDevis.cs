@@ -73,7 +73,7 @@ public static class ListeDevis
         if (a.Thermique is not { } t) return;
         switch (t.Solution)
         {
-            case SolutionThermique.Ventilation:
+            case SolutionThermique.Ventilation when t.ModeleVentilateur is null:
                 l.Add(new(Enveloppe, "Ventilateur à filtre", $"débit libre {N(t.Ventilateur, 0)} m³/h, 230 V", fabricant, "", 1, "u",
                     Remarque: $"Besoin {N(t.DebitNecessaire, 0)} m³/h"));
                 l.Add(new(Enveloppe, "Grille de sortie à filtre", "même taille que le ventilateur", fabricant, "", 1, "u"));

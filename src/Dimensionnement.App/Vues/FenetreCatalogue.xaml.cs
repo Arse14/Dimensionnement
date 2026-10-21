@@ -29,6 +29,9 @@ public partial class FenetreCatalogue : Window
         Closing += Fermeture;
     }
 
+    /// <summary>Affiche la fiche de cette référence ; faux si aucun catalogue ne la contient.</summary>
+    public bool Selectionner(string reference) => _modele.SelectionnerReference(reference);
+
     void Fermeture(object? sender, CancelEventArgs e)
     {
         // Valide la saisie en cours (le champ actif ne perd pas le focus avant la fermeture).

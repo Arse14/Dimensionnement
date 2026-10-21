@@ -177,7 +177,7 @@ public static class CalculArmoire
     {
         var config = projet.Armoire;
         var tous = AppareilsArmoire(r, projet);
-        Guid? Coffret(AppareilImplante a) =>
+        Guid? Coffret(AppareilImplante a) => a.Element?.CoffretId is { } impose ? impose :
             config.Affectations.TryGetValue(CleAffectation(a), out var id) && config.Coffrets.Any(c => c.Id == id) ? id : null;
         // Les IHM en porte sont sur la porte de l'armoire principale.
         var porte = r.Arbre.Parcourir().Where(e => e.EnPorte).ToList();

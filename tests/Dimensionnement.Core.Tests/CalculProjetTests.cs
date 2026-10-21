@@ -39,7 +39,7 @@ public class CalculProjetTests
 
         var qg = r.Arbre.Enfants.Single().Enfants.Single().Enfants.Single();
         Assert.Equal("QG", qg.Repere);
-        Assert.Equal(new[] { "Q1", "Q2", "Q3", "Q4" }, qg.Enfants.Where(e => e.Famille != "Répartiteur").Select(e => e.Repere));
+        Assert.Equal(new[] { "Q1", "Q2", "Q3", "Q4" }, qg.Enfants.Where(e => e.Famille != "Répartiteur" && !e.Repere.StartsWith("Q-EV")).Select(e => e.Repere));
         Assert.Contains(qg.Enfants, e => e.Repere == "XR");
         Assert.Contains(r.Arbre.Parcourir(), e => e.Repere == "M1");
         Assert.Contains(r.Nomenclature, e => e.Famille == "Contacteur" && e.Repere == "KM1");

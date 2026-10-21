@@ -141,6 +141,12 @@ public static class BibliothequeCatalogues
                     T("fiabilite", "Fiabilité (verifie, une_source, estime)", true), T("source", "Source des cotes"), T("note", "Remarque") }
                 .Concat(Cotes(true)).ToArray())
             { LireType = t => CatalogueRepartiteurs.Lire(t), ChampPrincipal = "courant", Designation = "Répartiteur" },
+        new FamilleCatalogue("ventilateurs", "Ventilateurs à filtre", CatalogueVentilateurs.NomFichier, CatalogueVentilateurs.TexteEmbarque,
+            new[] { T("fabricant", "Fabricant"), T("gamme", "Gamme", true), T("reference", "Référence"),
+                    N("debit", "Débit libre avec filtre", "m³/h", true, true), N("decoupe", "Découpe carrée", "mm", true),
+                    N("puissance", "Puissance absorbée", "W"), T("source", "Source des cotes"), T("note", "Remarque") }
+                .Concat(Cotes(true)).ToArray())
+            { LireType = t => CatalogueVentilateurs.Lire(t), ChampPrincipal = "debit", Designation = "Ventilateur" },
         new FamilleCatalogue("references", "Appareillage (références)", CatalogueReferences.NomFichier, CatalogueReferences.TexteEmbarque,
             new[] { T("fabricant", "Fabricant"), T("famille", "Famille d'appareil", true), T("gamme", "Gamme", true), T("reference", "Référence"),
                     N("min", "Calibre min.", "A", true, true), N("max", "Calibre max.", "A", true, true), T("courbe", "Courbe"), T("taille", "Taille"),

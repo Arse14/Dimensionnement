@@ -28,7 +28,7 @@ public class Version3Tests
         return projet;
     }
 
-    static Forcage Force(double valeur) => new() { Valeur = valeur, Motif = "test", Auteur = "BE" };
+    internal static Forcage Force(double valeur) => new() { Valeur = valeur, Motif = "test", Auteur = "BE" };
 
     [Fact]
     public void Armoire_normalisee_avec_zone_propre_au_dessus_de_la_zone_sale()
@@ -116,10 +116,12 @@ public class Version3Tests
         var t = CalculProjet.Calculer(projet).Thermique!;
 
         // Coffret 1000 × 1000 × 300 adossé : Ae = 1,4 × 1,0 × 1,3 + 1,8 × 0,3 × 1,0 = 2,36 m².
-        // Évacué par l'enveloppe : 5,5 × 2,36 × 5 = 65 W ; V = 3,1 × (500 − 65) / 5 = 270 m³/h ; × 1,3 = 351 → 550 m³/h.
+        // Évacué par l'enveloppe : 5,5 × 2,36 × 5 = 65 W ; V = 3,1 × (500 − 65) / 5 = 270 m³/h ; × 1,3 = 351 → ClimaSys 560 m³/h.
         Assert.Equal(SolutionThermique.Ventilation, t.Solution);
         Assert.Equal(269.8, t.DebitNecessaire, 1);
-        Assert.Equal(550, t.Ventilateur);
+        Assert.Equal("NSYCVF560M230PF", t.ModeleVentilateur!.Reference);
+        Assert.Equal(1, t.NombreVentilateurs);
+        Assert.True(t.TemperatureVentilee <= projet.Armoire.TemperatureInterieureMax);
         Assert.Equal(75, t.Resistance);
     }
 
@@ -226,7 +228,8 @@ public class Version3Tests
         var devis = ListeDevis.Generer(r);
 
         Assert.Contains(devis, l => l.Categorie == ListeDevis.Enveloppe && l.Designation == "Coffret électrique mural" && l.Quantite == 1);
-        Assert.Contains(devis, l => l.Designation == "Ventilateur à filtre");
+        Assert.Contains(devis, l => l.Reference == r.Thermique!.ModeleVentilateur!.Reference && l.Reperes.Contains("EV"));
+        Assert.Contains(devis, l => l.Reference == CalculProjet.ThermostatVentilation);
         Assert.Contains(devis, l => l.Reference == "GV2ME10" && l.Quantite == 1);
         Assert.Contains(devis, l => l.Reference == "LC1D09BD" && l.Quantite == 3);
         // Trois câbles moteur/résistance 4G1,5 de 10 m sans blindage, + 10 % : 33 m ; le câble du variateur est blindé.
@@ -364,8 +367,8 @@ public class ChampMagnetiqueTests
 
         Assert.True(a.Tient);
         Assert.Contains("goulottes", a.Alerte);
-        // Goulottes allégées d'abord ; la rangée des borniers prend ensuite un peu de la place libre.
-        Assert.Equal(15, a.ReserveEffective, 3);
+        // Goulottes allégées d'abord ; borniers, thermostat et protection de la ventilation prennent ensuite un peu de la place libre.
+        Assert.Equal(5, a.ReserveEffective, 3);
         Assert.DoesNotContain(a.Note.Lignes, l => l.Libelle == "Implantation" && l.Statut == StatutCalcul.NonConforme);
     }
 
@@ -567,5 +570,36 @@ public class ChampMagnetiqueTests
         var surface = CalculCablage.Encombrement(new[] { new FilsSection(2.5, 60, "Puissance") });
         Assert.Equal(new ModeleGoulotte(25, 60), CalculCablage.Choisir(surface));
         Assert.Equal(new ModeleGoulotte(25, 40), CalculCablage.Choisir(100));
+    }
+}
+
+public class VentilationAutomatiqueTests
+{
+    [Fact]
+    public void Ventilation_necessaire_ajoute_protection_thermostat_et_ventilateur_encastre()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        projet.Armoire.Forcages[CalculThermique.CodePuissance] = Version3Tests.Force(500);
+        var r = CalculProjet.Calculer(projet);
+
+        var ev = Assert.Single(r.Arbre.Parcourir(), e => e.Famille == "Ventilation");
+        Assert.True(ev.SurParoi);
+        Assert.Equal(r.Thermique!.ModeleVentilateur!.Reference, ev.Reference);
+        // Le thermostat et sa protection sont sur les rails, le ventilateur dans la porte.
+        Assert.Contains(r.Armoire!.Appareils, a => a.Repere == "BT-EV");
+        Assert.Contains(r.Armoire.Appareils, a => a.Repere == "Q-EV");
+        Assert.DoesNotContain(r.Armoire.Appareils, a => a.Repere == "EV");
+        Assert.Contains(r.Thermique.Note.Lignes, l => l.Libelle == "Ventilation" && l.Statut == StatutCalcul.Conforme);
+        Assert.Contains(SyntheseMateriel.Grouper(r), g => g.Titre.StartsWith("VENTILATION"));
+    }
+
+    [Fact]
+    public void Ventilateur_choisi_pour_tenir_dans_la_porte()
+    {
+        var petit = new ResultatArmoire { Note = new NoteDeCalcul("T"), Largeur = 300, Hauteur = 400, Cellules = 1 };
+        // 300 m³/h : le 560 m³/h (340 mm de haut) ne tient pas deux fois dans 400 mm ; deux 165 m³/h non plus en largeur.
+        Assert.Null(CalculThermique.ChoisirVentilateur(300, petit, CatalogueVentilateurs.Actif));
+        var choix = CalculThermique.ChoisirVentilateur(150, new ResultatArmoire { Note = new NoteDeCalcul("T"), Largeur = 600, Hauteur = 800, Cellules = 1 }, CatalogueVentilateurs.Actif);
+        Assert.Equal("NSYCVF165M230PF", choix!.Value.Modele.Reference);
     }
 }

@@ -17,6 +17,7 @@
     <EmbeddedResource Include="Normes\catalogue-cartes-es.json" LogicalName="Dimensionnement.Core.Normes.catalogue-cartes-es.json" />
     <EmbeddedResource Include="Normes\catalogue-ihm.json" LogicalName="Dimensionnement.Core.Normes.catalogue-ihm.json" />
     <EmbeddedResource Include="Normes\catalogue-repartiteurs.json" LogicalName="Dimensionnement.Core.Normes.catalogue-repartiteurs.json" />
+    <EmbeddedResource Include="Normes\catalogue-ventilateurs.json" LogicalName="Dimensionnement.Core.Normes.catalogue-ventilateurs.json" />
     <EmbeddedResource Include="Normes\catalogue-alimentations.json" LogicalName="Dimensionnement.Core.Normes.catalogue-alimentations.json" />
   </ItemGroup>
 

@@ -259,6 +259,12 @@
                                         </StackPanel>
                                     </Button>
                                     <Button Command="{Binding Dupliquer}" Content="Dupliquer" ToolTip="Créer une variante à partir de cet article"/>
+                                    <Button Command="{Binding ChercherEnLigne}" Margin="16,0,0,0" ToolTip="{Binding LienVerification}">
+                                        <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE774;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="{Binding LibelleVerification}"/></StackPanel>
+                                    </Button>
+                                    <Button Command="{Binding ValiderProduit}" ToolTip="Après contrôle sur la fiche du fabricant : passe l'article de « indicatif » à « vérifié »">
+                                        <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE73E;" Margin="0,0,6,0" VerticalAlignment="Center" Foreground="#6EE7A0"/><TextBlock Text="Valider le produit"/></StackPanel>
+                                    </Button>
                                     <Button Command="{Binding Supprimer}" Content="Supprimer"/>
                                 </StackPanel>
                             </StackPanel>

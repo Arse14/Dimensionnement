@@ -116,6 +116,8 @@ public class ModeleVueCatalogue : Observable
         OuvrirDocument = new Commande(p => Ouvrir(p as string), p => p is string { Length: > 0 });
         OuvrirLien = new Commande(() => Ouvrir(LienFabricant), () => LienFabricant.StartsWith("http", StringComparison.OrdinalIgnoreCase));
         OuvrirFichier = new Commande(OuvrirFichierBrut);
+        ChercherEnLigne = new Commande(() => Ouvrir(LienVerification), () => Article is not null);
+        ValiderProduit = new Commande(ValiderArticle, () => Article is not null && !Verifie);
         RevenirAuLivre = new Commande(RevenirAuCatalogueLivre, () => File.Exists(CheminUtilisateur));
         Reinitialiser = new Commande(() =>
         {
@@ -138,6 +140,54 @@ public class ModeleVueCatalogue : Observable
     public Commande OuvrirDocument { get; }
     public Commande OuvrirLien { get; }
     public Commande OuvrirFichier { get; }
+    public Commande ChercherEnLigne { get; }
+    public Commande ValiderProduit { get; }
+
+    /// <summary>
+    /// Page à consulter pour contrôler l'article : la page du fabricant, sinon la source des cotes, sinon une recherche
+    /// de sa fiche technique.
+    /// </summary>
+    public string LienVerification => Article is not { } a ? ""
+        : new[] { BibliothequeCatalogues.Chaine(a, BibliothequeCatalogues.LienFabricant), BibliothequeCatalogues.Chaine(a, "source") }
+              .FirstOrDefault(l => l.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+          ?? "https://www.google.com/search?q=" + Uri.EscapeDataString($"{BibliothequeCatalogues.Marque(a)} {BibliothequeCatalogues.Chaine(a, "reference")} fiche technique".Trim());
+
+    public string LibelleVerification => Article is { } a
+        && new[] { BibliothequeCatalogues.Chaine(a, BibliothequeCatalogues.LienFabricant), BibliothequeCatalogues.Chaine(a, "source") }
+            .Any(l => l.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        ? "Ouvrir la fiche en ligne" : "Chercher la fiche sur internet";
+
+    /// <summary>Ouvre le catalogue sur l'article de cette référence, dans la famille qui la contient.</summary>
+    public bool SelectionnerReference(string reference)
+    {
+        foreach (var famille in BibliothequeCatalogues.Familles.OrderBy(f => f.Id == _famille.Id ? 0 : 1))
+        {
+            if (famille.Id != _famille.Id)
+            {
+                if (!BibliothequeCatalogues.Charger(famille, Path.Combine(Dossier, famille.NomFichier))
+                        .Any(a => BibliothequeCatalogues.Chaine(a, "reference").Equals(reference, StringComparison.OrdinalIgnoreCase))) continue;
+                Famille = famille;
+            }
+            _recherche = ""; _marque = Toutes; _gamme = Toutes; _minimum = ""; _verifiesSeulement = false;
+            SignalerFiltre();
+            if (Lignes.FirstOrDefault(l => l.Reference.Equals(reference, StringComparison.OrdinalIgnoreCase)) is { } ligne)
+            {
+                Selection = ligne;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>Passe l'article en « vérifié » et enregistre aussitôt le catalogue, après confirmation.</summary>
+    void ValiderArticle()
+    {
+        if (MessageBox.Show($"Les valeurs de {Reference} ont-elles été contrôlées sur la fiche du fabricant ?\n\n" +
+                            "L'article passera de « indicatif » à « vérifié », pour ce projet et les suivants.",
+                "Valider le produit", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        Verifie = true;
+        EnregistrerCatalogue();
+    }
     public Commande RevenirAuLivre { get; }
     public Commande Reinitialiser { get; }
 
@@ -364,7 +414,7 @@ public class ModeleVueCatalogue : Observable
         foreach (var p in new[] { nameof(Selection), nameof(Article), nameof(AArticle), nameof(Titre), nameof(Reference), nameof(SousTitre),
                      nameof(ChiffresCles), nameof(Champs), nameof(ChampsCotes), nameof(LargeurCote), nameof(HauteurCote), nameof(ProfondeurCote),
                      nameof(ACotes), nameof(ResumeCotes), nameof(Photos), nameof(PhotoCourante), nameof(APhoto), nameof(DocumentsArticle),
-                     nameof(LienFabricant), nameof(NotesArticle), nameof(Verifie), nameof(Points), nameof(DansLeProjet), nameof(Historique),
+                     nameof(LienFabricant), nameof(LienVerification), nameof(LibelleVerification), nameof(NotesArticle), nameof(Verifie), nameof(Points), nameof(DansLeProjet), nameof(Historique),
                      nameof(Modifie) })
             Signaler(p);
     }

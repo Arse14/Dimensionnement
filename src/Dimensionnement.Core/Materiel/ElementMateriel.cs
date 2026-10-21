@@ -56,6 +56,12 @@ public class ElementMateriel
     /// <summary>Encastré dans la porte de l'armoire (IHM) : pas de place sur la plaque, mais ses pertes chauffent l'armoire.</summary>
     public bool EnPorte { get; set; }
 
+    /// <summary>Encastré dans une paroi de l'enveloppe (ventilateur à filtre) : pas de place sur la plaque.</summary>
+    public bool SurParoi { get; set; }
+
+    /// <summary>Coffret déporté imposé par le calcul (ventilation d'un coffret) ; null = selon l'affectation de l'utilisateur.</summary>
+    public Guid? CoffretId { get; set; }
+
     /// <summary>Variateur livré avec son filtre CEM réseau : le devis n'en ajoute pas.</summary>
     public bool FiltreCemIntegre { get; set; }
 

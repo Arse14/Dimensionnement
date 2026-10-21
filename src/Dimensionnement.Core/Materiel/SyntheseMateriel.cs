@@ -68,6 +68,16 @@ public static class SyntheseMateriel
             commande.Add(new CarteMateriel($"{racine.Repere}  {racine.Designation}", racine.Calibre, Pire(maillons), maillons, null));
         }
         if (commande.Count > 0) groupes.Add(new GroupeMateriel(TitreCommande, commande));
+
+        // Ventilation ajoutée par le bilan thermique : protection, thermostat et ventilateurs encastrés.
+        var ventilation = r.Arbre.Parcourir().Where(e => e.Famille == "Disjoncteur" && e.RepereOrigine.StartsWith("Q-EV")).Select(q =>
+        {
+            var maillons = q.Parcourir().Select(e => new MaillonMateriel(e, false)).ToList();
+            var ev = q.Parcourir().FirstOrDefault(e => e.Famille == "Ventilation");
+            return new CarteMateriel($"{q.Repere}  {q.Designation}", ev?.Calibre ?? "", Pire(maillons), maillons, null);
+        }).ToList();
+        // Avant l'automatisme, qui reste la dernière rubrique.
+        if (ventilation.Count > 0) groupes.Insert(commande.Count > 0 ? groupes.Count - 1 : groupes.Count, new GroupeMateriel($"VENTILATION ({ventilation.Count})", ventilation));
         return groupes;
     }
 

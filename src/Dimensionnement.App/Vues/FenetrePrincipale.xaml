@@ -1374,6 +1374,8 @@
                         <ContextMenu>
                             <MenuItem Header="Renommer…" CommandParameter="{Binding Element}"
                                       Command="{Binding PlacementTarget.Tag.RenommerElement, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <MenuItem Header="Ouvrir la fiche catalogue" CommandParameter="{Binding Element}"
+                                      Command="{Binding PlacementTarget.Tag.OuvrirFicheElement, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                             <MenuItem Header="Valider la référence (vérifiée sur la fiche du fabricant)" CommandParameter="{Binding Element}"
                                       Visibility="{Binding Element.AVerifier, Converter={StaticResource VraiVisible}}"
                                       Command="{Binding PlacementTarget.Tag.ValiderElement, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>

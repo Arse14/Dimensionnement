@@ -31,7 +31,7 @@ public static class Encombrements
         var poles = e.Poles > 0 ? e.Poles : 3;
         var i = e.Courant;
         if (e.HorsArmoire) return null;
-        if (e.Loge || e.EnPorte) return new(0, 0, 0, e.PertesW);
+        if (e.Loge || e.EnPorte || e.SurParoi) return new(0, 0, 0, e.SurParoi ? 0 : e.PertesW);
         if (e.LargeurMm > 0 && e.HauteurMm > 0)
             return new(e.LargeurMm, e.HauteurMm, e.ProfondeurMm, e.PertesW)
             {

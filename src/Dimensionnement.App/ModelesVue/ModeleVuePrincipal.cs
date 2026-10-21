@@ -50,6 +50,8 @@ public partial class ModeleVuePrincipal : Observable
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueEncombrements.NomFichier);
     static readonly string CheminRepartiteurs = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueRepartiteurs.NomFichier);
+    static readonly string CheminVentilateurs = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueVentilateurs.NomFichier);
     IReadOnlyList<ModeleCapteurSecurite> _capteurs = CatalogueCapteursSecurite.Charger(CheminCapteurs);
     IReadOnlyList<CarteEs> _cartes = CatalogueCartesEs.Charger(CheminCartes);
     IReadOnlyList<ChoixCpu> _cpus = Array.Empty<ChoixCpu>();
@@ -76,6 +78,7 @@ public partial class ModeleVuePrincipal : Observable
         _selection = _projet;
         CatalogueEncombrements.Actif = CatalogueEncombrements.Charger(CheminEncombrements);
         CatalogueRepartiteurs.Actif = CatalogueRepartiteurs.Charger(CheminRepartiteurs);
+        CatalogueVentilateurs.Actif = CatalogueVentilateurs.Charger(CheminVentilateurs);
         _cpus = ListerCpus(_catalogue);
         Resultat = CalculerProjet();
 
@@ -104,6 +107,7 @@ public partial class ModeleVuePrincipal : Observable
         SupprimerPeripherique = new Commande(p => Modifier(() => _projet.PeripheriquesMachine.Remove((PeripheriqueMachine)p!)), p => p is PeripheriqueMachine);
         RenommerElement = new Commande(p => Renommer((ElementMateriel)p!), p => p is ElementMateriel);
         ValiderElement = new Commande(p => ValiderReference((ElementMateriel)p!), p => p is ElementMateriel { AVerifier: true });
+        OuvrirFicheElement = new Commande(p => OuvrirFiche(((ElementMateriel)p!).Reference), p => p is ElementMateriel { Reference.Length: > 0 });
         OuvrirGlossaire = new Commande(p => Afficher(new FenetreGlossaire(p as LigneCalcul)));
         AjouterAlimentation = new Commande(() => AjouterDepart(new DepartAlimentation24V()));
         AjouterTransformateur = new Commande(p => AjouterDepart(NouveauTransformateur(p is TensionCommande t ? t : TensionCommande.Alternatif24)));
@@ -139,7 +143,7 @@ public partial class ModeleVuePrincipal : Observable
         AfficherReferences = new Commande(() => Selection = new PageReferences(_projet));
         OuvrirVueArmoire = new Commande(() => Afficher(new FenetreArmoire(this)));
         OuvrirOrganigramme = new Commande(() => Afficher(new FenetreSchema(this, "Organigramme du matériel",
-            "De l'arrivée jusqu'à chaque récepteur, départs groupés par rubrique. Survolez un appareil pour son détail ; molette + Ctrl pour zoomer.",
+            "De l'arrivée jusqu'à chaque récepteur, départs groupés par rubrique. Survolez un appareil pour son détail, cliquez-le pour ouvrir sa fiche catalogue ; molette + Ctrl pour zoomer.",
             SchemaOrganigramme.Svg, ExporterOrganigramme!)));
         OuvrirCarte = new Commande(p => OuvrirCarteMateriel((CarteMateriel)p!), p => p is CarteMateriel);
         DeplacerAppareil = new Commande(p => Modifier(() =>
@@ -366,6 +370,35 @@ public partial class ModeleVuePrincipal : Observable
     public Commande RechargerCatalogue { get; }
     public Commande Forcer { get; }
     public Commande ValiderElement { get; }
+    public Commande OuvrirFicheElement { get; }
+
+    /// <summary>
+    /// Ouvre le navigateur de catalogues sur la fiche de cette référence, pour la contrôler en ligne et la valider ; une
+    /// référence absente des catalogues propose une recherche de sa fiche sur internet.
+    /// </summary>
+    public void OuvrirFiche(string reference)
+    {
+        reference = reference.Trim();
+        if (reference.Length == 0) return;
+        var fenetre = new FenetreCatalogue(this, BibliothequeCatalogues.Familles[0].Id);
+        if (fenetre.Selectionner(reference))
+        {
+            Afficher(fenetre);
+            return;
+        }
+        fenetre.Close();
+        if (MessageBox.Show($"La référence {reference} n'est dans aucun catalogue de l'application (référence saisie ou choisie par gamme).\n\n" +
+                            "Chercher sa fiche technique sur internet ?", "Fiche catalogue", MessageBoxButton.YesNo, MessageBoxImage.Information) != MessageBoxResult.Yes) return;
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
+                "https://www.google.com/search?q=" + Uri.EscapeDataString($"{reference} fiche technique")) { UseShellExecute = true });
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
+        {
+            MessageBox.Show(ex.Message, "Fiche catalogue", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
     public Commande OuvrirGlossaire { get; }
     public Commande AnnulerForcage { get; }
 
@@ -484,7 +517,7 @@ public partial class ModeleVuePrincipal : Observable
     public string ResumeThermique => Resultat.Thermique switch
     {
         null => "",
-        { Solution: Core.Armoire.SolutionThermique.Ventilation } t => $"Ventilateur à filtre de {t.Ventilateur:0} m³/h (besoin {t.DebitNecessaire:0} m³/h)",
+        { Solution: Core.Armoire.SolutionThermique.Ventilation } t => $"{(t.NombreVentilateurs > 1 ? $"{t.NombreVentilateurs} × " : "")}ventilateur {t.ModeleVentilateur?.Reference} de {t.Ventilateur:0} m³/h : {t.DebitInstalle:0} m³/h installés pour {t.DebitNecessaire * Core.Armoire.CalculThermique.MajorationFiltres:0} m³/h nécessaires ({t.TemperatureVentilee:0.0} °C à l'intérieur)",
         { Solution: Core.Armoire.SolutionThermique.Climatisation } t => $"Climatiseur de {t.Climatiseur:0} W (besoin {t.PuissanceFrigorifique:0} W)",
         var t => $"Convection naturelle suffisante ({t.TemperatureInterieure:0.0} °C à l'intérieur)",
     };
@@ -871,6 +904,7 @@ public partial class ModeleVuePrincipal : Observable
         _capteurs = CatalogueCapteursSecurite.Charger(CheminCapteurs);
         CatalogueEncombrements.Actif = CatalogueEncombrements.Charger(CheminEncombrements);
         CatalogueRepartiteurs.Actif = CatalogueRepartiteurs.Charger(CheminRepartiteurs);
+        CatalogueVentilateurs.Actif = CatalogueVentilateurs.Charger(CheminVentilateurs);
         _cartes = CatalogueCartesEs.Charger(CheminCartes);
         _alimentations = CatalogueAlimentations.Charger(CheminAlimentations);
         _ihm = CatalogueIhm.Charger(CheminIhm);

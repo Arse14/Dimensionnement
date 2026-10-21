@@ -261,11 +261,65 @@ public static class CalculProjet
         };
         resultat.Selectivite = CalculSelectivite.Calculer(resultat);
         resultat.Armoire = CalculArmoire.Calculer(resultat, projet, enveloppes);
-        resultat.Thermique = CalculThermique.Calculer(resultat, resultat.Armoire, projet.Armoire);
-        resultat.Armoire.Thermique = resultat.Thermique;
+        Thermique(resultat, projet);
+        // Ventilation nécessaire : ventilateurs, thermostats et protections entrent dans l'arborescence, puis l'implantation
+        // est refaite pour placer thermostats et disjoncteurs sur les rails.
+        if (AjouterVentilation(resultat, projet, references))
+        {
+            resultat.Armoire = CalculArmoire.Calculer(resultat, projet, enveloppes);
+            Thermique(resultat, projet);
+        }
+        return resultat;
+    }
+
+    static void Thermique(ResultatProjet resultat, Projet projet)
+    {
+        resultat.Thermique = CalculThermique.Calculer(resultat, resultat.Armoire!, projet.Armoire);
+        resultat.Armoire!.Thermique = resultat.Thermique;
         foreach (var coffret in resultat.Armoire.Coffrets)
             coffret.Thermique = CalculThermique.Calculer(resultat, coffret, projet.Armoire.Coffrets.First(c => c.Id == coffret.Id));
-        return resultat;
+    }
+
+    /// <summary>Thermostat d'armoire à contact NO (commande de ventilateur) Schneider ClimaSys.</summary>
+    public const string ThermostatVentilation = "NSYCCOTHO";
+
+    /// <summary>
+    /// Pour chaque enveloppe ventilée : disjoncteur 2 A courbe C en aval du sectionneur général, thermostat NO sur rail
+    /// et ventilateurs à filtre encastrés en porte (grille de sortie fournie). Renvoie vrai si du matériel a été ajouté.
+    /// </summary>
+    static bool AjouterVentilation(ResultatProjet r, Projet projet, IReadOnlyList<ReferenceCatalogue>? references)
+    {
+        // Circuit de ventilation en aval du disjoncteur général, comme un départ ; à défaut sous le sectionneur.
+        var sectionneur = r.Arbre.Parcourir().FirstOrDefault(e => e.RepereOrigine == "QG") ?? r.Arbre.Parcourir().FirstOrDefault(e => e.RepereOrigine == "QS0");
+        if (sectionneur is null || r.Armoire is null) return false;
+        const int poles = 2; // 1P+N en 230 V
+        var ajoutes = new List<ElementMateriel>();
+        var rang = 0;
+        foreach (var enveloppe in r.Armoire.Enveloppes)
+        {
+            if (enveloppe.Thermique is not { Solution: SolutionThermique.Ventilation, ModeleVentilateur: { } m } t) continue;
+            rang++;
+            var suffixe = rang == 1 ? "" : $".{rang}";
+            var lieu = enveloppe.Id is null ? "" : $" ({enveloppe.Nom})";
+            var protection = new ElementMateriel { Repere = $"Q-EV{suffixe}", Famille = "Disjoncteur", Designation = "Protection de la ventilation" + lieu,
+                Calibre = "2 A, courbe C", CoffretId = enveloppe.Id }.Avec(2, poles, courbe: "C");
+            var thermostat = new ElementMateriel { Repere = $"BT-EV{suffixe}", Famille = "Thermostat",
+                Designation = "Thermostat d'armoire, contact NO, commande des ventilateurs" + lieu, Calibre = "réglage 0 à 60 °C",
+                Fabricant = "Schneider – ClimaSys CC", Reference = ThermostatVentilation, CoffretId = enveloppe.Id,
+                LargeurMm = 33, HauteurMm = 67, ProfondeurMm = 44, AVerifier = true };
+            var ventilateur = new ElementMateriel { Repere = $"EV{suffixe}", Famille = "Ventilation",
+                Designation = $"Ventilateur à filtre encastré en porte, {m.Debit:0} m³/h, avec grille de sortie" + lieu,
+                Calibre = $"{m.Debit:0} m³/h, découpe {m.Decoupe:0} × {m.Decoupe:0} mm, {m.Puissance:0.#} W 230 V",
+                Quantite = t.NombreVentilateurs, Fabricant = $"{m.Fabricant} – {m.Gamme}", Reference = m.Reference,
+                SurParoi = true, CoffretId = enveloppe.Id, AVerifier = !m.Verifie };
+            sectionneur.Ajouter(protection).Ajouter(thermostat).Ajouter(ventilateur);
+            ajoutes.Add(protection);
+        }
+        if (ajoutes.Count == 0) return false;
+        var racine = new ElementMateriel { Repere = "ventilation" };
+        foreach (var q in ajoutes) racine.Enfants.Add(q);
+        CatalogueReferences.Appliquer(racine, projet.References, references ?? CatalogueReferences.Charger());
+        return true;
     }
 
     /// <summary>Remplace repères et désignations par les noms choisis par l'utilisateur ; le repère calculé reste la clé.</summary>

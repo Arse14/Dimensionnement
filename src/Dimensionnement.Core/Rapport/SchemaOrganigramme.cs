@@ -138,7 +138,8 @@ public static class SchemaOrganigramme
 
     static void Appareil(StringBuilder s, ElementMateriel e, double x, double y)
     {
-        s.Append($"<g><title>{E(e.Repere)} – {E(e.Designation)}{(e.Calibre.Length > 0 ? " – " + E(e.Calibre) : "")}" +
+        // La référence portée par le groupe permet à l'application d'ouvrir la fiche catalogue au clic.
+        s.Append($"<g{(e.Reference.Length > 0 ? $" data-reference=\"{E(e.Reference)}\"" : "")}><title>{E(e.Repere)} – {E(e.Designation)}{(e.Calibre.Length > 0 ? " – " + E(e.Calibre) : "")}" +
                  $"{(e.Reference.Length > 0 ? "\n" + E(e.Fabricant) + " " + E(e.Reference) : "")}</title>");
         s.Append($"<rect x=\"{F(x)}\" y=\"{F(y)}\" width=\"{F(Boite)}\" height=\"{F(Hauteur)}\" rx=\"5\" fill=\"#ffffff\" stroke=\"#9aa5b1\"/>");
         s.Append($"<circle cx=\"{F(x + 12)}\" cy=\"{F(y + 14)}\" r=\"4.5\" fill=\"{CouleurStatut(e.Statut)}\"/>");
