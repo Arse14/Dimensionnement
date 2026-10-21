@@ -233,10 +233,13 @@ public static class CalculThermique
         {
             // Les pertes des appareils ne sont pas comptées : l'armoire peut être hors tension.
             chauffage = k * ae * (c.TemperatureInterieureMin - c.TemperatureAmbianteMin);
-            resistance = Calibres.Superieur(Resistances, chauffage) ?? Resistances[^1];
+            var conseillee = Calibres.Superieur(Resistances, chauffage) ?? Resistances[^1];
+            resistance = c.ChauffageAnticondensation ? conseillee : 0;
             note.Groupe = "Environnement";
-            note.Info("Chauffage anticondensation",
-                $"Ph = k × Ae × (T_{{i,min}} − T_{{a,min}}) = {N(chauffage, 0)} W : résistance de {N(resistance, 0)} W avec thermostat et hygrostat.", Ref);
+            note.Info("Chauffage anticondensation", c.ChauffageAnticondensation
+                ? $"Ph = k × Ae × (T_{{i,min}} − T_{{a,min}}) = {N(chauffage, 0)} W : résistance de {N(resistance, 0)} W avec thermostat et hygrostat."
+                : $"Ph = k × Ae × (T_{{i,min}} − T_{{a,min}}) = {N(chauffage, 0)} W : une résistance de {N(conseillee, 0)} W serait conseillée, " +
+                  "non prévue (case « Chauffage anticondensation » décochée), donc absente du matériel et du devis.", Ref);
         }
 
         return new ResultatThermique

@@ -17,7 +17,7 @@ public class ElementMateriel
     public string Designation { get; set; } = "";
 
     /// <summary>Calibre ou caractéristique principale, lisible (« 13–18 A », « 2,5 mm² »…).</summary>
-    public string Calibre { get; init; } = "";
+    public string Calibre { get; set; } = "";
     public int Quantite { get; init; } = 1;
     public string Fabricant { get; set; } = "";
     public string Reference { get; set; } = "";

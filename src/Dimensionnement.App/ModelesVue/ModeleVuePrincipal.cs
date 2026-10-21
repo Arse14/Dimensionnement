@@ -1035,6 +1035,13 @@ public partial class ModeleVuePrincipal : Observable
             Selection = new PageVentilation(_projet, coffret ?? _projet.Armoire, coffret?.Nom ?? "armoire principale");
             return;
         }
+        // Carte de chauffage ou de climatisation : le bilan thermique de son enveloppe, où se coche le chauffage.
+        if (carte.Chaine.FirstOrDefault()?.Element is { } q && (q.RepereOrigine.StartsWith("Q-CH") || q.RepereOrigine.StartsWith("Q-CL")))
+        {
+            var coffret = _projet.Armoire.Coffrets.FirstOrDefault(c => c.Id == q.CoffretId);
+            Selection = new PageThermique(_projet, coffret ?? _projet.Armoire, coffret?.Nom ?? "armoire principale");
+            return;
+        }
         Selection = carte.Chaine.FirstOrDefault()?.Element.Famille switch
         {
             "Automate" or "Entrées/sorties" or "Accessoire automate" or "IHM" => _projet.Automate,

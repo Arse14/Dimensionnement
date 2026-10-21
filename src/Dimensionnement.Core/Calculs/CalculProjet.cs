@@ -316,6 +316,10 @@ public static class CalculProjet
             AppliquerRenommages(resultat.Arbre, projet);
             resultat.Armoire = CalculArmoire.Calculer(resultat, projet, enveloppes);
             Thermique(resultat, projet);
+            // L'enveloppe a pu changer de taille : la résistance suit le bilan final.
+            foreach (var e in resultat.Arbre.Parcourir().Where(e => e.Famille == "Chauffage"))
+                if (resultat.Armoire.Enveloppes.FirstOrDefault(a => a.Id == e.CoffretId)?.Thermique is { Resistance: > 0 } t)
+                    e.Calibre = $"{t.Resistance:0} W, 230 V";
         }
         return resultat;
     }
@@ -345,10 +349,13 @@ public static class CalculProjet
         var rang = 0;
         foreach (var enveloppe in r.Armoire.Enveloppes)
         {
-            if (enveloppe.Thermique is not { Solution: SolutionThermique.Ventilation, ModeleVentilateur: { } m } t) continue;
+            if (enveloppe.Thermique is not { } t) continue;
             rang++;
             var suffixe = rang == 1 ? "" : $".{rang}";
             var lieu = enveloppe.Id is null ? "" : $" ({enveloppe.Nom})";
+            if (t.Resistance > 0) ajoutes.Add(Chauffage(sectionneur, enveloppe, t, suffixe, lieu, poles));
+            if (t is { Solution: SolutionThermique.Climatisation, Climatiseur: > 0 }) ajoutes.Add(Climatiseur(sectionneur, enveloppe, t, suffixe, lieu, poles));
+            if (t is not { Solution: SolutionThermique.Ventilation, ModeleVentilateur: { } m }) continue;
             // Ventilateurs 24 V DC : disjoncteur unipolaire en sortie de l'alimentation 24 V, calibré sur 1,25 fois leur courant.
             var continu = m.EnContinu24V;
             var courant = t.NombreVentilateurs * m.Puissance / 24;
@@ -379,6 +386,45 @@ public static class CalculProjet
         CatalogueReferences.Appliquer(racine, projet.References, references ?? CatalogueReferences.Charger(),
             projet.Reseau.IccKiloAmperes);
         return true;
+    }
+
+    /// <summary>Thermostat-hygrostat de chauffage à contact NF Schneider ClimaSys CC.</summary>
+    public const string HygrostatChauffage = "NSYCCOHYT";
+
+    /// <summary>
+    /// Chauffage anticondensation demandé par l'utilisateur : disjoncteur 2 A, thermostat-hygrostat et résistance sur rail,
+    /// dans l'arborescence pour être implantés et chiffrés comme le reste du matériel.
+    /// </summary>
+    static ElementMateriel Chauffage(ElementMateriel amont, ResultatArmoire enveloppe, ResultatThermique t, string suffixe, string lieu, int poles)
+    {
+        var protection = new ElementMateriel { Repere = $"Q-CH{suffixe}", Famille = "Disjoncteur", Designation = "Protection du chauffage" + lieu,
+            Calibre = "2 A, courbe C", CoffretId = enveloppe.Id }.Avec(2, poles, courbe: "C");
+        var hygrostat = new ElementMateriel { Repere = $"BT-CH{suffixe}", Famille = "Thermostat",
+            Designation = "Thermostat-hygrostat de chauffage, contact NF" + lieu, Calibre = "réglable en température et humidité",
+            Fabricant = "Schneider – ClimaSys CC", Reference = HygrostatChauffage, CoffretId = enveloppe.Id,
+            LargeurMm = 50, HauteurMm = 67, ProfondeurMm = 38, AVerifier = true };
+        // Ses pertes ne comptent pas dans le bilan : la résistance ne chauffe que quand l'armoire est froide.
+        var resistance = new ElementMateriel { Repere = $"E-CH{suffixe}", Famille = "Chauffage",
+            Designation = "Résistance de chauffage anticondensation" + lieu, Calibre = $"{t.Resistance:0} W, 230 V",
+            CoffretId = enveloppe.Id, LargeurMm = 60, HauteurMm = 140, ProfondeurMm = 60, AVerifier = true };
+        amont.Ajouter(protection).Ajouter(hygrostat).Ajouter(resistance);
+        return protection;
+    }
+
+    /// <summary>
+    /// Climatiseur retenu par le bilan thermique, monté sur paroi : sa protection est estimée sur une puissance absorbée
+    /// voisine de la puissance frigorifique (compresseur : courbe C, calibre 6 A minimum), à confirmer selon la notice.
+    /// </summary>
+    static ElementMateriel Climatiseur(ElementMateriel amont, ResultatArmoire enveloppe, ResultatThermique t, string suffixe, string lieu, int poles)
+    {
+        var calibre = Calibres.Superieur(Calibres.Disjoncteurs, Math.Max(6, 1.5 * t.Climatiseur / 230)) ?? 16;
+        var protection = new ElementMateriel { Repere = $"Q-CL{suffixe}", Famille = "Disjoncteur", Designation = "Protection du climatiseur" + lieu,
+            Calibre = $"{calibre:0} A, courbe C (selon notice)", CoffretId = enveloppe.Id }.Avec(calibre, poles, courbe: "C");
+        var clim = new ElementMateriel { Repere = $"CL{suffixe}", Famille = "Climatisation",
+            Designation = "Climatiseur d'armoire" + lieu, Calibre = $"puissance frigorifique {t.Climatiseur:0} W (L35 L35), 230 V",
+            CoffretId = enveloppe.Id, SurParoi = true, ExterieurEnveloppe = true, AVerifier = true };
+        amont.Ajouter(protection).Ajouter(clim);
+        return protection;
     }
 
     /// <summary>Sortie 24 V DC du projet (alimentation, ou redresseur derrière un transformateur), sinon l'alimentation « à ajouter ».</summary>

@@ -106,6 +106,14 @@ public static class SyntheseMateriel
         }).ToList();
         // Avant les domaines de tension, qui restent les derniers groupes.
         if (ventilation.Count > 0) groupes.Insert(groupes.Count - domaines.Count, new GroupeMateriel($"VENTILATION ({ventilation.Count})", ventilation));
+        // Chauffage anticondensation demandé et climatiseur retenu : protection et appareils.
+        var chauffage = r.Arbre.Parcourir().Where(e => e.Famille == "Disjoncteur" && (e.RepereOrigine.StartsWith("Q-CH") || e.RepereOrigine.StartsWith("Q-CL"))).Select(q =>
+        {
+            var maillons = q.Parcourir().Select(e => new MaillonMateriel(e, false)).ToList();
+            return new CarteMateriel($"{q.Repere}  {q.Designation}", q.Parcourir().FirstOrDefault(e => e.Famille is "Chauffage" or "Climatisation")?.Calibre ?? "",
+                Pire(maillons), maillons, null);
+        }).ToList();
+        if (chauffage.Count > 0) groupes.Insert(groupes.Count - domaines.Count, new GroupeMateriel($"CHAUFFAGE ET CLIMATISATION ({chauffage.Count})", chauffage));
         return groupes;
     }
 

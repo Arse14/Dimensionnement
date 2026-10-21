@@ -1268,6 +1268,16 @@
                     <TextBlock Text="Intérieur minimal (°C)" Style="{StaticResource Etiquette}"/>
                     <TextBox Text="{inf:Lien Config.TemperatureInterieureMin}"/>
                 </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Chauffage anticondensation" Style="{StaticResource Etiquette}"/>
+                    <CheckBox IsChecked="{inf:Lien Config.ChauffageAnticondensation}"
+                              ToolTip="Résistance, thermostat-hygrostat et disjoncteur Q-CH ajoutés à l'armoire, à l'implantation et au devis. La puissance conseillée est dans la note thermique, même décoché."/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Éclairage d'armoire" Style="{StaticResource Etiquette}"/>
+                    <CheckBox IsChecked="{inf:Lien Config.EclairageArmoire}"
+                              ToolTip="Éclairage LED avec contact de porte, chiffré dans le devis"/>
+                </DockPanel>
 
                 <TextBlock Text="Pertes des appareils à leur courant de service" Style="{StaticResource Section}"/>
                 <ItemsControl ItemsSource="{Binding DataContext.Resultat.Thermique.Postes, RelativeSource={RelativeSource AncestorType=Window}}">

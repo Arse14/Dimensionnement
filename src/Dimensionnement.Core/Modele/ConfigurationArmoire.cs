@@ -94,6 +94,12 @@ public class ConfigurationArmoire
     string _ventilateurImpose = "";
     public TensionVentilation TensionVentilation { get; set; } = TensionVentilation.Alternatif230;
 
+    /// <summary>Résistance de chauffage anticondensation avec son thermostat-hygrostat : ajoutée seulement si l'utilisateur la demande.</summary>
+    public bool ChauffageAnticondensation { get; set; }
+
+    /// <summary>Éclairage LED d'armoire avec contact de porte, chiffré seulement si l'utilisateur le demande.</summary>
+    public bool EclairageArmoire { get; set; }
+
     public MarqueEnveloppe Marque { get; set; } = MarqueEnveloppe.Rittal;
 
     /// <summary>Taille d'armoire bloquée par l'utilisateur : l'implantation doit y tenir, sinon une alerte est levée.</summary>

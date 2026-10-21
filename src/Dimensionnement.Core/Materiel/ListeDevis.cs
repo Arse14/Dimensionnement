@@ -38,7 +38,8 @@ public static class ListeDevis
         AppareillageEtAccessoires(r, lignes, fabricant);
         BorniersEtMontage(r, lignes, fabricant);
         CablesEtEntrees(r, lignes);
-        return lignes;
+        // Tri stable : ventilateurs, thermostats et chauffage de la nomenclature rejoignent leur enveloppe.
+        return lignes.OrderBy(x => x.Categorie).ToList();
     }
 
     static void EnveloppeEtThermique(ResultatProjet r, List<LigneDevis> l, string fabricant)
@@ -67,8 +68,9 @@ public static class ListeDevis
             l.Add(new(Enveloppe, "Socle", $"hauteur 100 mm, largeur {N(a.Largeur)} mm", fabricant, "", a.Cellules, "u"));
             if (a.Cellules > 1)
                 l.Add(new(Enveloppe, "Kit de juxtaposition", "", fabricant, "", a.Cellules - 1, "u"));
-            l.Add(new(Enveloppe, "Éclairage d'armoire LED avec contact de porte", "", fabricant, "", a.Cellules, "u"));
         }
+        if (config.EclairageArmoire)
+            l.Add(new(Enveloppe, "Éclairage d'armoire LED avec contact de porte", "", fabricant, "", a.Cellules, "u", nom));
         l.Add(new(Enveloppe, "Plaque passe-câbles / bride d'entrée", "bas d'enveloppe", fabricant, "", a.Cellules, "u"));
         l.Add(new(Enveloppe, "Pochette à schémas", "format A4", fabricant, "", 1, "u"));
 
@@ -79,18 +81,11 @@ public static class ListeDevis
                 l.Add(new(Enveloppe, "Ventilateur à filtre", $"débit libre {N(t.Ventilateur, 0)} m³/h, 230 V", fabricant, "", 1, "u",
                     Remarque: $"Besoin {N(t.DebitNecessaire, 0)} m³/h"));
                 l.Add(new(Enveloppe, "Grille de sortie à filtre", "même taille que le ventilateur", fabricant, "", 1, "u"));
-                l.Add(new(Enveloppe, "Thermostat d'armoire", "contact NO, réglable", fabricant, "", 1, "u"));
-                break;
-            case SolutionThermique.Climatisation:
-                l.Add(new(Enveloppe, "Climatiseur d'armoire", $"puissance frigorifique {N(t.Climatiseur, 0)} W (L35 L35)", fabricant, "", 1, "u",
-                    Remarque: $"Besoin {N(t.PuissanceFrigorifique, 0)} W"));
+                if (t.CommandeVentilation != CommandeVentilation.Continue)
+                    l.Add(new(Enveloppe, "Thermostat d'armoire", "contact NO, réglable", fabricant, "", 1, "u"));
                 break;
         }
-        if (t.Resistance > 0)
-        {
-            l.Add(new(Enveloppe, "Résistance de chauffage anticondensation", $"{N(t.Resistance, 0)} W, 230 V", fabricant, "", 1, "u"));
-            l.Add(new(Enveloppe, "Thermostat et hygrostat de chauffage", "contact NF", fabricant, "", 1, "u"));
-        }
+        // Chauffage, ventilateurs et thermostats sont dans la nomenclature : ils sont chiffrés avec l'appareillage.
     }
 
     static void AppareillageEtAccessoires(ResultatProjet r, List<LigneDevis> l, string fabricant)
@@ -104,7 +99,9 @@ public static class ListeDevis
         {
             var e = g.First();
             var source = elementsArbre.FirstOrDefault(x => x.Repere == e.Repere.Split(", ")[0]) ?? e;
-            l.Add(new(Appareillage, e.Designation, Caracteristiques(source, r), e.Fabricant, e.Reference, g.Sum(x => x.Quantite), "u",
+            // Même article sous plusieurs usages (protection du chauffage et de la ventilation) : désignation de la famille.
+            var designation = g.Select(x => x.Designation).Distinct().Count() == 1 ? e.Designation : e.Famille;
+            l.Add(new(e.Famille is "Ventilation" or "Thermostat" or "Chauffage" or "Climatisation" ? Enveloppe : Appareillage, designation, Caracteristiques(source, r), e.Fabricant, e.Reference, g.Sum(x => x.Quantite), "u",
                 string.Join(", ", g.Select(x => x.Repere)), e.Reference.Length == 0 ? "Référence à compléter" : ""));
         }
 

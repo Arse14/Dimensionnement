@@ -123,7 +123,36 @@ public class Version3Tests
         Assert.Equal("NSYCVF560M230PF", t.ModeleVentilateur!.Reference);
         Assert.Equal(1, t.NombreVentilateurs);
         Assert.True(t.TemperatureVentilee <= projet.Armoire.TemperatureInterieureMax);
-        Assert.Equal(75, t.Resistance);
+        // Chauffage conseillé mais non demandé : aucune résistance.
+        Assert.True(t.Chauffage > 0);
+        Assert.Equal(0, t.Resistance);
+    }
+
+    [Fact]
+    public void Devis_suit_la_configuration_thermique()
+    {
+        var projet = ProjetMachine();
+        projet.Armoire.Forcages[CalculThermique.CodePuissance] = Force(500);
+        projet.Armoire.CommandeVentilation = CommandeVentilation.Continue;
+
+        var sans = CalculProjet.Calculer(projet);
+        var devis = ListeDevis.Generer(sans);
+        Assert.DoesNotContain(devis, l => l.Designation.Contains("hygrostat") || l.Designation.Contains("chauffage"));
+        Assert.DoesNotContain(devis, l => l.Designation.Contains("Thermostat"));
+        Assert.DoesNotContain(devis, l => l.Designation.Contains("Éclairage d'armoire"));
+
+        projet.Armoire.ChauffageAnticondensation = true;
+        projet.Armoire.EclairageArmoire = true;
+        var avec = CalculProjet.Calculer(projet);
+        var w = avec.Thermique!.Resistance;
+        Assert.True(w > 0);
+        // Le chauffage entre dans l'arborescence, donc dans l'implantation et le devis.
+        Assert.Contains(avec.Arbre.Parcourir(), e => e.RepereOrigine == "E-CH");
+        devis = ListeDevis.Generer(avec);
+        Assert.Contains(devis, l => l.Reperes == "BT-CH" && l.Categorie == ListeDevis.Enveloppe);
+        Assert.Contains(devis, l => l.Reperes == "E-CH" && l.Caracteristiques.StartsWith($"{w:0} W"));
+        Assert.Contains(devis, l => l.Reperes.Contains("Q-CH"));
+        Assert.Contains(devis, l => l.Designation.StartsWith("Éclairage d'armoire"));
     }
 
     [Fact]
