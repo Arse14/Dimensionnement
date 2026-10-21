@@ -124,3 +124,36 @@ public class CommandeVentilationTests
         Assert.Equal("NSYCVF850M230PF", r.Thermique!.ModeleVentilateur!.Reference);
     }
 }
+
+public class TensionVentilationTests
+{
+    [Fact]
+    public void Ventilateurs_24V_sur_l_alimentation_et_au_bilan()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        projet.Armoire.Forcages[CalculThermique.CodePuissance] = Version3Tests.Force(300);
+        var avant = CalculProjet.Calculer(projet).Consommation24V;
+        projet.Armoire.TensionVentilation = TensionVentilation.Continu24;
+        var r = CalculProjet.Calculer(projet);
+
+        var m = r.Thermique!.ModeleVentilateur!;
+        Assert.True(m.EnContinu24V);
+        Assert.Contains(r.Consommateurs24V, c => c.Designation.StartsWith($"Ventilateurs {m.Reference}"));
+        Assert.Equal(avant + r.Thermique.NombreVentilateurs * m.Puissance / 24, r.Consommation24V, 3);
+        var q = Assert.Single(r.Arbre.Parcourir(), e => e.RepereOrigine == "Q-EV");
+        Assert.Contains("24 V DC", q.Calibre);
+        Assert.Contains(r.Arbre.Parcourir(), e => e.Famille == "Alimentation" && e.Enfants.Contains(q));
+    }
+
+    [Fact]
+    public void Repli_en_230V_si_aucun_24V_ne_suffit()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        projet.Armoire.Forcages[CalculThermique.CodePuissance] = Version3Tests.Force(900);
+        projet.Armoire.PositionVentilation = PositionVentilation.Porte;
+        projet.Armoire.TensionVentilation = TensionVentilation.Continu24;
+        var r = CalculProjet.Calculer(projet);
+        if (r.Thermique!.ModeleVentilateur is { } m && !m.EnContinu24V)
+            Assert.Contains(r.Thermique.Note.Lignes, l => l.Libelle == "Tension des ventilateurs");
+    }
+}

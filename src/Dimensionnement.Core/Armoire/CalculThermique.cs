@@ -122,14 +122,21 @@ public static class CalculThermique
                 // Ventilation imposée : toute la puissance est évacuée par l'air, sans compter sur les parois.
                 debit = 3.1 * (forcee ? Math.Max(p, p - evacuee) : p - evacuee) / ecart;
                 var besoin = debit * MajorationFiltres;
-                var catalogue = CatalogueVentilateurs.Actif;
-                if (c.VentilateurImpose.Length > 0)
-                {
-                    var impose = catalogue.Where(m => m.Reference == c.VentilateurImpose).ToList();
-                    if (impose.Count > 0) catalogue = impose;
-                    else note.Info("Ventilateur imposé", $"{c.VentilateurImpose} absent du catalogue des ventilateurs : choix automatique.", Ref);
-                }
+                var tous = CatalogueVentilateurs.Actif;
+                var continu = c.TensionVentilation == TensionVentilation.Continu24;
+                var catalogue = tous.Where(m => m.EnContinu24V == continu).ToList();
+                var impose = c.VentilateurImpose.Length > 0 ? tous.Where(m => m.Reference == c.VentilateurImpose).ToList() : new List<ModeleVentilateur>();
+                if (impose.Count > 0) catalogue = impose;
+                else if (c.VentilateurImpose.Length > 0)
+                    note.Info("Ventilateur imposé", $"{c.VentilateurImpose} absent du catalogue des ventilateurs : choix automatique.", Ref);
                 var choix = ChoisirVentilateur(besoin, armoire, catalogue, position);
+                if (choix is null && impose.Count == 0 && continu
+                    && (ChoisirVentilateur(besoin, armoire, tous.Where(m => !m.EnContinu24V).ToList(), position) is { } alternatif))
+                {
+                    note.Verifier("Tension des ventilateurs", false, $"Aucun ventilateur 24 V DC du catalogue ne fournit {N(besoin, 0)} m³/h " +
+                        "à cet emplacement : ventilateur 230 V AC retenu.", Ref, StatutCalcul.Alerte);
+                    choix = alternatif;
+                }
                 if (choix is null && position != PositionVentilation.Porte && ChoisirVentilateur(besoin, armoire, catalogue) is { } enPorte)
                 {
                     note.Verifier("Paroi des ventilateurs", false, $"Paroi latérale trop petite ({N(armoire.Profondeur)} × {N(armoire.Hauteur)} mm) " +
@@ -155,7 +162,8 @@ public static class CalculThermique
                         $"{(nombre > 1 ? $"{nombre} × " : "")}{modele.Fabricant} {modele.Gamme} {modele.Reference} : {N(modele.Debit, 0)} m³/h" +
                         (nombre > 1 ? $" chacun, {N(nombre * modele.Debit, 0)} m³/h installés" : "") +
                         $", découpe {N(modele.Decoupe)} × {N(modele.Decoupe)} mm, {N(modele.Largeur)} × {N(modele.Hauteur)} × {N(modele.Profondeur)} mm, " +
-                        $"{N(modele.Puissance, 1)} W en 230 V. " + Emplacement(position, modele, armoire) + " " +
+                        $"{N(modele.Puissance, 1)} W en {modele.Tension}" +
+                        (modele.EnContinu24V ? $" ({N(nombre * modele.Puissance / 24, 2)} A repris au bilan 24 V DC). " : ". ") + Emplacement(position, modele, armoire) + " " +
                         (c.CommandeVentilation == CommandeVentilation.Continue
                             ? "Marche continue dès la mise sous tension (filtres à contrôler plus souvent)."
                             : $"Commandé par thermostat réglé à {N(c.ConsigneThermostat, 0)} °C.") +

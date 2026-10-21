@@ -15,6 +15,13 @@ public record ModeleVentilateur
     public double Debit { get; init; }
     public double Decoupe { get; init; }
     public double Puissance { get; init; }
+
+    /// <summary>Tension d'alimentation du ventilateur : « 230 V AC » ou « 24 V DC ».</summary>
+    public string Tension { get; init; } = "230 V AC";
+
+    /// <summary>Vrai pour un ventilateur alimenté par le 24 V DC de commande.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool EnContinu24V => Tension.Replace(" ", "").StartsWith("24VDC", StringComparison.OrdinalIgnoreCase);
     public double Largeur { get; init; }
     public double Hauteur { get; init; }
     public double Profondeur { get; init; }
@@ -37,8 +44,17 @@ public static class CatalogueVentilateurs
     /// <summary>Catalogue utilisé par le calcul ; l'application le remplace par celui du dossier utilisateur.</summary>
     public static IReadOnlyList<ModeleVentilateur> Actif { get; set; } = Embarque.Value;
 
-    public static IReadOnlyList<ModeleVentilateur> Charger(string? fichierPersonnalise = null) =>
-        fichierPersonnalise is not null && File.Exists(fichierPersonnalise) ? Lire(File.ReadAllText(fichierPersonnalise)) : Embarque.Value;
+    /// <summary>
+    /// Le catalogue de l'utilisateur s'il existe, complété des références embarquées qu'il ne contient pas encore
+    /// (nouvelles tensions ou tailles ajoutées depuis sa dernière modification).
+    /// </summary>
+    public static IReadOnlyList<ModeleVentilateur> Charger(string? fichierPersonnalise = null)
+    {
+        if (fichierPersonnalise is null || !File.Exists(fichierPersonnalise)) return Embarque.Value;
+        var personnel = Lire(File.ReadAllText(fichierPersonnalise));
+        var connues = personnel.Select(m => m.Reference).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return personnel.Concat(Embarque.Value.Where(m => !connues.Contains(m.Reference))).ToList();
+    }
 
     public static string TexteEmbarque()
     {

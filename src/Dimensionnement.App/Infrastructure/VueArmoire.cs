@@ -374,7 +374,7 @@ public class VueArmoire : Border
         {
             Width = largeur ?? m.Largeur, Height = m.Hauteur, CornerRadius = new CornerRadius(4), Background = Pinceau("#2214B8A6"), Tag = "Porte",
             ToolTip = $"{texte}\n{m.Fabricant} {m.Gamme} {m.Reference}\nDécoupe {m.Decoupe:0} × {m.Decoupe:0} mm, {m.Largeur:0} × {m.Hauteur:0} × {m.Profondeur:0} mm" +
-                      (ventilateur ? $", {m.Puissance:0.#} W 230 V" : "") + (m.Verifie ? "" : "\nValeurs indicatives, à vérifier"),
+                      (ventilateur ? $", {m.Puissance:0.#} W {m.Tension}" : "") + (m.Verifie ? "" : "\nValeurs indicatives, à vérifier"),
             Child = new Grid
             {
                 Children =

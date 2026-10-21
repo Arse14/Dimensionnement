@@ -88,6 +88,30 @@ public static class CalculProjet
         IReadOnlyList<CarteEs>? cartes = null, IReadOnlyList<ModeleAlimentation>? alimentations = null, IReadOnlyList<ModeleIhm>? ihm = null,
         IReadOnlyList<ModeleCapteurSecurite>? capteursSecurite = null)
     {
+        // Des ventilateurs 24 V DC ne sont connus qu'après le bilan thermique : un second passage les ajoute au bilan 24 V,
+        // pour que l'alimentation soit dimensionnée avec eux.
+        var r = Calculer(projet, catalogue, references, variateurs, enveloppes, catalogueSecurite, cartes, alimentations, ihm, capteursSecurite,
+            Array.Empty<ConsommationCommande>());
+        var ventilation = Ventilation24V(r);
+        return ventilation.Count == 0 ? r
+            : Calculer(projet, catalogue, references, variateurs, enveloppes, catalogueSecurite, cartes, alimentations, ihm, capteursSecurite, ventilation);
+    }
+
+    /// <summary>Consommation des ventilateurs 24 V DC retenus, une ligne par enveloppe ventilée.</summary>
+    static List<ConsommationCommande> Ventilation24V(ResultatProjet r) =>
+        (r.Armoire?.Enveloppes ?? Enumerable.Empty<ResultatArmoire>())
+        .Select(e => e.Thermique)
+        .Where(t => t is { Solution: SolutionThermique.Ventilation, ModeleVentilateur: { EnContinu24V: true } })
+        .Select(t => new ConsommationCommande($"Ventilateurs {t!.ModeleVentilateur!.Reference} × {t.NombreVentilateurs}",
+            t.NombreVentilateurs * t.ModeleVentilateur.Puissance / 24))
+        .ToList();
+
+    static ResultatProjet Calculer(Projet projet, IReadOnlyList<CpuAutomate> catalogue,
+        IReadOnlyList<ReferenceCatalogue>? references, IReadOnlyList<ModeleVariateur>? variateurs,
+        IReadOnlyList<ModeleEnveloppe>? enveloppes, IReadOnlyList<ModeleSecurite>? catalogueSecurite,
+        IReadOnlyList<CarteEs>? cartes, IReadOnlyList<ModeleAlimentation>? alimentations, IReadOnlyList<ModeleIhm>? ihm,
+        IReadOnlyList<ModeleCapteurSecurite>? capteursSecurite, IReadOnlyList<ConsommationCommande> ventilation24V)
+    {
         capteursSecurite ??= CatalogueCapteursSecurite.Charger();
         ihm ??= CatalogueIhm.Charger();
         cartes ??= CatalogueCartesEs.Charger();
@@ -97,7 +121,7 @@ public static class CalculProjet
 
         // Le bilan ne dépend pas des câbles : un premier passage donne les puissances, le second
         // recalcule les départs avec la chute de tension consommée par le câble d'arrivée.
-        var consommateurs24V = Consommateurs24V(projet, catalogueSecurite, catalogue, cartes, ihm, capteursSecurite);
+        var consommateurs24V = Consommateurs24V(projet, catalogueSecurite, catalogue, cartes, ihm, capteursSecurite).Concat(ventilation24V).ToList();
         var consommation24V = consommateurs24V.Where(c => c.Tension == TensionCommande.Continu24).Sum(c => c.Courant);
         var repartition = Repartir(projet, consommateurs24V);
         var alimentesPar = SourcesCommande.AlimentesPar(projet);
@@ -309,8 +333,14 @@ public static class CalculProjet
             rang++;
             var suffixe = rang == 1 ? "" : $".{rang}";
             var lieu = enveloppe.Id is null ? "" : $" ({enveloppe.Nom})";
+            // Ventilateurs 24 V DC : disjoncteur unipolaire en sortie de l'alimentation 24 V, calibré sur 1,25 fois leur courant.
+            var continu = m.EnContinu24V;
+            var courant = t.NombreVentilateurs * m.Puissance / 24;
+            var calibre = continu ? Calibres.Superieur(Calibres.Disjoncteurs, Math.Max(1, 1.25 * courant)) ?? 2 : 2;
+            var amont = continu && r.Arbre.Parcourir().FirstOrDefault(e => e.Famille == "Alimentation") is { } alimentation ? alimentation : sectionneur;
             var protection = new ElementMateriel { Repere = $"Q-EV{suffixe}", Famille = "Disjoncteur", Designation = "Protection de la ventilation" + lieu,
-                Calibre = "2 A, courbe C", CoffretId = enveloppe.Id }.Avec(2, poles, courbe: "C");
+                Calibre = continu ? $"{calibre:0.#} A, courbe C, 24 V DC" : "2 A, courbe C", CoffretId = enveloppe.Id }
+                .Avec(calibre, continu ? 1 : poles, courbe: "C");
             var thermostat = new ElementMateriel { Repere = $"BT-EV{suffixe}", Famille = "Thermostat",
                 Designation = "Thermostat d'armoire, contact NO, commande des ventilateurs" + lieu, Calibre = $"réglé à {t.ConsigneThermostat:0} °C (0 à 60 °C)",
                 Fabricant = "Schneider – ClimaSys CC", Reference = ThermostatVentilation, CoffretId = enveloppe.Id,
@@ -318,13 +348,13 @@ public static class CalculProjet
             var ventilateur = new ElementMateriel { Repere = $"EV{suffixe}", Famille = "Ventilation",
                 Designation = $"Ventilateur à filtre encastré {Paroi(t.PositionVentilation)}, {m.Debit:0} m³/h, avec grille de sortie" +
                     (t.CommandeVentilation == CommandeVentilation.Continue ? ", marche continue" : "") + lieu,
-                Calibre = $"{m.Debit:0} m³/h, découpe {m.Decoupe:0} × {m.Decoupe:0} mm, {m.Puissance:0.#} W 230 V",
+                Calibre = $"{m.Debit:0} m³/h, découpe {m.Decoupe:0} × {m.Decoupe:0} mm, {m.Puissance:0.#} W {m.Tension}",
                 Quantite = t.NombreVentilateurs, Fabricant = $"{m.Fabricant} – {m.Gamme}", Reference = m.Reference,
                 // Ses pertes partent avec l'air extrait : elles ne s'ajoutent pas au bilan.
                 SurParoi = true, ExterieurEnveloppe = true, CoffretId = enveloppe.Id, AVerifier = !m.Verifie };
             // En marche continue, pas de thermostat : les ventilateurs suivent directement leur protection.
-            if (t.CommandeVentilation == CommandeVentilation.Continue) sectionneur.Ajouter(protection).Ajouter(ventilateur);
-            else sectionneur.Ajouter(protection).Ajouter(thermostat).Ajouter(ventilateur);
+            if (t.CommandeVentilation == CommandeVentilation.Continue) amont.Ajouter(protection).Ajouter(ventilateur);
+            else amont.Ajouter(protection).Ajouter(thermostat).Ajouter(ventilateur);
             ajoutes.Add(protection);
         }
         if (ajoutes.Count == 0) return false;

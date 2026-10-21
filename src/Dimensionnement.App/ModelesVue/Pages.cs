@@ -32,7 +32,7 @@ public record ChoixTexte(string Valeur, string Libelle);
 public record PageVentilation(Projet Projet, ConfigurationArmoire Config, string Nom)
 {
     public IReadOnlyList<ChoixTexte> Ventilateurs { get; } = new[] { new ChoixTexte("", "Automatique : le plus petit qui suffit") }
-        .Concat(Core.Normes.CatalogueVentilateurs.Actif.OrderBy(m => m.Debit)
-            .Select(m => new ChoixTexte(m.Reference, $"{m.Reference} – {m.Debit:0} m³/h, {m.Largeur:0} × {m.Hauteur:0} mm")))
+        .Concat(Core.Normes.CatalogueVentilateurs.Actif.OrderBy(m => m.EnContinu24V).ThenBy(m => m.Debit)
+            .Select(m => new ChoixTexte(m.Reference, $"{m.Reference} – {m.Debit:0} m³/h, {m.Tension}, {m.Largeur:0} × {m.Hauteur:0} mm")))
         .ToList();
 }

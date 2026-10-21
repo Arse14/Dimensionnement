@@ -109,6 +109,8 @@ public class LibelleEnum : IValueConverter
         PositionVentilation.CoteGauche => "Côté gauche (sortie en haut à droite)",
         PositionVentilation.CoteDroit => "Côté droit (sortie en haut à gauche)",
         PositionVentilation.Porte => "Porte (sortie en haut de porte)",
+        TensionVentilation.Alternatif230 => "230 V AC (réseau, derrière Q-EV)",
+        TensionVentilation.Continu24 => "24 V DC (alimentation de commande, repris au bilan 24 V)",
         FabricantMateriel.Schneider => "Schneider Electric",
         MarqueFamille.Projet => "Marque du projet",
         MarqueFamille.Schneider => "Schneider Electric",
@@ -203,6 +205,7 @@ public static class Listes
     public static MontageSectionneur[] MontagesSectionneur { get; } = Enum.GetValues<MontageSectionneur>();
     public static CommandeVentilation[] CommandesVentilation { get; } = Enum.GetValues<CommandeVentilation>();
     public static PositionVentilation[] PositionsVentilation { get; } = Enum.GetValues<PositionVentilation>();
+    public static TensionVentilation[] TensionsVentilation { get; } = Enum.GetValues<TensionVentilation>();
     public static FabricantMateriel[] FabricantsMateriel { get; } = Enum.GetValues<FabricantMateriel>();
     public static string[] FabricantsProjet { get; } = { Projet.FabricantParDefaut };
     public static MarqueVariateur[] MarquesVariateur { get; } = Enum.GetValues<MarqueVariateur>();

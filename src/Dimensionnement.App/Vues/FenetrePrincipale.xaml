@@ -1292,6 +1292,11 @@
                              ToolTip="Température de démarrage des ventilateurs, en dessous de l'intérieur maximal admis"/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Tension des ventilateurs" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.TensionsVentilation}" SelectedItem="{inf:Lien Config.TensionVentilation}"
+                              ToolTip="En 24 V DC, les ventilateurs sont alimentés par l'alimentation de commande et comptés dans son bilan"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Position des ventilateurs" Style="{StaticResource Etiquette}"/>
                     <ComboBox ItemsSource="{x:Static inf:Listes.PositionsVentilation}" SelectedItem="{inf:Lien Config.PositionVentilation}"
                               ToolTip="Ventilateur en bas de la paroi choisie ; sur un côté, la grille de sortie va en haut du côté opposé"/>
@@ -1300,7 +1305,7 @@
                     <TextBlock Text="Ventilateur" Style="{StaticResource Etiquette}"/>
                     <ComboBox ItemsSource="{Binding Ventilateurs}" DisplayMemberPath="Libelle" SelectedValuePath="Valeur"
                               SelectedValue="{inf:Lien Config.VentilateurImpose}"
-                              ToolTip="Schneider ClimaSys encastré ; « Automatique » prend le plus petit qui fournit le débit"/>
+                              ToolTip="Schneider ClimaSys encastré ; « Automatique » prend le plus petit qui fournit le débit, dans la tension choisie. Un modèle imposé fixe aussi sa tension."/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Intérieur maximal admis (°C)" Style="{StaticResource Etiquette}"/>

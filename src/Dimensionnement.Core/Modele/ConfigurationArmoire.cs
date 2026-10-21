@@ -32,6 +32,9 @@ public enum CommandeVentilation { Thermostat, Continue }
 /// <summary>Paroi qui reçoit les ventilateurs à filtre ; la grille de sortie va en haut de la paroi opposée (côtés) ou de la porte.</summary>
 public enum PositionVentilation { CoteGauche, CoteDroit, Porte }
 
+/// <summary>Tension des ventilateurs : réseau 230 V AC, ou 24 V DC de commande (repris au bilan 24 V).</summary>
+public enum TensionVentilation { Alternatif230, Continu24 }
+
 public enum FabricantMateriel { Schneider, ABB, Siemens, Legrand }
 
 /// <summary>Fabricant des enveloppes et plaques de montage.</summary>
@@ -88,6 +91,7 @@ public class ConfigurationArmoire
     public double ConsigneThermostat { get; set; } = 35;
     public PositionVentilation PositionVentilation { get; set; } = PositionVentilation.CoteGauche;
     public string VentilateurImpose { get; set; } = "";
+    public TensionVentilation TensionVentilation { get; set; } = TensionVentilation.Alternatif230;
 
     public MarqueEnveloppe Marque { get; set; } = MarqueEnveloppe.Rittal;
 
