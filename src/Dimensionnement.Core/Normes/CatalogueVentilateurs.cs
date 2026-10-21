@@ -46,12 +46,15 @@ public static class CatalogueVentilateurs
 
     /// <summary>
     /// Le catalogue de l'utilisateur s'il existe, complété des références embarquées qu'il ne contient pas encore
-    /// (nouvelles tensions ou tailles ajoutées depuis sa dernière modification).
+    /// (nouvelles tensions ou tailles ajoutées depuis sa dernière modification). Une ligne encore indicative chez
+    /// l'utilisateur cède la place à la ligne embarquée vérifiée sur la fiche du fabricant.
     /// </summary>
     public static IReadOnlyList<ModeleVentilateur> Charger(string? fichierPersonnalise = null)
     {
         if (fichierPersonnalise is null || !File.Exists(fichierPersonnalise)) return Embarque.Value;
-        var personnel = Lire(File.ReadAllText(fichierPersonnalise));
+        var embarques = Embarque.Value.ToDictionary(m => m.Reference, StringComparer.OrdinalIgnoreCase);
+        var personnel = Lire(File.ReadAllText(fichierPersonnalise))
+            .Select(m => !m.Verifie && embarques.TryGetValue(m.Reference, out var e) && e.Verifie ? e : m).ToList();
         var connues = personnel.Select(m => m.Reference).ToHashSet(StringComparer.OrdinalIgnoreCase);
         return personnel.Concat(Embarque.Value.Where(m => !connues.Contains(m.Reference))).ToList();
     }

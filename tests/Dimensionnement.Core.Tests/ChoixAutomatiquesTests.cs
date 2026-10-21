@@ -92,3 +92,25 @@ public class ChoixAutomatiquesTests
         Assert.True(ihm.AVerifier);
     }
 }
+
+public class CatalogueVentilateursFusionTests
+{
+    [Fact]
+    public void Ligne_indicative_de_l_utilisateur_remplacee_par_la_fiche_verifiee()
+    {
+        var fichier = Path.GetTempFileName();
+        File.WriteAllText(fichier, """
+            [ { "Reference": "NSYCVF560M230PF", "Debit": 560, "Largeur": 320, "Hauteur": 340, "Verifie": false },
+              { "Reference": "MON-VENTILO", "Debit": 100, "Largeur": 150, "Hauteur": 150 } ]
+            """);
+        try
+        {
+            var c = Normes.CatalogueVentilateurs.Charger(fichier);
+            var m = Assert.Single(c, x => x.Reference == "NSYCVF560M230PF");
+            Assert.Equal(562, m.Debit);
+            Assert.Equal(316, m.Largeur);
+            Assert.Contains(c, x => x.Reference == "MON-VENTILO");
+        }
+        finally { File.Delete(fichier); }
+    }
+}

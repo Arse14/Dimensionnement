@@ -137,7 +137,11 @@ public class LibelleEnum : IValueConverter
         ZoneCem.Propre => "Zone CEM « propre »",
         ZoneCem.HorsArmoire => "Hors armoire",
         null => "",
-        _ => valeur.ToString() ?? "",
+        // Le modèle de liste du thème remplace DisplayMemberPath : un choix (ventilateur, enveloppe, coffret, famille de
+        // catalogue) s'affiche par son libellé ou son nom, jamais par le texte brut de l'objet.
+        _ => valeur.GetType().GetProperty("Libelle")?.GetValue(valeur) as string
+             ?? valeur.GetType().GetProperty("Nom")?.GetValue(valeur) as string
+             ?? valeur.ToString() ?? "",
     };
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => Libelle(value);
