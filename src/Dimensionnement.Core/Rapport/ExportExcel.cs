@@ -60,13 +60,11 @@ public static class ExportExcel
     static readonly XLColor Bandeau = XLColor.FromHtml("#DCE6F0");
     static readonly XLColor Zebre = XLColor.FromHtml("#F5F8FB");
     static readonly XLColor Trait = XLColor.FromHtml("#C5D0DC");
-    static readonly XLColor Saisie = XLColor.FromHtml("#FFF6D5");
     static readonly XLColor Gris = XLColor.FromHtml("#5B6573");
 
     /// <summary>
-    /// Demande de prix mise en page pour le fournisseur : bandeau titre, cartouche du projet, une section par catégorie
-    /// avec numéros 1.1, 1.2…, colonnes de prix à compléter en jaune, sous-totaux et total HT calculés par Excel,
-    /// impression A4 paysage sur une largeur de page avec l'en-tête répété.
+    /// Liste de matériel mise en page pour le fournisseur, qui chiffre de son côté : bandeau titre, cartouche du projet,
+    /// une section par catégorie avec numéros 1.1, 1.2…, impression A4 paysage sur une largeur de page avec l'en-tête répété.
     /// </summary>
     static IXLWorksheet FeuilleDevis(XLWorkbook classeur, ResultatProjet r)
     {
@@ -77,12 +75,11 @@ public static class ExportExcel
         f.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
         f.ShowGridLines = false;
 
-        string[] colonnes = { "N°", "Désignation", "Caractéristiques", "Fabricant", "Référence", "Qté", "Unité", "Repères", "Remarque",
-            "Prix unitaire HT", "Total HT", "Délai" };
-        double[] largeurs = { 6, 38, 44, 22, 22, 7, 6, 18, 30, 13, 13, 10 };
+        string[] colonnes = { "N°", "Désignation", "Caractéristiques", "Fabricant", "Référence", "Qté", "Unité", "Repères", "Remarque" };
+        double[] largeurs = { 6, 40, 48, 24, 24, 7, 6, 22, 40 };
         var n = colonnes.Length;
         for (var i = 0; i < n; i++) f.Column(i + 1).Width = largeurs[i];
-        const int cQte = 6, cPrix = 10, cTotal = 11, cDelai = 12;
+        const int cQte = 6;
 
         // Bandeau titre.
         var titre = f.Range(1, 1, 1, n).Merge();
@@ -104,7 +101,7 @@ public static class ExportExcel
             Cartouche(f, 4 + i, 4, 5, droite[i]);
         }
         var consigne = f.Range(8, 1, 8, n).Merge();
-        consigne.Value = "Références à confirmer par le fournisseur ; équivalences acceptées si signalées. Merci de compléter les colonnes en jaune.";
+        consigne.Value = "Références à confirmer par le fournisseur ; équivalences acceptées si signalées.";
         consigne.Style.Font.SetItalic().Font.SetFontColor(Gris).Alignment.SetIndent(1);
 
         // En-tête du tableau, figé et répété à l'impression.
@@ -118,7 +115,6 @@ public static class ExportExcel
         f.SheetView.FreezeRows(debut);
 
         var ligne = debut;
-        var sousTotaux = new List<int>();
         foreach (var categorie in ListeDevis.Generer(r).GroupBy(d => d.Categorie))
         {
             var section = f.Range(++ligne, 1, ligne, n).Merge();
@@ -141,38 +137,14 @@ public static class ExportExcel
                 f.Cell(ligne, cQte).Style.NumberFormat.Format = "0.##";
                 var remarque = f.Cell(ligne, 9);
                 remarque.Style.Font.SetFontColor(d.Remarque.Contains("à compléter") ? XLColor.FromHtml("#C65A00") : Gris);
-                // Colonnes du fournisseur.
-                f.Cell(ligne, cPrix).Style.Fill.SetBackgroundColor(Saisie).NumberFormat.SetFormat("#,##0.00 €");
-                f.Cell(ligne, cDelai).Style.Fill.SetBackgroundColor(Saisie).Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
-                f.Cell(ligne, cTotal).FormulaA1 = $"IF(J{ligne}=\"\",\"\",F{ligne}*J{ligne})";
-                f.Cell(ligne, cTotal).Style.NumberFormat.SetFormat("#,##0.00 €");
             }
             var bloc = f.Range(premiere, 1, ligne, n);
             bloc.Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin).Border.SetOutsideBorderColor(Trait)
                 .Border.SetInsideBorder(XLBorderStyleValues.Hair).Border.SetInsideBorderColor(Trait);
-            // Sous-total de la catégorie.
-            ligne++;
-            var libelle = f.Range(ligne, 1, ligne, cTotal - 1).Merge();
-            libelle.Value = $"Sous-total {categorie.Key}";
-            libelle.Style.Font.SetBold().Alignment.SetHorizontal(XLAlignmentHorizontalValues.Right);
-            f.Cell(ligne, cTotal).FormulaA1 = $"SUM(K{premiere}:K{ligne - 1})";
-            f.Cell(ligne, cTotal).Style.Font.SetBold().NumberFormat.SetFormat("#,##0.00 €");
-            f.Range(ligne, cTotal, ligne, cTotal).Style.Border.SetTopBorder(XLBorderStyleValues.Thin);
-            sousTotaux.Add(ligne);
             ligne++;
         }
 
-        ligne++;
-        var total = f.Range(ligne, 1, ligne, cTotal - 1).Merge();
-        total.Value = "TOTAL HT";
-        total.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Right);
-        f.Cell(ligne, cTotal).FormulaA1 = string.Join("+", sousTotaux.Select(l => $"K{l}"));
-        f.Cell(ligne, cTotal).Style.NumberFormat.SetFormat("#,##0.00 €");
-        var bandeTotal = f.Range(ligne, 1, ligne, n);
-        bandeTotal.Style.Font.SetBold().Font.SetFontSize(11).Font.SetFontColor(XLColor.White).Fill.SetBackgroundColor(Marine);
-        f.Row(ligne).Height = 22;
-
-        f.Range(debut, 1, ligne - 2, n).SetAutoFilter();
+        f.Range(debut, 1, ligne - 1, n).SetAutoFilter();
         var page = f.PageSetup;
         page.PaperSize = XLPaperSize.A4Paper;
         page.PageOrientation = XLPageOrientation.Landscape;
