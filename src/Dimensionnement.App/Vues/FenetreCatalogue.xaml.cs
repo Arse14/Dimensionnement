@@ -16,10 +16,14 @@ public partial class FenetreCatalogue : Window
     const string Dynamique = "colonne du catalogue";
     readonly ModeleVueCatalogue _modele;
 
-    public FenetreCatalogue(ModeleVuePrincipal principal, string idFamille)
+    /// <summary>Référence retenue par le bouton « Retenir » quand la fenêtre sert à choisir un article.</summary>
+    public string? ReferenceRetenue { get; private set; }
+
+    public FenetreCatalogue(ModeleVuePrincipal principal, string idFamille, bool choix = false)
     {
         InitializeComponent();
-        _modele = new ModeleVueCatalogue(principal, idFamille);
+        _modele = new ModeleVueCatalogue(principal, idFamille, choix);
+        _modele.Retenu += r => { ReferenceRetenue = r; DialogResult = true; };
         DataContext = _modele;
         ConstruireColonnes();
         _modele.PropertyChanged += (_, e) =>

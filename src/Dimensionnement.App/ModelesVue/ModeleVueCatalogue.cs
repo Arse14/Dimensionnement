@@ -96,9 +96,11 @@ public class ModeleVueCatalogue : Observable
     bool _modifie;
     string? _photo;
 
-    public ModeleVueCatalogue(ModeleVuePrincipal principal, string idFamille)
+    public ModeleVueCatalogue(ModeleVuePrincipal principal, string idFamille, bool choix = false)
     {
         _principal = principal;
+        ModeChoix = choix;
+        Retenir = new Commande(() => Retenu?.Invoke(_selection?.Reference ?? ""), () => _selection is not null && choix);
         _famille = BibliothequeCatalogues.Familles.FirstOrDefault(f => f.Id == idFamille) ?? BibliothequeCatalogues.Familles[0];
         Charger();
 
@@ -125,6 +127,11 @@ public class ModeleVueCatalogue : Observable
             SignalerTout();
         });
     }
+
+    /// <summary>Vrai quand le catalogue sert à choisir un article pour le projet : le bouton « Retenir » renvoie sa référence.</summary>
+    public bool ModeChoix { get; }
+    public Commande Retenir { get; }
+    public event Action<string>? Retenu;
 
     public Commande Enregistrer { get; }
     public Commande Annuler { get; }

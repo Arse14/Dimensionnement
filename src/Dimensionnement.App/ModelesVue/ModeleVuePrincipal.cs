@@ -140,6 +140,7 @@ public partial class ModeleVuePrincipal : Observable
         AfficherArmoire = new Commande(() => Selection = new PageArmoire(_projet, ConfigCourante, NomCourant));
         AfficherThermique = new Commande(() => Selection = new PageThermique(_projet, ConfigCourante, NomCourant));
         AfficherVentilation = new Commande(() => Selection = new PageVentilation(_projet, _projet.Armoire, "armoire principale"));
+        ChoisirVentilateurCatalogue = new Commande(p => ChoisirVentilateur((PageVentilation)p!), p => p is PageVentilation);
         AfficherSelectivite = new Commande(() => Selection = new PageSelectivite(_projet));
         AfficherReferences = new Commande(() => Selection = new PageReferences(_projet));
         OuvrirVueArmoire = new Commande(() => Afficher(new FenetreArmoire(this)));
@@ -266,6 +267,17 @@ public partial class ModeleVuePrincipal : Observable
     public Commande AfficherArmoire { get; }
     public Commande AfficherThermique { get; }
     public Commande AfficherVentilation { get; }
+    public Commande ChoisirVentilateurCatalogue { get; }
+
+    /// <summary>Ouvre le catalogue des ventilateurs en mode choix ; la référence retenue devient le ventilateur imposé de l'enveloppe.</summary>
+    void ChoisirVentilateur(PageVentilation page)
+    {
+        var fenetre = new FenetreCatalogue(this, "ventilateurs", choix: true) { Owner = Application.Current.MainWindow };
+        if (page.Config.VentilateurImpose.Length > 0) fenetre.Selectionner(page.Config.VentilateurImpose);
+        if (fenetre.ShowDialog() != true || fenetre.ReferenceRetenue is not { Length: > 0 } reference) return;
+        Modifier(() => page.Config.VentilateurImpose = reference);
+        Selection = page with { };
+    }
     public Commande AfficherSelectivite { get; }
     public Commande AfficherReferences { get; }
     public Commande OuvrirVueArmoire { get; }

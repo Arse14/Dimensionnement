@@ -90,7 +90,8 @@ public class ConfigurationArmoire
     public CommandeVentilation CommandeVentilation { get; set; } = CommandeVentilation.Thermostat;
     public double ConsigneThermostat { get; set; } = 35;
     public PositionVentilation PositionVentilation { get; set; } = PositionVentilation.CoteGauche;
-    public string VentilateurImpose { get; set; } = "";
+    public string VentilateurImpose { get => _ventilateurImpose; set => _ventilateurImpose = value ?? ""; }
+    string _ventilateurImpose = "";
     public TensionVentilation TensionVentilation { get; set; } = TensionVentilation.Alternatif230;
 
     public MarqueEnveloppe Marque { get; set; } = MarqueEnveloppe.Rittal;

@@ -211,6 +211,10 @@ public class VueArmoire : Border
         if (AfficherChamps && a.Sources.Count > 0)
             DessinerChamp(a);
 
+        // Les petits appareils passent devant les grands : un appareil recouvert par un plus gros reste saisissable, et
+        // l'appareil survolé vient au premier plan.
+        var ordre = a.Appareils.OrderByDescending(x => x.Largeur * x.Hauteur).Select((x, i) => (x, i))
+            .ToDictionary(t => t.x, t => 10 + (int)(25.0 * t.i / Math.Max(1, a.Appareils.Count)));
         foreach (var x in a.Appareils)
         {
             var bloc = new Border
@@ -248,10 +252,14 @@ public class VueArmoire : Border
                     },
                 },
             };
+            Panel.SetZIndex(bloc, ordre[x]);
             if (Interactif)
             {
                 bloc.Cursor = Cursors.SizeAll;
                 bloc.MouseLeftButtonDown += Saisir;
+                var rang = ordre[x];
+                bloc.MouseEnter += (_, _) => { if (_glisse is null) Panel.SetZIndex(bloc, 39); };
+                bloc.MouseLeave += (_, _) => { if (_glisse != bloc) Panel.SetZIndex(bloc, rang); };
                 var menu = new ContextMenu();
                 if (x.Element is { } element && RenommerCommande is { } renommer)
                 {

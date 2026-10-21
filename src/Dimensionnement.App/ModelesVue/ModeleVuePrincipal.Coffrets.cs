@@ -76,6 +76,8 @@ public partial class ModeleVuePrincipal
             ? Resultat.Armoire!.Enveloppes.SelectMany(e => e.Appareils).Where(a => a.Element?.DepartId == depart).Select(CalculArmoire.CleAffectation)
             : new[] { d.Cle };
         foreach (var cle in cles.Distinct().ToList()) Affecter(cle, cible);
+        // La vue passe sur l'enveloppe d'arrivée : l'appareil y attend dans la zone « À placer » (ou y est posé automatiquement).
+        _affichee = cible;
     }), p => p is DeportAppareil);
 
     /// <summary>Envoie dans un nouveau coffret tout ce qui attend dans la zone « À placer », avec le reste de leurs départs.</summary>

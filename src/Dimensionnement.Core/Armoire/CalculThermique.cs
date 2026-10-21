@@ -125,24 +125,46 @@ public static class CalculThermique
                 var tous = CatalogueVentilateurs.Actif;
                 var continu = c.TensionVentilation == TensionVentilation.Continu24;
                 var catalogue = tous.Where(m => m.EnContinu24V == continu).ToList();
-                var impose = c.VentilateurImpose.Length > 0 ? tous.Where(m => m.Reference == c.VentilateurImpose).ToList() : new List<ModeleVentilateur>();
-                if (impose.Count > 0) catalogue = impose;
-                else if (c.VentilateurImpose.Length > 0)
-                    note.Info("Ventilateur imposé", $"{c.VentilateurImpose} absent du catalogue des ventilateurs : choix automatique.", Ref);
-                var choix = ChoisirVentilateur(besoin, armoire, catalogue, position);
-                if (choix is null && impose.Count == 0 && continu
-                    && (ChoisirVentilateur(besoin, armoire, tous.Where(m => !m.EnContinu24V).ToList(), position) is { } alternatif))
+                var reference = c.VentilateurImpose.Trim();
+                var impose = reference.Length > 0 ? tous.Where(m => m.Reference.Equals(reference, StringComparison.OrdinalIgnoreCase)).ToList() : new List<ModeleVentilateur>();
+                if (impose.Count > 0)
                 {
-                    note.Verifier("Tension des ventilateurs", false, $"Aucun ventilateur 24 V DC du catalogue ne fournit {N(besoin, 0)} m³/h " +
-                        "à cet emplacement : ventilateur 230 V AC retenu.", Ref, StatutCalcul.Alerte);
-                    choix = alternatif;
+                    catalogue = impose;
+                    if (impose[0].EnContinu24V != continu)
+                        note.Info("Ventilateur imposé", $"{impose[0].Reference} est alimenté en {impose[0].Tension} : cette tension remplace celle réglée pour l'enveloppe.", Ref);
                 }
-                if (choix is null && position != PositionVentilation.Porte && ChoisirVentilateur(besoin, armoire, catalogue) is { } enPorte)
+                else if (reference.Length > 0)
+                    note.Verifier("Ventilateur imposé", false, $"{reference} absent du catalogue des ventilateurs : choix automatique.", Ref, StatutCalcul.Alerte);
+                // Recherche à la position demandée, puis en 230 V AC si le 24 V DC ne suffit pas, puis en porte si la paroi est trop petite.
+                (ModeleVentilateur Modele, int Nombre)? Chercher(IReadOnlyList<ModeleVentilateur> cat, bool repli24V)
                 {
-                    note.Verifier("Paroi des ventilateurs", false, $"Paroi latérale trop petite ({N(armoire.Profondeur)} × {N(armoire.Hauteur)} mm) " +
-                        $"pour {N(besoin, 0)} m³/h : ventilateurs reportés sur la porte.", Ref, StatutCalcul.Alerte);
-                    position = PositionVentilation.Porte;
-                    choix = enPorte;
+                    var trouve = ChoisirVentilateur(besoin, armoire, cat, position);
+                    if (trouve is null && repli24V && continu
+                        && ChoisirVentilateur(besoin, armoire, tous.Where(m => !m.EnContinu24V).ToList(), position) is { } alternatif)
+                    {
+                        note.Verifier("Tension des ventilateurs", false, $"Aucun ventilateur 24 V DC du catalogue ne fournit {N(besoin, 0)} m³/h " +
+                            "à cet emplacement : ventilateur 230 V AC retenu.", Ref, StatutCalcul.Alerte);
+                        trouve = alternatif;
+                    }
+                    if (trouve is null && position != PositionVentilation.Porte && ChoisirVentilateur(besoin, armoire, cat) is { } enPorte)
+                    {
+                        note.Verifier("Paroi des ventilateurs", false, $"Paroi latérale trop petite ({N(armoire.Profondeur)} × {N(armoire.Hauteur)} mm) " +
+                            $"pour {N(besoin, 0)} m³/h : ventilateurs reportés sur la porte.", Ref, StatutCalcul.Alerte);
+                        position = PositionVentilation.Porte;
+                        trouve = enPorte;
+                    }
+                    return trouve;
+                }
+                var choix = Chercher(catalogue, impose.Count == 0);
+                // Ventilateur imposé insuffisant ou trop grand pour l'enveloppe : signalé, puis choix automatique à sa place.
+                if (choix is null && impose.Count > 0)
+                {
+                    note.Verifier("Ventilateur imposé", false, $"{impose[0].Reference} ({N(impose[0].Debit, 0)} m³/h, {N(impose[0].Largeur)} × {N(impose[0].Hauteur)} mm) " +
+                        $"ne fournit pas {N(besoin, 0)} m³/h, même à plusieurs, ou ne tient ni sur la paroi choisie ni en porte : choix automatique à sa place.",
+                        Ref, StatutCalcul.Alerte);
+                    catalogue = tous.Where(m => m.EnContinu24V == continu).ToList();
+                    impose.Clear();
+                    choix = Chercher(catalogue, true);
                 }
                 if (choix is { } retenu)
                 {
@@ -179,9 +201,15 @@ public static class CalculThermique
                     note.Verifier("Ventilation", false, $"{N(besoin, 0)} m³/h nécessaires pour les variateurs : aucun ventilateur du catalogue ne tient " +
                         $"sur les parois ni dans la porte {N(armoire.Largeur)} × {N(armoire.Hauteur)} mm. Armoire trop petite.", Ref, StatutCalcul.NonConforme);
                 else
-                    note.Info("Ventilation", $"{N(besoin, 0)} m³/h nécessaires : aucun ventilateur du catalogue ne tient sur les parois ni dans la porte " +
-                        $"{N(armoire.Largeur)} × {N(armoire.Hauteur)} mm, climatisation retenue.", Ref);
+                    note.Verifier("Ventilation", false, $"{N(besoin, 0)} m³/h nécessaires : aucun ventilateur du catalogue ne tient sur les parois ni dans la porte " +
+                        $"{N(armoire.Largeur)} × {N(armoire.Hauteur)} mm (profondeur {N(armoire.Profondeur)} mm) : climatisation retenue. " +
+                        "Une enveloppe plus grande ou moins de matériel permettrait une simple ventilation.", Ref, StatutCalcul.Alerte);
             }
+            else
+                // L'air ambiant ne peut refroidir l'enveloppe que s'il est nettement plus frais que l'intérieur admis.
+                note.Verifier("Ventilation", false, $"Ventilation impossible : l'intérieur maximal admis ({N(c.TemperatureInterieureMax, 0)} °C) doit dépasser " +
+                    $"l'ambiance maximale ({N(c.TemperatureAmbianteMax, 0)} °C) d'au moins 5 °C pour que l'air extérieur refroidisse l'enveloppe. " +
+                    "Relever l'intérieur admis, revoir l'ambiance, ou climatiser.", Ref, StatutCalcul.Alerte);
             if (solution == SolutionThermique.Aucune && !(forcee && ti <= c.TemperatureInterieureMax))
             {
                 solution = SolutionThermique.Climatisation;

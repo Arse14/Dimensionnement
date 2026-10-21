@@ -82,6 +82,11 @@
         <Border DockPanel.Dock="Top" Background="{StaticResource Panneau}" BorderBrush="{StaticResource Bordure}" BorderThickness="0,0,0,1" Padding="16,10">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Bottom">
+                    <Button Command="{Binding Retenir}" Style="{StaticResource BoutonAccent}" Margin="0,0,16,0"
+                            Visibility="{Binding ModeChoix, Converter={StaticResource VraiVisible}}"
+                            ToolTip="Retient l'article sélectionné pour le projet et ferme le catalogue">
+                        <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE73E;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="{Binding Reference, StringFormat='Retenir {0}'}"/></StackPanel>
+                    </Button>
                     <Button Command="{Binding Nouveau}" ToolTip="Ajouter un article saisi à la main">
                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE710;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Nouvel article"/></StackPanel>
                     </Button>

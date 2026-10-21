@@ -1307,9 +1307,15 @@
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Ventilateur" Style="{StaticResource Etiquette}"/>
-                    <ComboBox ItemsSource="{Binding Ventilateurs}" DisplayMemberPath="Libelle" SelectedValuePath="Valeur"
-                              SelectedValue="{inf:Lien Config.VentilateurImpose}"
-                              ToolTip="Schneider ClimaSys encastré ; « Automatique » prend le plus petit qui fournit le débit, dans la tension choisie. Un modèle imposé fixe aussi sa tension."/>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="Choisir au catalogue…" Margin="6,0,0,0" Padding="10,3"
+                                ToolTip="Ouvre le catalogue des ventilateurs à filtre : fiche, cotes, photos ; « Retenir » impose le modèle à cette enveloppe"
+                                Command="{Binding DataContext.ChoisirVentilateurCatalogue, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"/>
+                        <ComboBox ItemsSource="{Binding Ventilateurs}" DisplayMemberPath="Libelle" SelectedValuePath="Valeur"
+                                  SelectedValue="{inf:Lien Config.VentilateurImpose}"
+                                  ToolTip="Schneider ClimaSys encastré ; « Automatique » prend le plus petit qui fournit le débit, dans la tension choisie. Un modèle imposé fixe aussi sa tension."/>
+                    </DockPanel>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Intérieur maximal admis (°C)" Style="{StaticResource Etiquette}"/>

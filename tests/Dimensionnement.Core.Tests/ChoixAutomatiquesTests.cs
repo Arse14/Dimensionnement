@@ -114,3 +114,49 @@ public class CatalogueVentilateursFusionTests
         finally { File.Delete(fichier); }
     }
 }
+
+public class VentilationCoffretTests
+{
+    static Projet Projet(Action<ConfigurationArmoire> regler)
+    {
+        var projet = Version3Tests.ProjetMachine();
+        projet.Armoire.Forcages[Armoire.CalculThermique.CodePuissance] = Version3Tests.Force(300);
+        regler(projet.Armoire);
+        return projet;
+    }
+
+    [Fact]
+    public void Ambiance_egale_a_l_interieur_admis_ventilation_impossible_expliquee()
+    {
+        var r = CalculProjet.Calculer(Projet(a => { a.TemperatureAmbianteMax = 60; a.TemperatureInterieureMax = 60; }));
+        var t = r.Thermique!;
+        Assert.Equal(Armoire.SolutionThermique.Climatisation, t.Solution);
+        Assert.Contains(t.Note.Lignes, l => l.Libelle == "Ventilation" && l.Statut == StatutCalcul.Alerte && l.Message.Contains("impossible"));
+    }
+
+    [Fact]
+    public void Ventilateur_impose_trop_petit_remplace_avec_alerte()
+    {
+        var r = CalculProjet.Calculer(Projet(a => { a.VentilateurImpose = "NSYCVF38M230PF"; a.PositionVentilation = PositionVentilation.Porte; }));
+        var t = r.Thermique!;
+        Assert.Equal(Armoire.SolutionThermique.Ventilation, t.Solution);
+        Assert.NotEqual("NSYCVF38M230PF", t.ModeleVentilateur!.Reference);
+        Assert.Contains(t.Note.Lignes, l => l.Libelle == "Ventilateur imposé" && l.Statut == StatutCalcul.Alerte);
+    }
+
+    [Fact]
+    public void Ventilateur_impose_inconnu_signale()
+    {
+        var r = CalculProjet.Calculer(Projet(a => a.VentilateurImpose = "INCONNU"));
+        Assert.Contains(r.Thermique!.Note.Lignes, l => l.Libelle == "Ventilateur imposé" && l.Statut == StatutCalcul.Alerte);
+        Assert.Equal(Armoire.SolutionThermique.Ventilation, r.Thermique.Solution);
+    }
+
+    [Fact]
+    public void Ventilateur_impose_null_ne_plante_pas()
+    {
+        var projet = Projet(a => a.VentilateurImpose = null!);
+        Assert.Equal("", projet.Armoire.VentilateurImpose);
+        CalculProjet.Calculer(projet);
+    }
+}
