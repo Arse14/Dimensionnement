@@ -38,7 +38,11 @@
                 <Button Content="Ajouter une goulotte horizontale" Command="{Binding AjouterGoulotte}" CommandParameter="H" Margin="0,0,6,0"/>
                 <Button Content="Ajouter une goulotte verticale" Command="{Binding AjouterGoulotte}" CommandParameter="V" Margin="0,0,16,0"/>
                 <Button Content="Réinitialiser l'implantation" Command="{Binding ReinitialiserImplantation}" Margin="0,0,16,0"/>
-                <TextBlock Text="{Binding ResumeArmoire}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <TextBlock Text="Enveloppe" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <ComboBox ItemsSource="{Binding ChoixEnveloppes}" SelectedItem="{Binding EnveloppeChoisie}" DisplayMemberPath="Libelle"
+                          Width="420" MaxDropDownHeight="420" IsTextSearchEnabled="True" TextSearch.TextPath="Libelle" Margin="0,0,16,0"
+                          ToolTip="Choisir une enveloppe du catalogue l'impose (marque et cotes reprises) ; « Automatique » prend la plus petite qui reçoit le matériel ; les cotes libres se saisissent dans le panneau Armoire et implantation."/>
+                <TextBlock Text="{Binding ResumeArmoire}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,0"/>
             </WrapPanel>
         </Border>
 

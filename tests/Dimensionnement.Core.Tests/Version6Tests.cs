@@ -184,4 +184,18 @@ public class Version6Tests
         Assert.Equal("3RT2036-1NB30", CatalogueReferences.Bobine("3RT2036-1NB30", TensionCommande.Alternatif24));
         Assert.Equal("3RT2036-1AP00", CatalogueReferences.Bobine("3RT2036-1NB30", TensionCommande.Alternatif230));
     }
+
+    [Fact]
+    public void Enveloppe_du_catalogue_imposee_reprend_sa_reference_et_sa_plaque()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        projet.Armoire.Marque = MarqueEnveloppe.Schneider;
+        projet.Armoire.TailleImposee = true;
+        (projet.Armoire.LargeurImposee, projet.Armoire.HauteurImposee, projet.Armoire.ProfondeurImposee) = (800, 2000, 400);
+
+        var a = CalculProjet.Calculer(projet).Armoire!;
+
+        Assert.Equal("NSYSF20840", a.Reference);
+        Assert.Equal((696.0, 1897.0), (a.PlaqueLargeur, a.PlaqueHauteur));
+    }
 }

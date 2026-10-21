@@ -339,6 +339,57 @@ public class ModeleVuePrincipal : Observable
           $"plaque occupée à {a.Occupation:0} % – {Resultat.Thermique?.PuissanceDissipee:0} W dissipés"
         : "";
 
+    List<ChoixEnveloppe>? _choixEnveloppes;
+    IReadOnlyList<ModeleEnveloppe>? _choixSource;
+
+    /// <summary>« Automatique », puis toutes les enveloppes des catalogues Rittal, Legrand et Schneider, de la plus petite à la plus grande.</summary>
+    public IReadOnlyList<ChoixEnveloppe> ChoixEnveloppes
+    {
+        get
+        {
+            if (_choixEnveloppes is null || !ReferenceEquals(_choixSource, _enveloppes))
+            {
+                _choixSource = _enveloppes;
+                _choixEnveloppes = new List<ChoixEnveloppe> { ChoixEnveloppe.Automatique, ChoixEnveloppe.Libre };
+                _choixEnveloppes.AddRange(_enveloppes
+                    .Where(m => Enum.TryParse<MarqueEnveloppe>(m.Fabricant, true, out _))
+                    .OrderBy(m => m.Fabricant).ThenBy(m => m.Gamme).ThenBy(m => m.Largeur * m.Hauteur).ThenBy(m => m.Profondeur)
+                    .Select(m => new ChoixEnveloppe($"{m.Fabricant} {m.Gamme} – {m.Largeur:0} × {m.Hauteur:0} × {m.Profondeur:0} mm ({m.Reference})", m)));
+            }
+            return _choixEnveloppes;
+        }
+    }
+
+    /// <summary>Enveloppe imposée : une du catalogue (marque et cotes reprises), des cotes libres, ou le choix automatique.</summary>
+    public ChoixEnveloppe EnveloppeChoisie
+    {
+        get
+        {
+            var a = _projet.Armoire;
+            if (!a.TailleImposee) return ChoixEnveloppe.Automatique;
+            return ChoixEnveloppes.FirstOrDefault(c => c.Modele is { } m && a.CellulesImposees == 1
+                       && m.Fabricant.Equals(a.Marque.ToString(), StringComparison.OrdinalIgnoreCase)
+                       && Math.Abs(m.Largeur - a.LargeurImposee) < 1 && Math.Abs(m.Hauteur - a.HauteurImposee) < 1
+                       && Math.Abs(m.Profondeur - a.ProfondeurImposee) < 1)
+                   ?? ChoixEnveloppe.Libre;
+        }
+        set
+        {
+            if (value is null || value == EnveloppeChoisie) return;
+            var a = _projet.Armoire;
+            a.TailleImposee = value != ChoixEnveloppe.Automatique;
+            if (value.Modele is { } m)
+            {
+                a.Marque = Enum.Parse<MarqueEnveloppe>(m.Fabricant, true);
+                a.LargeurImposee = m.Largeur;
+                a.HauteurImposee = m.Hauteur;
+                a.ProfondeurImposee = m.Profondeur;
+                a.CellulesImposees = 1;
+            }
+            Recalculer();
+        }
+    }
+
     public string ResumeThermique => Resultat.Thermique switch
     {
         null => "",
@@ -791,3 +842,20 @@ public class ModeleVuePrincipal : Observable
 
 /// <summary>Une CPU proposée dans la liste de choix ; référence vide pour le choix automatique.</summary>
 public record ChoixCpu(string Reference, string Libelle);
+
+/// <summary>Une entrée de la liste des enveloppes : choix automatique, cotes libres, ou une enveloppe du catalogue.</summary>
+public sealed class ChoixEnveloppe
+{
+    public static readonly ChoixEnveloppe Automatique = new("Automatique : la plus petite qui reçoit le matériel", null);
+    public static readonly ChoixEnveloppe Libre = new("Dimensions libres (saisies à la main)", null);
+
+    public ChoixEnveloppe(string libelle, ModeleEnveloppe? modele)
+    {
+        Libelle = libelle;
+        Modele = modele;
+    }
+
+    public string Libelle { get; }
+    public ModeleEnveloppe? Modele { get; }
+    public override string ToString() => Libelle;
+}

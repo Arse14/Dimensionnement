@@ -1014,6 +1014,13 @@
                     <TextBlock Text="Réserve de place sur les rails (%)" Style="{StaticResource Etiquette}"/>
                     <TextBox Text="{inf:Lien Projet.Armoire.ReservePourcent}"/>
                 </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Enveloppe" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{Binding DataContext.ChoixEnveloppes, RelativeSource={RelativeSource AncestorType=Window}}"
+                              SelectedItem="{Binding DataContext.EnveloppeChoisie, RelativeSource={RelativeSource AncestorType=Window}}"
+                              DisplayMemberPath="Libelle" MaxDropDownHeight="420" IsTextSearchEnabled="True" TextSearch.TextPath="Libelle"
+                              ToolTip="Choisir une enveloppe du catalogue l'impose (marque et cotes reprises) ; « Automatique » prend la plus petite qui reçoit le matériel."/>
+                </DockPanel>
                 <CheckBox x:Name="CaseTailleImposee" Content="Imposer la taille de l'armoire" IsChecked="{inf:Lien Projet.Armoire.TailleImposee}" Margin="0,8,0,4"
                           ToolTip="L'implantation essaie de tout faire entrer dans cette taille, en réduisant la réserve si besoin ; une alerte signale si c'est impossible."/>
                 <StackPanel IsEnabled="{Binding IsChecked, ElementName=CaseTailleImposee}">
