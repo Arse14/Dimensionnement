@@ -109,6 +109,7 @@ public class VueArmoire : Border
     void Dessiner()
     {
         _plan.Children.Clear();
+        _longueurs.Clear();
         _glisse = null;
         if (Armoire is not { } a) return;
         _plan.Width = a.LargeurTotale + a.LargeurAttente + 2 * Marge;
@@ -177,7 +178,7 @@ public class VueArmoire : Border
             {
                 var t = new Troncon(id, g.Verticale, g.X, g.Y, g.Verticale ? g.Y : g.X, g.Longueur, g.Verticale ? g.Largeur : g.Hauteur);
                 Manipulable(goulotte, id, true, t);
-                Poignees(t);
+                Poignees(t, goulotte);
             }
             else if (Interactif && LibreCommande is { } libre)
             {
@@ -204,7 +205,7 @@ public class VueArmoire : Border
             {
                 var t = new Troncon(b.Id!.Value, false, b.X, b.Y + b.Hauteur / 2 - PoigneeRail / 2, b.X, b.Largeur, PoigneeRail);
                 Manipulable(rail, b.Id!.Value, false, t);
-                Poignees(t);
+                Poignees(t, rail);
             }
         }
 
@@ -539,26 +540,72 @@ public class VueArmoire : Border
         _plan.Children.Add(element);
     }
 
+    /// <summary>Zone de saisie d'une poignée, le long du rail : large pour ne pas viser au pixel près, mais invisible.</summary>
     const double TaillePoignee = 14;
+    /// <summary>Trait orange visible de la poignée.</summary>
+    const double TraitPoignee = 3;
 
-    /// <summary>Deux poignées orange aux extrémités, à glisser pour donner au rail ou à la goulotte la longueur voulue.</summary>
-    void Poignees(Troncon t)
+    /// <summary>Longueur affichée pendant le réglage, par rail ou goulotte.</summary>
+    readonly Dictionary<Guid, TextBlock> _longueurs = new();
+
+    /// <summary>
+    /// Deux poignées fines aux extrémités, à glisser pour donner au rail ou à la goulotte la longueur voulue. Elles
+    /// n'apparaissent qu'au survol du rail, de la goulotte ou d'une poignée, et restent affichées pendant le geste.
+    /// </summary>
+    void Poignees(Troncon t, FrameworkElement support)
     {
+        var visibles = new List<UIElement>();
+        var survoles = new List<UIElement> { support };
+        void Afficher()
+        {
+            var montrer = survoles.Any(e => e.IsMouseOver) || _glisse is { Tag: PoigneeExtremite p } && p.Troncon.Id == t.Id;
+            foreach (var v in visibles) v.Opacity = montrer ? 1 : 0;
+        }
+
+        var fin = t.Debut + t.Longueur;
         foreach (var debut in new[] { true, false })
         {
-            var poignee = new Border
+            var travers = t.Epaisseur + 6;
+            var trait = new Border
             {
-                Width = t.Verticale ? t.Epaisseur + 8 : TaillePoignee, Height = t.Verticale ? TaillePoignee : t.Epaisseur + 8,
-                Background = Pinceau("#F5A623"), BorderBrush = Pinceau("#1D232A"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(2),
+                Width = t.Verticale ? travers : TraitPoignee, Height = t.Verticale ? TraitPoignee : travers,
+                Background = Pinceau("#F5A623"), CornerRadius = new CornerRadius(TraitPoignee / 2),
+                HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
+            };
+            var poignee = new Grid
+            {
+                // Fond transparent : la zone reste saisissable même quand le trait est masqué.
+                Width = t.Verticale ? travers : TaillePoignee, Height = t.Verticale ? TaillePoignee : travers,
+                Background = Brushes.Transparent, Opacity = 0, Children = { trait },
                 Cursor = t.Verticale ? Cursors.SizeNS : Cursors.SizeWE, Tag = new PoigneeExtremite(t, debut),
                 ToolTip = $"Glisser pour régler la longueur ({t.Longueur:0} mm), clic droit sur le rail ou la goulotte pour une longueur exacte",
             };
             poignee.MouseLeftButtonDown += Saisir;
+            poignee.MouseEnter += (_, _) => Afficher();
+            poignee.MouseLeave += (_, _) => Afficher();
+            poignee.MouseLeftButtonUp += (_, _) => Afficher();
             Panel.SetZIndex(poignee, 60);
-            var fin = t.Debut + t.Longueur;
-            if (t.Verticale) Placer(poignee, t.X - 4, (debut ? t.Debut : fin) - TaillePoignee / 2);
-            else Placer(poignee, (debut ? t.Debut : fin) - TaillePoignee / 2, t.Y - 4);
+            visibles.Add(poignee);
+            survoles.Add(poignee);
+            if (t.Verticale) Placer(poignee, t.X - 3, (debut ? t.Debut : fin) - TaillePoignee / 2);
+            else Placer(poignee, (debut ? t.Debut : fin) - TaillePoignee / 2, t.Y - 3);
         }
+
+        // Longueur au-dessus de l'extrémité de fin (à droite du haut pour une goulotte verticale).
+        var texte = new TextBlock { Text = $"{t.Longueur:0} mm", Foreground = Brushes.White, FontSize = 11 };
+        _longueurs[t.Id] = texte;
+        var etiquette = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(230, 0x1D, 0x23, 0x2A)), CornerRadius = new CornerRadius(3),
+            Padding = new Thickness(5, 1, 5, 1), Child = texte, IsHitTestVisible = false, Opacity = 0,
+        };
+        Panel.SetZIndex(etiquette, 61);
+        visibles.Add(etiquette);
+        if (t.Verticale) Placer(etiquette, t.X + t.Epaisseur + 6, t.Debut);
+        else Placer(etiquette, Math.Max(t.Debut, fin - 70), t.Y - 22);
+
+        support.MouseEnter += (_, _) => Afficher();
+        support.MouseLeave += (_, _) => Afficher();
     }
 
     void Saisir(object sender, MouseButtonEventArgs e)
@@ -580,6 +627,14 @@ public class VueArmoire : Border
         var axe = (_glisse.Tag as PoigneeExtremite)?.Troncon.Verticale;
         if (axe != true) Canvas.SetLeft(_glisse, Arrondir(_origine.X + p.X - _depart.X));
         if (axe != false) Canvas.SetTop(_glisse, Arrondir(_origine.Y + p.Y - _depart.Y));
+        // Longueur en direct pendant le réglage d'une extrémité.
+        if (_glisse.Tag is PoigneeExtremite { Troncon: var t } poignee && _longueurs.TryGetValue(t.Id, out var texte))
+        {
+            var position = (t.Verticale ? Canvas.GetTop(_glisse) : Canvas.GetLeft(_glisse)) - Marge + TaillePoignee / 2;
+            var fin = t.Debut + t.Longueur;
+            var longueur = poignee.Debut ? fin - Math.Min(position, fin - 20) : Math.Max(20, position - t.Debut);
+            texte.Text = $"Longueur {longueur:0} mm";
+        }
     }
 
     void Deposer(object sender, MouseButtonEventArgs e)
