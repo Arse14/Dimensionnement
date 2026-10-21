@@ -145,7 +145,7 @@ public partial class ModeleVuePrincipal : Observable
         AfficherReferences = new Commande(() => Selection = new PageReferences(_projet));
         OuvrirVueArmoire = new Commande(() => Afficher(new FenetreArmoire(this)));
         OuvrirOrganigramme = new Commande(() => Afficher(new FenetreSchema(this, "Organigramme du matériel",
-            "De l'arrivée jusqu'à chaque récepteur, départs groupés par rubrique. Survolez un appareil pour son détail, cliquez-le pour ouvrir sa fiche catalogue ; molette + Ctrl pour zoomer.",
+            "De l'arrivée jusqu'à chaque récepteur, départs groupés par rubrique, commande groupée sous son alimentation. Survolez un appareil pour son détail, cliquez-le (gauche ou droit) pour ouvrir sa fiche catalogue ; molette + Ctrl pour zoomer.",
             SchemaOrganigramme.Svg, ExporterOrganigramme!)));
         OuvrirCarte = new Commande(p => OuvrirCarteMateriel((CarteMateriel)p!), p => p is CarteMateriel);
         DeplacerAppareil = new Commande(p => Modifier(() =>

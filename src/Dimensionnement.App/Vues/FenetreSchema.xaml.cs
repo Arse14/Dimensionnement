@@ -38,7 +38,11 @@ public partial class FenetreSchema : Window
                 "Dimensionnement", "WebView2");
             var environnement = await CoreWebView2Environment.CreateAsync(null, donnees);
             await Vue.EnsureCoreWebView2Async(environnement);
-            // Clic sur un appareil de l'organigramme : sa fiche catalogue s'ouvre pour la contrôler et la valider.
+            // Pas de menu du navigateur ni d'outils de développement : le clic droit est à l'application.
+            Vue.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+            Vue.CoreWebView2.Settings.AreDevToolsEnabled = false;
+            Vue.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
+            // Clic (gauche ou droit) sur un appareil de l'organigramme : sa fiche catalogue s'ouvre pour la contrôler et la valider.
             Vue.CoreWebView2.WebMessageReceived += (_, e) =>
             {
                 if (e.TryGetWebMessageAsString() is { Length: > 0 } reference) _modele.OuvrirFiche(reference);
@@ -59,10 +63,15 @@ public partial class FenetreSchema : Window
         if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == nameof(ModeleVuePrincipal.Resultat)) Afficher();
     }
 
-    /// <summary>Script de la vue intégrée : un clic sur un appareil qui porte une référence l'envoie à l'application.</summary>
+    /// <summary>
+    /// Script de la vue intégrée : un clic, gauche ou droit, sur un appareil qui porte une référence l'envoie à l'application ;
+    /// le menu contextuel du navigateur ne s'ouvre jamais.
+    /// </summary>
     const string ScriptFiche =
-        "<script>document.addEventListener('click',function(e){var g=e.target.closest&&e.target.closest('[data-reference]');" +
-        "if(g&&window.chrome&&chrome.webview)chrome.webview.postMessage(g.getAttribute('data-reference'));});</script>";
+        "<script>function fiche(e){var g=e.target.closest&&e.target.closest('[data-reference]');" +
+        "if(g&&window.chrome&&chrome.webview)chrome.webview.postMessage(g.getAttribute('data-reference'));}" +
+        "document.addEventListener('click',fiche);" +
+        "document.addEventListener('contextmenu',function(e){e.preventDefault();fiche(e);});</script>";
 
     string Html() =>
         "<!doctype html><html><head><meta charset=\"utf-8\"><style>body{margin:0;background:#fff}" +
