@@ -4,7 +4,11 @@ using static Dimensionnement.Core.Calculs.Format;
 
 namespace Dimensionnement.Core.Calculs;
 
-public record ResultatCable(double Section, double CourantAdmissible, double ChuteTension, double SectionPe);
+public record ResultatCable(double Section, double CourantAdmissible, double ChuteTension, double SectionPe)
+{
+    /// <summary>Chute de tension en amont du départ, en % : la chute cumulée vaut ChuteAmont + ChuteTension.</summary>
+    public double ChuteAmont { get; init; }
+}
 
 /// <summary>Choix de la section d'un câble cuivre : courant admissible puis chute de tension.</summary>
 public static class CalculCable
@@ -58,7 +62,7 @@ public static class CalculCable
         var pe = TablesCables.SectionPe(section);
         note.Info("Section du conducteur de protection", $"PE = {Mm2(pe)}", "NF C 15-100, tableau 54.2");
 
-        return new ResultatCable(section, iz, du, pe);
+        return new ResultatCable(section, iz, du, pe) { ChuteAmont = chuteAmont };
     }
 
     /// <summary>

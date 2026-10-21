@@ -86,10 +86,15 @@ public class CalculProjetTests
     {
         var html = RapportHtml.Generer(CalculProjet.Calculer(ProjetExemple()));
 
-        foreach (var titre in new[] { "1. Page de garde", "2. Données d'entrée", "3. Liste des départs", "4. Arbre du matériel",
-                     "5. Notes de calcul", "6. Arrivée générale", "7. Nomenclature", "8. Historique" })
+        foreach (var titre in new[] { "1. Projet et hypothèses", "2. Bilan de puissance", "3. Matériel par départ", "4. Synthèse des calculs",
+                     "5. Points à traiter", "7. Nomenclature", "8. Historique", "Annexe A.", "Annexe B.", "Annexe C.", "Annexe D.", "Annexe E." })
             Assert.Contains(titre, html);
         Assert.Contains("NF EN 61800-3", html);
+        // Renvois : chaque départ vers son calcul détaillé, chaque étape vers le glossaire.
+        Assert.Contains("href=\"#C1\"", html);
+        Assert.Contains("id=\"C1\"", html);
+        Assert.Contains("href=\"#G1\"", html);
+        Assert.Contains("id=\"G1\"", html);
     }
 
     [Fact]

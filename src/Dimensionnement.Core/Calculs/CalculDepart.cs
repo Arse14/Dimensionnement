@@ -18,6 +18,9 @@ public class ResultatDepart
     public double Section { get; init; }
     public double ChuteTension { get; init; }
 
+    /// <summary>Résultat complet du câble (Iz corrigé, PE, chute amont) pour la synthèse du rapport.</summary>
+    public ResultatCable? Cable { get; init; }
+
     /// <summary>Puissance active absorbée, en kW, avant coefficient d'utilisation.</summary>
     public double PuissanceActive { get; init; }
 
@@ -848,7 +851,7 @@ public static class CalculDepart
         return new ResultatDepart
         {
             Depart = d, Note = note, CourantEmploi = ib, CalibreProtection = calibre,
-            Section = cable.Section, ChuteTension = cable.ChuteTension,
+            Section = cable.Section, ChuteTension = cable.ChuteTension, Cable = cable,
             PuissanceActive = p, PuissanceReactive = q, Materiel = protection,
         };
     }
