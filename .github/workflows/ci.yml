@@ -24,11 +24,13 @@ jobs:
         run: dotnet test tests/Dimensionnement.Core.Tests -c Release --no-build --logger "console;verbosity=normal"
 
       - name: Publication de l'exécutable Windows
-        shell: pwsh
+        shell: bash
         run: |
           # Sur une étiquette vX.Y.Z, l'exécutable porte ce numéro ; sinon celui du projet.
-          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { @("-p:Version=$($env:GITHUB_REF_NAME.TrimStart('v'))") } else { @() }
-          dotnet publish src/Dimensionnement.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true @version -o publication
+          version=()
+          if [ "$GITHUB_REF_TYPE" = tag ]; then version=("-p:Version=${GITHUB_REF_NAME#v}"); fi
+          dotnet publish src/Dimensionnement.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true "${version[@]}" -o publication
 
       - uses: actions/upload-artifact@v4
         with:
