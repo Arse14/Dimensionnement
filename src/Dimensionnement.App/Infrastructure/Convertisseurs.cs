@@ -160,6 +160,7 @@ public class MemeDepart : IMultiValueConverter
 public static class Listes
 {
     public static TypeAlimentation[] Alimentations { get; } = Enum.GetValues<TypeAlimentation>();
+    public static TypeAlimentation[] PrimairesSource { get; } = { TypeAlimentation.Mono230, TypeAlimentation.Bi400, TypeAlimentation.Tri400 };
     public static SchemaLiaisonTerre[] Slt { get; } = Enum.GetValues<SchemaLiaisonTerre>();
     public static OrigineAlimentation[] Origines { get; } = Enum.GetValues<OrigineAlimentation>();
     public static ModeDemarrage[] Demarrages { get; } = Enum.GetValues<ModeDemarrage>();

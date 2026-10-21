@@ -279,13 +279,23 @@ public class DepartAlimentation24V : Depart
     public double ProfondeurManuelle { get; set; } = 125;
 
     /// <summary>Alimentation à découpage ou transformateur.</summary>
-    public SourceAlimentation Source { get; set; } = SourceAlimentation.Decoupage;
+    public SourceAlimentation Source
+    {
+        get => _source;
+        set { _source = value; Modifie(); }
+    }
+    SourceAlimentation _source = SourceAlimentation.Decoupage;
 
     /// <summary>Alimentation à sortie réglable (24-28 V) pour compenser la chute de tension des longues lignes 24 V.</summary>
     public bool Reglable { get; set; }
 
     /// <summary>Tension de sortie : 24 V DC, 24 V AC ou 230 V AC.</summary>
-    public TensionCommande Sortie { get; set; } = TensionCommande.Continu24;
+    public TensionCommande Sortie
+    {
+        get => _sortie;
+        set { _sortie = value; Modifie(); }
+    }
+    TensionCommande _sortie = TensionCommande.Continu24;
 
     /// <summary>Départs 230 V alimentés par un transformateur 400/230 V (numéros des départs).</summary>
     public List<int> DepartsAlimentes { get; set; } = new();
@@ -318,10 +328,32 @@ public class DepartAlimentation24V : Depart
     {
         Alimentation = TypeAlimentation.Mono230;
         Rubrique = "Commande";
-        Designation = "Alimentation 24 V DC";
+        Designation = TypeLibelle;
     }
 
     public override string TypeLibelle => Libelle(Sortie, EstTransformateur, Alimentation);
+
+    /// <summary>
+    /// Primaire, sortie ou technologie changés : la désignation suit tant qu'elle est celle proposée par le logiciel
+    /// (une désignation saisie par l'utilisateur est gardée).
+    /// </summary>
+    protected override void Modifie()
+    {
+        var actuelle = Designation.Replace(" réglable", "").Replace(", primaire triphasé", "");
+        if (Designation.Length == 0 || LibellesAutomatiques.Value.Contains(actuelle))
+            Designation = TypeLibelle + (Designation.Contains(" réglable") ? " réglable" : "");
+        Signaler(nameof(TypeLibelle), nameof(Designation), nameof(EstTransformateur));
+    }
+
+    static readonly Lazy<HashSet<string>> LibellesAutomatiques = new(() =>
+    {
+        var libelles = new HashSet<string> { "Alimentation 24 V DC" };
+        foreach (var sortie in Enum.GetValues<TensionCommande>())
+        foreach (var transfo in new[] { false, true })
+        foreach (var primaire in Enum.GetValues<TypeAlimentation>())
+            libelles.Add(Libelle(sortie, transfo, primaire));
+        return libelles;
+    });
     public override string PrefixeRecepteur => EstTransformateur ? "T" : "G";
 
     /// <summary>Libellé d'une source de commande : « Alimentation 24 V DC », « Transformateur 400/24 V AC »…</summary>
@@ -330,7 +362,12 @@ public class DepartAlimentation24V : Depart
         var u = primaire == TypeAlimentation.Mono230 ? "230" : "400";
         return (sortie, transformateur) switch
         {
-            (TensionCommande.Continu24, false) => "Alimentation 24 V DC",
+            (TensionCommande.Continu24, false) => primaire switch
+            {
+                TypeAlimentation.Mono230 => "Alimentation 230 V AC / 24 V DC",
+                TypeAlimentation.Bi400 => "Alimentation 400 V AC (2 phases) / 24 V DC",
+                _ => "Alimentation 400 V AC triphasée / 24 V DC",
+            },
             (TensionCommande.Continu24, true) => $"Transformateur {u}/24 V + redresseur 24 V DC",
             (TensionCommande.Alternatif24, _) => $"Transformateur {u}/24 V AC",
             _ => $"Transformateur {u}/230 V AC",

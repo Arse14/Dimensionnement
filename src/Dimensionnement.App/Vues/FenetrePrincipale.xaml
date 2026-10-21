@@ -530,6 +530,11 @@
                     <ComboBox ItemsSource="{x:Static inf:Listes.SourcesAlimentation}" SelectedItem="{inf:Lien Source}"/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Tension primaire" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.PrimairesSource}" SelectedItem="{inf:Lien Alimentation}"
+                              ToolTip="230 V : protection 1P+N. 400 V entre deux phases : protection 2P. 400 V triphasé (alimentations à découpage) : protection 3P. Le calibre suit le courant primaire."/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Tension de sortie" Style="{StaticResource Etiquette}"/>
                     <ComboBox ItemsSource="{x:Static inf:Listes.TensionsCommande}" SelectedItem="{inf:Lien Sortie}"
                               ToolTip="24 V AC et 230 V AC imposent un transformateur ; 24 V DC par transformateur ajoute un redresseur filtré."/>
@@ -1520,10 +1525,20 @@
                                 <MenuItem Header="Coffret déporté" Command="{Binding AjouterCoffret}"/>
                                 <MenuItem Header="Autre charge" Command="{Binding AjouterGenerique}"/>
                                 <Separator/>
-                                <MenuItem Header="Alimentation 24 V DC" Command="{Binding AjouterAlimentation}"/>
-                                <MenuItem Header="Transformateur 400/24 V AC" Command="{Binding AjouterTransformateur}" CommandParameter="{x:Static mod:TensionCommande.Alternatif24}"/>
-                                <MenuItem Header="Transformateur + redresseur 24 V DC" Command="{Binding AjouterTransformateur}" CommandParameter="{x:Static mod:TensionCommande.Continu24}"/>
-                                <MenuItem Header="Transformateur 400/230 V" Command="{Binding AjouterTransformateur}" CommandParameter="{x:Static mod:TensionCommande.Alternatif230}"/>
+                                <MenuItem Header="Alimentation 24 V DC (découpage)">
+                                    <MenuItem Header="Primaire 230 V AC → 24 V DC" Command="{Binding AjouterSource}" CommandParameter="Decoupage;Mono230;Continu24"/>
+                                    <MenuItem Header="Primaire 400 V AC 2 phases → 24 V DC" Command="{Binding AjouterSource}" CommandParameter="Decoupage;Bi400;Continu24"/>
+                                    <MenuItem Header="Primaire 400 V AC triphasé → 24 V DC" Command="{Binding AjouterSource}" CommandParameter="Decoupage;Tri400;Continu24"/>
+                                </MenuItem>
+                                <MenuItem Header="Transformateur 24 V AC">
+                                    <MenuItem Header="230 / 24 V AC" Command="{Binding AjouterSource}" CommandParameter="Transformateur;Mono230;Alternatif24"/>
+                                    <MenuItem Header="400 / 24 V AC" Command="{Binding AjouterSource}" CommandParameter="Transformateur;Bi400;Alternatif24"/>
+                                </MenuItem>
+                                <MenuItem Header="Transformateur + redresseur 24 V DC">
+                                    <MenuItem Header="230 / 24 V + redresseur 24 V DC" Command="{Binding AjouterSource}" CommandParameter="Transformateur;Mono230;Continu24"/>
+                                    <MenuItem Header="400 / 24 V + redresseur 24 V DC" Command="{Binding AjouterSource}" CommandParameter="Transformateur;Bi400;Continu24"/>
+                                </MenuItem>
+                                <MenuItem Header="Transformateur 400 / 230 V AC" Command="{Binding AjouterSource}" CommandParameter="Transformateur;Bi400;Alternatif230"/>
                             </ContextMenu>
                         </Button.ContextMenu>
                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE710;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Ajouter"/><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE70D;" FontSize="9" Margin="6,0,0,0" VerticalAlignment="Center"/></StackPanel>

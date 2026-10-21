@@ -35,13 +35,13 @@ public class Version3Tests
     {
         var a = CalculProjet.Calculer(ProjetMachine()).Armoire!;
 
-        // Plus petit coffret Rittal AX dont la plaque de montage reçoit le matériel avec 25 % de réserve.
-        Assert.Equal((800, 1200, 300, 1), (a.Largeur, a.Hauteur, a.Profondeur, a.Cellules));
+        // Plus petit coffret Rittal AX dont la plaque de montage reçoit le matériel avec 25 % de réserve, borniers en bas.
+        Assert.Equal((1000, 1000, 300, 1), (a.Largeur, a.Hauteur, a.Profondeur, a.Cellules));
         Assert.Equal("Coffret mural", a.Type);
-        Assert.Equal("AX 800 × 1200 × 300", a.Reference);
-        Assert.Equal((740, 1140), (a.PlaqueLargeur, a.PlaqueHauteur));
-        Assert.DoesNotContain(a.Note.Lignes, l => l.Statut is StatutCalcul.Alerte or StatutCalcul.NonConforme);
-        var basPropre = a.Appareils.Where(x => x.Zone == ZoneCem.Propre).Max(x => x.Y + x.Hauteur);
+        Assert.Equal("AX 1000 × 1000 × 300", a.Reference);
+        Assert.Equal((940, 940), (a.PlaqueLargeur, a.PlaqueHauteur));
+        Assert.True(!a.Note.Lignes.Any(l => l.Statut is StatutCalcul.Alerte or StatutCalcul.NonConforme), string.Join(" || ", a.Note.Lignes.Where(l => l.Statut is StatutCalcul.Alerte or StatutCalcul.NonConforme).Select(l => l.Libelle + " : " + l.Message)));
+        var basPropre = a.Appareils.Where(x => x.Zone == ZoneCem.Propre && x.Famille != "Bornier").Max(x => x.Y + x.Hauteur);
         var hautSale = a.Appareils.Where(x => x.Zone == ZoneCem.Sale).Min(x => x.Y);
         Assert.True(hautSale - basPropre >= CalculArmoire.SeparationCem);
         Assert.Contains(a.Appareils, x => x.Repere == "X1");
@@ -115,10 +115,10 @@ public class Version3Tests
 
         var t = CalculProjet.Calculer(projet).Thermique!;
 
-        // Coffret 800 × 1200 × 300 adossé : Ae = 1,4 × 0,8 × 1,5 + 1,8 × 0,3 × 1,2 = 2,328 m².
-        // Évacué par l'enveloppe : 5,5 × 2,328 × 5 = 64 W ; V = 3,1 × (500 − 64) / 5 = 270 m³/h ; × 1,3 = 351 → 550 m³/h.
+        // Coffret 1000 × 1000 × 300 adossé : Ae = 1,4 × 1,0 × 1,3 + 1,8 × 0,3 × 1,0 = 2,36 m².
+        // Évacué par l'enveloppe : 5,5 × 2,36 × 5 = 65 W ; V = 3,1 × (500 − 65) / 5 = 270 m³/h ; × 1,3 = 351 → 550 m³/h.
         Assert.Equal(SolutionThermique.Ventilation, t.Solution);
-        Assert.Equal(270.3, t.DebitNecessaire, 1);
+        Assert.Equal(269.8, t.DebitNecessaire, 1);
         Assert.Equal(550, t.Ventilateur);
         Assert.Equal(75, t.Resistance);
     }
@@ -364,7 +364,8 @@ public class ChampMagnetiqueTests
 
         Assert.True(a.Tient);
         Assert.Contains("goulottes", a.Alerte);
-        Assert.Equal(25, a.ReserveEffective, 3);
+        // Goulottes allégées d'abord ; la rangée des borniers prend ensuite un peu de la place libre.
+        Assert.Equal(15, a.ReserveEffective, 3);
         Assert.DoesNotContain(a.Note.Lignes, l => l.Libelle == "Implantation" && l.Statut == StatutCalcul.NonConforme);
     }
 
@@ -388,6 +389,9 @@ public class ChampMagnetiqueTests
             projet.Armoire.Positions[variateurs[i].Cle] = new PositionManuelle { X = a.PlaqueX + i * variateurs[i].Largeur, Y = bas };
         projet.Armoire.Positions[variateurs[3].Cle] = new PositionManuelle
             { X = a.PlaqueX + a.PlaqueLargeur - variateurs[3].Largeur, Y = bas - variateurs[3].Hauteur };
+        // Le bornier, resté lui aussi à placer, va en haut à droite, à côté des disjoncteurs.
+        var bornier = a.Appareils.Single(x => x.Famille == "Bornier");
+        projet.Armoire.Positions[bornier.Cle] = new PositionManuelle { X = a.PlaqueX + a.PlaqueLargeur - bornier.Largeur - 20, Y = a.PlaqueY + 60 };
         var manuel = CalculProjet.Calculer(projet).Armoire!;
 
         Assert.True(manuel.Tient, manuel.Alerte);

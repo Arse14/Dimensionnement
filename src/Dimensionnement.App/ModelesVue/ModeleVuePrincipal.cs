@@ -104,6 +104,7 @@ public partial class ModeleVuePrincipal : Observable
         RenommerElement = new Commande(p => Renommer((ElementMateriel)p!), p => p is ElementMateriel);
         AjouterAlimentation = new Commande(() => AjouterDepart(new DepartAlimentation24V()));
         AjouterTransformateur = new Commande(p => AjouterDepart(NouveauTransformateur(p is TensionCommande t ? t : TensionCommande.Alternatif24)));
+        AjouterSource = new Commande(p => AjouterDepart(NouvelleSource(p as string ?? "")));
         BasculerNote = new Commande(() => NoteVisible = !NoteVisible);
         AfficherBilanPuissance = new Commande(() => Selection = new PageBilanPuissance(_projet));
         AjouterPupitre = new Commande(() => Modifier(() => _projet.Automate.Pupitres.Add(new PupitreIhm { Nom = $"IHM {_projet.Automate.Pupitres.Count + 1}" })));
@@ -195,6 +196,9 @@ public partial class ModeleVuePrincipal : Observable
     public Commande SupprimerPeripherique { get; }
     public Commande AjouterAlimentation { get; }
     public Commande AjouterTransformateur { get; }
+
+    /// <summary>Source de commande du menu « Ajouter », décrite par « technologie;primaire;sortie » (ex. « Transformateur;Mono230;Alternatif24 »).</summary>
+    public Commande AjouterSource { get; }
     public Commande BasculerNote { get; }
     public Commande AfficherBilanPuissance { get; }
     public Commande AjouterPupitre { get; }
@@ -474,8 +478,7 @@ public partial class ModeleVuePrincipal : Observable
                 {
                     a.Reglable = c.Reglable;
                     if (c.Primaire == TypeAlimentation.Tri400) a.Alimentation = TypeAlimentation.Tri400;
-                    a.Designation = DepartAlimentation24V.Libelle(a.Sortie, false, a.Alimentation) + (a.Reglable ? " réglable" : "")
-                        + (a.Alimentation == TypeAlimentation.Tri400 ? ", primaire triphasé" : "");
+                    a.Designation = DepartAlimentation24V.Libelle(a.Sortie, false, a.Alimentation) + (a.Reglable ? " réglable" : "");
                 }
             // Un besoin sans ajout (refusé) ou rattaché à un transformateur existant demande aussi un recalcul.
             Resultat = CalculerProjet();
@@ -547,6 +550,17 @@ public partial class ModeleVuePrincipal : Observable
         if (question.Retenu)
             _projet.PreferenceSource = choix == SourceAlimentation.Decoupage ? PreferenceSource.Decoupage : PreferenceSource.Transformateur;
         return choix;
+    }
+
+    static DepartAlimentation24V NouvelleSource(string description)
+    {
+        var parties = description.Split(';');
+        var source = parties.Length > 0 && Enum.TryParse<SourceAlimentation>(parties[0], out var s) ? s : SourceAlimentation.Decoupage;
+        var primaire = parties.Length > 1 && Enum.TryParse<TypeAlimentation>(parties[1], out var p) ? p : TypeAlimentation.Mono230;
+        var sortie = parties.Length > 2 && Enum.TryParse<TensionCommande>(parties[2], out var t) ? t : TensionCommande.Continu24;
+        var a = new DepartAlimentation24V { Source = source, Sortie = sortie, Alimentation = primaire, Differentiel = SensibiliteDifferentiel.Aucun };
+        a.Designation = a.TypeLibelle;
+        return a;
     }
 
     static DepartAlimentation24V NouveauTransformateur(TensionCommande sortie)

@@ -43,7 +43,7 @@ public static class ExplicationsArmoire
             "largeur selon la section " +
             "(6,2 mm jusqu'à 4 mm², 8,2 mm jusqu'à 10 mm², 12,2 mm jusqu'à 35 mm², 16 mm au-delà). Bornier de commande X2 (zone propre) : " +
             "une borne de 5,2 mm par E/S TOR, deux par voie analogique, 9 par barrière immatérielle, 8 par scrutateur, 2 par autre capteur " +
-            "de sécurité, plus 10 bornes de distribution 24 V. Un bornier plus long qu'une rangée est coupé en tronçons (X1.1, X1.2…)."),
+            "de sécurité, plus 10 bornes de distribution 24 V. Les borniers ont leur propre zone en bas de la plaque, au plus près des presse-étoupes : commande à gauche, puissance à droite, séparées de 50 mm, avec 20 % de place en réserve. Un frein à alimentation séparée ajoute deux bornes de puissance, un frein 24 V deux bornes de commande. Un bornier plus long qu'une rangée est coupé en tronçons (X1.1, X1.2…)."),
         new("Choix de l'enveloppe",
             "Toutes les enveloppes de la marque choisie sont essayées de la plus petite surface à la plus grande (coffrets, puis armoires de " +
             "1 à 8 cellules) ; la première où tout tient avec la réserve est retenue. La profondeur est la plus petite du catalogue qui dépasse " +

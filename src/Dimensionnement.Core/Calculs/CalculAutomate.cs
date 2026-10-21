@@ -215,8 +215,12 @@ public static class CalculAutomate
                 note.Info("CPU imposée", $"{choix.Libelle} : les cartes d'E/S suivent sa famille ({plan.Famille}).");
                 if (!choix.Marque.Equals(c.Marque.ToString(), StringComparison.OrdinalIgnoreCase))
                     note.Info("Marque", $"La CPU imposée est une {choix.Marque} : elle prime sur la marque {c.Marque} saisie.");
-                note.Verifier("Sécurité intégrée", !(c.SecuriteIntegree && choix.VersionSecurite == false),
-                    c.SecuriteIntegree ? $"La {choix.Cpu} {(choix.VersionSecurite == false ? "n'existe pas" : "existe")} en version de sécurité." : "Non demandée.", Ref);
+                var versionF = catalogue.FirstOrDefault(x => x.Securite && x.Cpu.Replace(" F-", "-").Replace("F-", "-") == choix.Cpu);
+                note.Verifier("Sécurité intégrée", !(c.SecuriteIntegree && (choix.VersionSecurite == false || versionF is not null)),
+                    !c.SecuriteIntegree ? "Non demandée."
+                    : choix.Securite ? $"La {choix.Cpu} est la version de sécurité."
+                    : versionF is not null ? $"La {choix.Cpu} est la version standard : imposer la {versionF.Cpu} ({versionF.Reference})."
+                    : $"La {choix.Cpu} {(choix.VersionSecurite == false ? "n'existe pas" : "existe")} en version de sécurité.", Ref);
                 note.Verifier("OPC UA", !(c.ClientsOpcUa > 0 && choix.OpcUa == false),
                     c.ClientsOpcUa > 0 ? $"Serveur OPC UA {(choix.OpcUa == false ? "absent" : "disponible")} sur la {choix.Cpu}." : "Non demandé.", Ref);
                 var periph = peripheriquesRequis + (plan.Station ? 1 : 0);
@@ -234,6 +238,10 @@ public static class CalculAutomate
             var candidates = catalogue.Where(x => x.Marque.Equals(c.Marque.ToString(), StringComparison.OrdinalIgnoreCase));
             // Cartes compactes : les CPU au format ET200SP passent devant ; sinon elles sont réservées à ce choix.
             candidates = c.CartesCompactes ? candidates.OrderByDescending(x => x.Compacte) : candidates.Where(x => !x.Compacte);
+            // Sécurité intégrée : les CPU F du catalogue d'abord, à la place de leur version standard ; sinon, les versions standard.
+            candidates = c.SecuriteIntegree && candidates.Any(x => x.Securite)
+                ? candidates.Where(x => x.Securite).Concat(candidates.Where(x => !x.Securite && !candidates.Any(f => f.Securite && f.Gamme == x.Gamme)))
+                : candidates.Where(x => !x.Securite);
             foreach (var cpu in candidates)
             {
                 if (c.SecuriteIntegree && cpu.VersionSecurite == false) continue;

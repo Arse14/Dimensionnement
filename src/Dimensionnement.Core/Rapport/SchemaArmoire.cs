@@ -72,7 +72,7 @@ public static class SchemaArmoire
             // Nom de la zone à la verticale dans la marge gauche de la bande, hors des appareils.
             var cx = b.X + 8 + (a.Laterale - 8) / 2;
             s.Append($"<text x=\"{F(cx)}\" y=\"{F(rail)}\" transform=\"rotate(-90 {F(cx)} {F(rail)})\" font-size=\"{F(Math.Min(16, b.Hauteur / 7))}\" " +
-                     $"font-weight=\"bold\" fill=\"{trait}\" text-anchor=\"middle\" dominant-baseline=\"middle\" letter-spacing=\"1\">{NomZone(b.Zone)}</text>");
+                     $"font-weight=\"bold\" fill=\"{trait}\" text-anchor=\"middle\" dominant-baseline=\"middle\" letter-spacing=\"1\">{(b.Bornier ? "BORNIERS" : NomZone(b.Zone))}</text>");
         }
         foreach (var g in a.Cablage.Goulottes)
             s.Append($"<rect x=\"{F(g.X)}\" y=\"{F(g.Y)}\" width=\"{F(g.Largeur)}\" height=\"{F(g.Hauteur)}\" fill=\"url(#fentes{(g.Verticale ? "V" : "H")})\" " +

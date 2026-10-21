@@ -16,6 +16,8 @@ public record CpuAutomate
     public int? MemoireTravailKo { get; init; }
     public int? EntreesSortiesMax { get; init; }
     public bool? VersionSecurite { get; init; }
+    /// <summary>Cette référence est la version de sécurité (CPU F) ; les autres sont standard.</summary>
+    public bool Securite { get; init; }
 
     /// <summary>Famille des cartes d'E/S raccordées ; vide = déduite de la gamme.</summary>
     public string FamilleCartes { get; init; } = "";
@@ -71,9 +73,20 @@ public static class CatalogueAutomates
 
     public static IReadOnlyList<CpuAutomate> Charger(string? fichierPersonnalise = null)
     {
+        var embarque = Lire(TexteEmbarque());
         if (fichierPersonnalise is not null && File.Exists(fichierPersonnalise))
-            return Lire(File.ReadAllText(fichierPersonnalise));
-        return Lire(TexteEmbarque());
+            return Completer(Lire(File.ReadAllText(fichierPersonnalise)), embarque, c => c.Reference);
+        return embarque;
+    }
+
+    /// <summary>
+    /// Catalogue de l'utilisateur complété des modèles livrés qu'il ne contient pas (ajoutés par une mise à jour du logiciel) :
+    /// ses valeurs priment pour les modèles qu'il a.
+    /// </summary>
+    public static IReadOnlyList<T> Completer<T>(IReadOnlyList<T> utilisateur, IReadOnlyList<T> livre, Func<T, string> cle)
+    {
+        var connus = utilisateur.Select(cle).Where(k => k.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return utilisateur.Concat(livre.Where(m => cle(m).Length > 0 && !connus.Contains(cle(m)))).ToList();
     }
 
     /// <summary>Contenu du catalogue livré avec l'application, à copier pour le compléter.</summary>

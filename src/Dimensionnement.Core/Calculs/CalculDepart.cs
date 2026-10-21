@@ -629,7 +629,7 @@ public static class CalculDepart
             "Documentation fabricant");
         var (courantCable, calibre, protection, aval) = Protection(a, note, reseau, ib, CourbeDisjoncteur.C, "appel des alimentations à découpage");
         var cable = CalculCable.Dimensionner(note, a.Cable, a.Alimentation, courantCable, ib, CosPhiAlimentation, reseau, chuteAmont);
-        var alimentation = Element($"G{a.Numero}", "Alimentation", "Alimentation 24 V DC", $"{N(assigne)} A, {N(24 * assigne)} W")
+        var alimentation = Element($"G{a.Numero}", "Alimentation", DepartAlimentation24V.Libelle(TensionCommande.Continu24, false, a.Alimentation), $"{N(assigne)} A, {N(24 * assigne)} W")
             .Avec(assigne, puissanceKw: 24 * assigne / 1000);
         if (modele is not null)
         {

@@ -35,7 +35,7 @@ public class AppareilImplante
 }
 
 /// <summary>Bande d'une zone CEM sur la plaque : une rangée de rail et ses goulottes, ou un bloc fixé sur la plaque (variateurs).</summary>
-public record BandeZone(ZoneCem Zone, double X, double Y, double Largeur, double Hauteur, bool Rail = true, Guid? Id = null)
+public record BandeZone(ZoneCem Zone, double X, double Y, double Largeur, double Hauteur, bool Rail = true, Guid? Id = null, bool Bornier = false)
 {
     /// <summary>Rail ajouté par l'utilisateur ; son axe est au milieu de la bande et il en occupe toute la largeur.</summary>
     public bool Manuel => Id is not null;
@@ -359,14 +359,18 @@ public static class CalculArmoire
             });
         }
 
-        var puissance = BornesPuissance(r).Sum(b => b.Largeur);
+        // Place réservée pour des bornes ajoutées en cours de câblage ou de mise en service.
+        var puissance = BornesPuissance(r).Sum(b => b.Largeur) * (1 + ReserveBornes);
         if (puissance > 0)
             liste.Add(Bornier("X1", "Bornier de puissance", ZoneCem.Sale, puissance));
-        var commande = BornesCommande(projet).Nombre * Encombrements.LargeurBorneCommande;
+        var commande = BornesCommande(projet).Nombre * Encombrements.LargeurBorneCommande * (1 + ReserveBornes);
         if (commande > 0)
             liste.Add(Bornier("X2", "Bornier de commande", ZoneCem.Propre, commande));
         return liste;
     }
+
+    /// <summary>Réserve de place sur les borniers (20 %).</summary>
+    public const double ReserveBornes = 0.2;
 
     static AppareilImplante Bornier(string repere, string designation, ZoneCem zone, double largeur) => new()
     {
@@ -382,6 +386,8 @@ public static class CalculArmoire
         {
             var actifs = d.Depart.Alimentation switch { TypeAlimentation.Mono230 or TypeAlimentation.Bi400 => 2, TypeAlimentation.Tri400 => 3, _ => 4 };
             if (d.Depart is DepartMoteur { Demarrage: ModeDemarrage.EtoileTriangle }) actifs = 6;
+            // Frein à alimentation séparée : deux bornes de plus vers la bobine.
+            if (d.Depart is DepartMoteur { Frein: true, AlimentationFrein: AlimentationFrein.Separee230 }) actifs += 2;
             var nombre = actifs + 1;
             yield return (nombre, d.Section, nombre * Encombrements.LargeurBorne(d.Section));
         }
@@ -401,7 +407,10 @@ public static class CalculArmoire
             _ => 2,
         });
         var distribution = es + securite > 0 || projet.Departs.OfType<DepartAlimentation24V>().Any() ? 10 : 0;
-        return (es + securite + distribution, $"{es} E/S, {securite} sécurité, {distribution} distribution 24 V");
+        // Frein 24 V DC : deux bornes de commande vers la bobine.
+        var freins = 2 * projet.Departs.OfType<DepartMoteur>().Count(m => m.Frein && m.AlimentationFrein == AlimentationFrein.Continu24);
+        return (es + securite + distribution + freins,
+            $"{es} E/S, {securite} sécurité, {distribution} distribution 24 V" + (freins > 0 ? $", {freins} freins 24 V" : ""));
     }
 
     public record Implantation(bool Tient, List<AppareilImplante> Appareils, List<BandeZone> Bandes, double Occupation);
@@ -466,7 +475,7 @@ public static class CalculArmoire
 
         foreach (var zone in new[] { ZoneCem.Propre, ZoneCem.Intermediaire, ZoneCem.Sale })
         {
-            var appareils = elements.Where(e => e.Zone == zone).ToList();
+            var appareils = elements.Where(e => e.Zone == zone && e.Famille != "Bornier").ToList();
             if (appareils.Count == 0) continue;
             if (zonePrecedente == ZoneCem.Propre && zone == ZoneCem.Sale) y += SeparationCem;
             zonePrecedente = zone;
@@ -528,10 +537,66 @@ public static class CalculArmoire
                 y += hr + entreRangees;
             }
         }
+        // Zone des borniers en bas de la plaque, au plus près des presse-étoupes : commande (propre) à gauche, puissance (sale)
+        // à droite, séparées pour la CEM ; la place libre reste au-dessus, entre le matériel et les borniers.
+        var occupeAvant = cellule * (bas - haut) + Math.Max(0, y - entreRangees - haut);
+        var borniers = elements.Where(e => e.Famille == "Bornier" && e.Zone != ZoneCem.HorsArmoire)
+            .OrderBy(e => e.Zone == ZoneCem.Propre ? 0 : e.Zone == ZoneCem.Intermediaire ? 1 : 2).SelectMany(e => Decouper(e, capacite)).ToList();
+        var rangeesBornier = RangeesBorniers(borniers, utile * (1 - reserve));
+        if (rangeesBornier.Count > 0)
+        {
+            // Les borniers descendent dans la marge basse : il n'y reste que la goulotte d'arrivée des câbles.
+            var hTotal = rangeesBornier.Sum(r => r.Max(e => e.Hauteur) + entreRangees) - entreRangees - (MargeBasse - MargeSousBorniers);
+            Reserver(hTotal);
+            if (y + hTotal <= bas) y = Math.Max(y, bas - hTotal);
+            foreach (var rangee in rangeesBornier)
+            {
+                var hr = rangee.Max(e => e.Hauteur);
+                var x0 = cellule * largeur + dx + margeLaterale;
+                var x = x0;
+                for (var i = 0; i < rangee.Count; i++)
+                {
+                    if (i > 0) x += rangee[i].Zone != rangee[i - 1].Zone ? SeparationBorniers : JeuDeparts;
+                    places.Add(Copier(rangee[i], x, y));
+                    x += rangee[i].Largeur;
+                }
+                bandes.Add(new BandeZone(rangee.Any(e => e.Zone == ZoneCem.Sale) ? ZoneCem.Sale : rangee[0].Zone, cellule * largeur + dx, y - entreRangees / 2, plaque, hr + entreRangees, Bornier: true));
+                y += hr + entreRangees;
+            }
+            occupeAvant += hTotal + entreRangees;
+        }
         if (cellule >= cellules) tient = false;
         var disponible = cellules * (bas - haut);
-        var occupe = cellule * (bas - haut) + Math.Max(0, y - entreRangees - haut);
-        return new Implantation(tient, places, bandes, disponible > 0 ? 100 * occupe / disponible : 100);
+        return new Implantation(tient, places, bandes, disponible > 0 ? Math.Min(100, 100 * occupeAvant / disponible) : 100);
+    }
+
+    /// <summary>Écart entre le bornier de commande et celui de puissance posés sur le même rail (séparation CEM), en mm.</summary>
+    public const double SeparationBorniers = 50;
+
+    /// <summary>Place laissée sous les borniers pour la goulotte d'arrivée des câbles, en mm.</summary>
+    public const double MargeSousBorniers = 60;
+
+    /// <summary>Rangées de borniers : tronçons à la suite, un écart de séparation entre commande et puissance.</summary>
+    static List<List<AppareilImplante>> RangeesBorniers(List<AppareilImplante> borniers, double capacite)
+    {
+        var rangees = new List<List<AppareilImplante>>();
+        var courante = new List<AppareilImplante>();
+        double occupe = 0;
+        foreach (var b in borniers)
+        {
+            var ecart = courante.Count == 0 ? 0 : courante[^1].Zone != b.Zone ? SeparationBorniers : JeuDeparts;
+            if (courante.Count > 0 && occupe + ecart + b.Largeur > capacite)
+            {
+                rangees.Add(courante);
+                courante = new List<AppareilImplante>();
+                occupe = 0;
+                ecart = 0;
+            }
+            courante.Add(b);
+            occupe += ecart + b.Largeur;
+        }
+        if (courante.Count > 0) rangees.Add(courante);
+        return rangees;
     }
 
     /// <summary>Découpe un bornier plus long qu'un rail en tronçons.</summary>
@@ -737,8 +802,9 @@ public static class CalculArmoire
 
     static void ControlerSeparation(NoteDeCalcul note, List<BandeZone> bandes)
     {
-        var propres = bandes.Where(b => b.Zone == ZoneCem.Propre).ToList();
-        var sales = bandes.Where(b => b.Zone == ZoneCem.Sale).ToList();
+        // La zone des borniers mêle commande et puissance par nature : ses deux borniers sont séparés sur le rail.
+        var propres = bandes.Where(b => b.Zone == ZoneCem.Propre && !b.Bornier).ToList();
+        var sales = bandes.Where(b => b.Zone == ZoneCem.Sale && !b.Bornier).ToList();
         if (propres.Count == 0 || sales.Count == 0) return;
         var distance = (from p in propres
                         from s in sales

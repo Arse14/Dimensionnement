@@ -135,7 +135,7 @@ public class VueArmoire : Border
                 if (b.Rail)
                     Placer(new TextBlock
                 {
-                    Text = SchemaArmoire.NomZone(b.Zone), Width = b.Hauteur, TextAlignment = TextAlignment.Center,
+                    Text = b.Bornier ? "BORNIERS" : SchemaArmoire.NomZone(b.Zone), Width = b.Hauteur, TextAlignment = TextAlignment.Center,
                     FontSize = Math.Min(16, b.Hauteur / 7), FontWeight = FontWeights.Bold, Foreground = trait,
                     LayoutTransform = new RotateTransform(-90), IsHitTestVisible = false,
                 }, b.X + 8 + (a.Laterale - 8 - 21) / 2, b.Y);
