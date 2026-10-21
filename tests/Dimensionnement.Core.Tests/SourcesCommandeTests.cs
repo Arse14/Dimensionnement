@@ -187,3 +187,24 @@ public class IhmEnPorteTests
         Assert.DoesNotContain(Dimensionnement.Core.Armoire.CalculThermique.Postes(r), p => p.Repere.StartsWith("HMI"));
     }
 }
+
+public class CatalogueSiemensVerifieTests
+{
+    [Fact]
+    public void Les_cartes_particulieres_ne_sont_jamais_choisies_automatiquement()
+    {
+        var catalogue = CatalogueCartesEs.Charger();
+        Assert.Contains(catalogue, c => c.Reference == "6ES7136-6BA01-0CA0" && c.Specifique && c.Verifie);
+        var dq = CalculAutomate.ChoisirCartes("ET200SP", "DQ", 4, false, catalogue)!;
+        Assert.Equal("6ES7132-6BF01-0BA0", Assert.Single(dq).Reference);
+    }
+
+    [Fact]
+    public void Cpu_S7_1500_aux_references_actuelles_et_verifiees()
+    {
+        var cpu = CatalogueAutomates.Charger().Single(c => c.Cpu == "CPU 1511-1 PN");
+        Assert.Equal("6ES7511-1AL03-0AB0", cpu.Reference);
+        Assert.True(cpu.Verifie);
+        Assert.Equal(0.56, cpu.Consommation);
+    }
+}

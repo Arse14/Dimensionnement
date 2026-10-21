@@ -32,6 +32,9 @@ public record CarteEs
     public string AccessoireDebut { get; init; } = "";
     public string AccessoireDebutDesignation { get; init; } = "";
     public bool Verifie { get; init; }
+
+    /// <summary>Carte particulière (HF, relais, 2 A, RTD, sécurité) : au catalogue, jamais retenue automatiquement.</summary>
+    public bool Specifique { get; init; }
 }
 
 /// <summary>

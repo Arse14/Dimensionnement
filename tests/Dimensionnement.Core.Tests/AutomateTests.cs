@@ -49,9 +49,9 @@ public class AutomateTests
     [Fact]
     public void Charge_de_communication_elevee_passe_en_S7_1500()
     {
-        var r = CalculAutomate.Calculer(Besoin(20), Catalogue);
+        var r = CalculAutomate.Calculer(Besoin(30), Catalogue);
 
-        // 20 + 20 % = 24 > 16 : les S7-1200 ne suffisent plus
+        // 30 + 20 % = 36 > 31 (S7-1200 G2) : les S7-1200 ne suffisent plus
         Assert.Equal("CPU 1511-1 PN", r.Cpu!.Cpu);
         Assert.All(r.Plan!.Cartes, c => Assert.Equal("S7-1500", c.Famille));
     }
@@ -103,7 +103,7 @@ public class AutomateTests
     public void CPU_imposee_impose_la_famille_de_ses_cartes()
     {
         var besoin = Besoin(2);
-        besoin.CpuImposee = "6ES7513-1AL02-0AB0";
+        besoin.CpuImposee = "6ES7513-1AM03-0AB0";
 
         var r = CalculAutomate.Calculer(besoin, Catalogue);
 
@@ -163,12 +163,12 @@ public class AutomateTests
     public void Stations_ET200SP_deportees_dans_l_arborescence_et_comptees_en_communication()
     {
         var besoin = SansEs(0);
-        for (var i = 1; i <= 14; i++)
+        for (var i = 1; i <= 27; i++)
             besoin.Stations.Add(new StationDeportee { Nom = $"Îlot {i}", EntreesTor = 16, SortiesTor = 8, DansArmoire = i > 1 });
 
         var r = CalculAutomate.Calculer(besoin, Catalogue);
 
-        // 14 stations × 1,2 = 17 périphériques > 16 : les S7-1200 ne suffisent plus.
+        // 27 stations × 1,2 = 33 périphériques > 31 (S7-1200 G2) : les S7-1200 ne suffisent plus.
         Assert.Equal("S7-1500", r.Cpu!.Gamme);
         var cpu = r.Appareils.Single();
         var station = cpu.Enfants.Single(e => e.Repere == "API1-S1");

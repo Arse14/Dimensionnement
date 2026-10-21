@@ -86,7 +86,7 @@ public static class CalculAutomate
     {
         var cartes = new List<CarteEs>();
         if (voies <= 0) return cartes;
-        var dispo = CatalogueCartesEs.De(famille, type, catalogue).Where(c => c.Voies > 0 && (compactes || !c.Compacte))
+        var dispo = CatalogueCartesEs.De(famille, type, catalogue).Where(c => c.Voies > 0 && !c.Specifique && (compactes || !c.Compacte))
             .OrderBy(c => c.Voies).ThenBy(c => c.Largeur).ToList();
         if (dispo.Count == 0) return null;
         var grande = dispo.Where(c => c.Voies == dispo[^1].Voies).OrderBy(c => c.Largeur).First();
