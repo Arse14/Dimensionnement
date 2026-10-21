@@ -34,6 +34,8 @@
             <WrapPanel>
                 <CheckBox x:Name="CaseZones" Content="Zones CEM" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"/>
                 <CheckBox x:Name="CaseChamps" Content="Champ magnétique" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                <CheckBox x:Name="CaseIhm" Content="IHM en porte" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"
+                          ToolTip="Affiche ou masque les IHM encastrées dans la porte ; elles restent comptées (découpe, profondeur)"/>
                 <Button Content="Ajouter un rail DIN" Command="{Binding AjouterRail}" Margin="0,0,6,0"/>
                 <Button Content="Ajouter une goulotte horizontale" Command="{Binding AjouterGoulotte}" CommandParameter="H" Margin="0,0,6,0"/>
                 <Button Content="Ajouter une goulotte verticale" Command="{Binding AjouterGoulotte}" CommandParameter="V" Margin="0,0,16,0"/>
@@ -111,6 +113,7 @@
                             Destinations="{Binding DestinationsDeport}"
                             AfficherZones="{Binding IsChecked, ElementName=CaseZones}"
                             AfficherChamps="{Binding IsChecked, ElementName=CaseChamps}"
+                            AfficherIhm="{Binding IsChecked, ElementName=CaseIhm}"
                             DeplacerCommande="{Binding DeplacerAppareil}"
                             ActionCommande="{Binding ModifierArmoire}"
                             RenommerCommande="{Binding RenommerElement}"

@@ -44,6 +44,8 @@ public class VueArmoire : Border
         typeof(ResultatArmoire), typeof(VueArmoire), new PropertyMetadata(null, Redessiner));
     public static readonly DependencyProperty AfficherChampsProperty = DependencyProperty.Register(nameof(AfficherChamps),
         typeof(bool), typeof(VueArmoire), new PropertyMetadata(true, Redessiner));
+    public static readonly DependencyProperty AfficherIhmProperty = DependencyProperty.Register(nameof(AfficherIhm),
+        typeof(bool), typeof(VueArmoire), new PropertyMetadata(true, Redessiner));
     public static readonly DependencyProperty AfficherZonesProperty = DependencyProperty.Register(nameof(AfficherZones),
         typeof(bool), typeof(VueArmoire), new PropertyMetadata(true, Redessiner));
     public static readonly DependencyProperty InteractifProperty = DependencyProperty.Register(nameof(Interactif),
@@ -76,6 +78,7 @@ public class VueArmoire : Border
 
     public ResultatArmoire? Armoire { get => (ResultatArmoire?)GetValue(ArmoireProperty); set => SetValue(ArmoireProperty, value); }
     public bool AfficherChamps { get => (bool)GetValue(AfficherChampsProperty); set => SetValue(AfficherChampsProperty, value); }
+    public bool AfficherIhm { get => (bool)GetValue(AfficherIhmProperty); set => SetValue(AfficherIhmProperty, value); }
     public bool AfficherZones { get => (bool)GetValue(AfficherZonesProperty); set => SetValue(AfficherZonesProperty, value); }
     public bool Interactif { get => (bool)GetValue(InteractifProperty); set => SetValue(InteractifProperty, value); }
     public ICommand? DeplacerCommande { get => (ICommand?)GetValue(DeplacerCommandeProperty); set => SetValue(DeplacerCommandeProperty, value); }
@@ -281,7 +284,7 @@ public class VueArmoire : Border
         }
 
         // IHM encastrées dans la porte : en pointillés par-dessus la plaque, vues à travers la porte fermée.
-        foreach (var x in a.Porte)
+        foreach (var x in AfficherIhm ? a.Porte : Array.Empty<AppareilImplante>())
         {
             var cadre = new Border
             {
