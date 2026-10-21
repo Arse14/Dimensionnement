@@ -65,6 +65,12 @@ public static class SourcesCommande
         return projet.Departs.Where(d => d.Alimentation == TypeAlimentation.Mono230 && !alimentes.ContainsKey(d.Id)).ToList();
     }
 
+    /// <summary>
+    /// Clé d'un besoin de source refusé : tension et partie alimentée. Refuser l'alimentation réservée à l'automate ne fait
+    /// pas taire la question pour la sécurité, ni pour l'alimentation commune.
+    /// </summary>
+    public static string Cle(TensionCommande tension, UsageAlimentation24V usage) => $"{tension}|{usage}";
+
     /// <summary>Tensions de commande consommées par le projet et qu'aucune source ne fournit.</summary>
     public static IReadOnlyList<BesoinSource> Manquantes(Projet projet, IReadOnlyList<ConsommationCommande> consommateurs)
     {
@@ -132,12 +138,12 @@ public static class SourcesCommande
     /// alimentés d'un réseau sans neutre rejoignent le premier transformateur 400/230 V existant.
     /// </summary>
     public static IReadOnlyList<DepartAlimentation24V> Completer(Projet projet, IReadOnlyList<ConsommationCommande> consommateurs,
-        Func<BesoinSource, SourceAlimentation?> choisir, ISet<TensionCommande>? ignorees = null)
+        Func<BesoinSource, SourceAlimentation?> choisir, ISet<string>? ignorees = null)
     {
         var ajoutees = new List<DepartAlimentation24V>();
         foreach (var besoin in Manquantes(projet, consommateurs))
         {
-            if (ignorees?.Contains(besoin.Tension) == true) continue;
+            if (ignorees?.Contains(Cle(besoin.Tension, besoin.Usage)) == true) continue;
             var existant = besoin.Usage == UsageAlimentation24V.Commande
                 ? projet.Departs.OfType<DepartAlimentation24V>().FirstOrDefault(t => t.Sortie == besoin.Tension && !projet.UsagesDedies.Contains(t.Usage))
                 : projet.Departs.OfType<DepartAlimentation24V>().FirstOrDefault(t => t.Sortie == besoin.Tension && t.Usage == besoin.Usage);

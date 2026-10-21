@@ -123,7 +123,7 @@ public class Version4Tests
 
         Assert.Empty(SourcesCommande.Completer(projet, r.Consommateurs24V, _ => null));
         Assert.Empty(SourcesCommande.Completer(projet, r.Consommateurs24V, _ => SourceAlimentation.Decoupage,
-            new HashSet<TensionCommande> { TensionCommande.Continu24 }));
+            new HashSet<string> { SourcesCommande.Cle(TensionCommande.Continu24, UsageAlimentation24V.Commande) }));
     }
 
     [Fact]

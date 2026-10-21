@@ -67,7 +67,7 @@ public partial class ModeleVuePrincipal : Observable
     IReadOnlyList<ModeleIhm> _ihm = CatalogueIhm.Charger(CheminIhm);
 
     /// <summary>Tensions dont l'utilisateur a refusé ou supprimé la source ajoutée automatiquement, jusqu'au prochain projet.</summary>
-    readonly HashSet<TensionCommande> _sourcesIgnorees = new();
+    readonly HashSet<string> _sourcesIgnorees = new();
     bool _noteVisible;
 
     Projet _projet = new();
@@ -644,7 +644,11 @@ public partial class ModeleVuePrincipal : Observable
                         && (!besoins.Contains(s.Sortie)
                             // Alimentation réservée à une partie dont l'option a été décochée : elle repart.
                             || s.Usage != UsageAlimentation24V.Commande && s.Sortie == TensionCommande.Continu24 && !dedies.Contains(s.Usage))).ToList();
-        _sourcesIgnorees.RemoveWhere(t => !besoins.Contains(t));
+        // Un refus est oublié quand son besoin disparaît, ou quand la partie n'est plus séparée : en recochant la case,
+        // la question revient.
+        var cles = besoins.Select(t => SourcesCommande.Cle(t, UsageAlimentation24V.Commande))
+            .Concat(dedies.Select(u => SourcesCommande.Cle(TensionCommande.Continu24, u))).ToHashSet();
+        _sourcesIgnorees.RemoveWhere(c => !cles.Contains(c));
         _freinsDemandes.RemoveWhere(id => !_projet.Departs.OfType<DepartMoteur>().Any(m => m.Id == id && CalculDepart.SourceFreinDansArmoire(m)));
         if (inutiles.Count == 0) return;
         foreach (var source in inutiles) _projet.Departs.Remove(source);
@@ -683,7 +687,7 @@ public partial class ModeleVuePrincipal : Observable
         question.ShowDialog();
         if (question.Choix is not { } choix)
         {
-            _sourcesIgnorees.Add(besoin.Tension);
+            _sourcesIgnorees.Add(SourcesCommande.Cle(besoin.Tension, besoin.Usage));
             return null;
         }
         _choixAlimentation = (question.Primaire, question.Reglable);
@@ -751,8 +755,9 @@ public partial class ModeleVuePrincipal : Observable
                 MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         _projet.Departs.Remove(d);
         // Une source supprimée n'est pas rajoutée aussitôt : l'alerte de la note de l'arrivée reste.
-        if (d is DepartAlimentation24V source && !_projet.Departs.OfType<DepartAlimentation24V>().Any(a => a.Sortie == source.Sortie))
-            _sourcesIgnorees.Add(source.Sortie);
+        if (d is DepartAlimentation24V source
+            && !_projet.Departs.OfType<DepartAlimentation24V>().Any(a => a.Sortie == source.Sortie && a.Usage == source.Usage))
+            _sourcesIgnorees.Add(SourcesCommande.Cle(source.Sortie, source.Usage));
         _selection = _projet;
         Recalculer();
     }

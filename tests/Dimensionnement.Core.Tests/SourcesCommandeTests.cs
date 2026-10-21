@@ -140,6 +140,23 @@ public class CommandeAlimenteeTests
     }
 
     [Fact]
+    public void Refus_de_l_alimentation_commune_ne_bloque_pas_l_alimentation_reservee()
+    {
+        var projet = AvecAutomate();
+        projet.Ajouter(new DepartAlimentation24V());
+        projet.AlimentationAutomateDediee = true;
+        var r = CalculProjet.Calculer(projet);
+        var refus = new HashSet<string> { SourcesCommande.Cle(TensionCommande.Continu24, UsageAlimentation24V.Commande) };
+        Assert.Single(SourcesCommande.Completer(projet, r.Consommateurs24V, _ => SourceAlimentation.Decoupage, refus));
+
+        var autre = AvecAutomate();
+        autre.Ajouter(new DepartAlimentation24V());
+        autre.AlimentationAutomateDediee = true;
+        refus.Add(SourcesCommande.Cle(TensionCommande.Continu24, UsageAlimentation24V.Automate));
+        Assert.Empty(SourcesCommande.Completer(autre, CalculProjet.Calculer(autre).Consommateurs24V, _ => SourceAlimentation.Decoupage, refus));
+    }
+
+    [Fact]
     public void Alimentation_separee_pour_l_automate_ajoutee_et_dimensionnee_sur_lui_seul()
     {
         var projet = AvecAutomate();
