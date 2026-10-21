@@ -12,6 +12,12 @@ namespace Dimensionnement.App.Infrastructure;
 /// <summary>Appareil déplacé par l'utilisateur, coordonnées en mm sur la plaque.</summary>
 public record DeplacementAppareil(string Repere, double X, double Y);
 
+/// <summary>Enveloppe vers laquelle déporter un appareil : Id vide pour l'armoire principale, Guid.Empty pour un nouveau coffret.</summary>
+public record DestinationDeport(Guid? Id, string Libelle);
+
+/// <summary>Demande de déport d'un appareil, ou de tout son départ, vers une enveloppe.</summary>
+public record DeportAppareil(string Cle, Guid? DepartId, Guid? Cible, bool ToutLeDepart);
+
 /// <summary>
 /// Action sur un rail ou une goulotte ajouté à la main : « Deplacer » (X, Y), « Longueur » (X = variation en mm),
 /// « Modele » (X = largeur, Y = hauteur de la goulotte) ou « Supprimer ».
@@ -40,6 +46,16 @@ public class VueArmoire : Border
         typeof(ICommand), typeof(VueArmoire));
     public static readonly DependencyProperty ActionCommandeProperty = DependencyProperty.Register(nameof(ActionCommande),
         typeof(ICommand), typeof(VueArmoire));
+    public static readonly DependencyProperty DeporterCommandeProperty = DependencyProperty.Register(nameof(DeporterCommande),
+        typeof(ICommand), typeof(VueArmoire));
+    public static readonly DependencyProperty DestinationsProperty = DependencyProperty.Register(nameof(Destinations),
+        typeof(IReadOnlyList<DestinationDeport>), typeof(VueArmoire));
+    public ICommand? DeporterCommande { get => (ICommand?)GetValue(DeporterCommandeProperty); set => SetValue(DeporterCommandeProperty, value); }
+    public IReadOnlyList<DestinationDeport>? Destinations
+    {
+        get => (IReadOnlyList<DestinationDeport>?)GetValue(DestinationsProperty);
+        set => SetValue(DestinationsProperty, value);
+    }
     public static readonly DependencyProperty RenommerCommandeProperty = DependencyProperty.Register(nameof(RenommerCommande),
         typeof(ICommand), typeof(VueArmoire), new PropertyMetadata(null, Redessiner));
 
@@ -186,12 +202,34 @@ public class VueArmoire : Border
             {
                 bloc.Cursor = Cursors.SizeAll;
                 bloc.MouseLeftButtonDown += Saisir;
+                var menu = new ContextMenu();
                 if (x.Element is { } element && RenommerCommande is { } renommer)
                 {
                     var item = new MenuItem { Header = $"Renommer {x.Repere}…" };
                     item.Click += (_, _) => renommer.Execute(element);
-                    bloc.ContextMenu = new ContextMenu { Items = { item } };
+                    menu.Items.Add(item);
                 }
+                if (DeporterCommande is { } deporter && Destinations is { Count: > 0 } destinations)
+                {
+                    var cle = CalculArmoire.CleAffectation(x);
+                    var depart = x.Element?.DepartId;
+                    MenuItem Sous(string titre, bool tout)
+                    {
+                        var parent = new MenuItem { Header = titre };
+                        foreach (var d in destinations.Where(d => d.Id != a.Id))
+                        {
+                            var item = new MenuItem { Header = d.Libelle };
+                            var demande = new DeportAppareil(cle, depart, d.Id, tout);
+                            item.Click += (_, _) => { if (deporter.CanExecute(demande)) deporter.Execute(demande); };
+                            parent.Items.Add(item);
+                        }
+                        return parent;
+                    }
+                    if (menu.Items.Count > 0) menu.Items.Add(new Separator());
+                    menu.Items.Add(Sous($"Déporter {x.Repere} vers", false));
+                    if (depart is not null) menu.Items.Add(Sous("Déporter tout son départ vers", true));
+                }
+                if (menu.Items.Count > 0) bloc.ContextMenu = menu;
             }
             Placer(bloc, x.X, x.Y);
         }

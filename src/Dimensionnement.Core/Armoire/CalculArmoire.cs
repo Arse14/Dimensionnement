@@ -45,6 +45,19 @@ public class ResultatArmoire
 {
     public required NoteDeCalcul Note { get; init; }
 
+    /// <summary>« Armoire principale » ou nom du coffret déporté ; Id est celui du coffret (vide pour l'armoire principale).</summary>
+    public string Nom { get; set; } = "Armoire principale";
+    public Guid? Id { get; set; }
+
+    /// <summary>Coffrets déportés, portés par l'armoire principale.</summary>
+    public IReadOnlyList<ResultatArmoire> Coffrets { get; set; } = Array.Empty<ResultatArmoire>();
+
+    /// <summary>Bilan thermique de cette enveloppe.</summary>
+    public ResultatThermique? Thermique { get; set; }
+
+    /// <summary>L'armoire principale puis ses coffrets déportés.</summary>
+    public IEnumerable<ResultatArmoire> Enveloppes => Coffrets.Prepend(this);
+
     /// <summary>Dimensions d'une cellule, en mm.</summary>
     public double Largeur { get; init; }
     public double Hauteur { get; init; }
@@ -135,11 +148,35 @@ public static class CalculArmoire
 
     const int CellulesMax = 8;
 
+    /// <summary>
+    /// Armoire principale et coffrets déportés : chaque appareil affecté à un coffret existant y est implanté, le reste
+    /// va dans l'armoire principale ; chaque enveloppe est dimensionnée sur son seul matériel.
+    /// </summary>
     public static ResultatArmoire Calculer(ResultatProjet r, Projet projet, IReadOnlyList<ModeleEnveloppe>? enveloppes = null)
     {
         var config = projet.Armoire;
+        var tous = AppareilsArmoire(r, projet);
+        Guid? Coffret(AppareilImplante a) =>
+            config.Affectations.TryGetValue(CleAffectation(a), out var id) && config.Coffrets.Any(c => c.Id == id) ? id : null;
+        var principale = Calculer(r, tous.Where(a => Coffret(a) is null).ToList(), config, enveloppes);
+        principale.Nom = "Armoire principale";
+        principale.Coffrets = config.Coffrets.Select(c =>
+        {
+            var coffret = Calculer(r, tous.Where(a => Coffret(a) == c.Id).ToList(), c, enveloppes);
+            coffret.Id = c.Id;
+            coffret.Nom = c.Nom;
+            return coffret;
+        }).ToList();
+        return principale;
+    }
+
+    /// <summary>Clé d'affectation d'un appareil : son repère calculé ; un tronçon de bornier suit son bornier.</summary>
+    public static string CleAffectation(AppareilImplante a) => a.Element is null && a.Famille == "Bornier" ? a.Repere.Split('.')[0] : a.Cle;
+
+    static ResultatArmoire Calculer(ResultatProjet r, List<AppareilImplante> elements, ConfigurationArmoire config,
+        IReadOnlyList<ModeleEnveloppe>? enveloppes)
+    {
         var note = new NoteDeCalcul("ARM", config.Forcages);
-        var elements = AppareilsArmoire(r, projet);
         var reserve = Math.Clamp(config.ReservePourcent, 0, 80) / 100;
         var catalogue = enveloppes ?? CatalogueEnveloppes.Charger();
         var marque = config.Marque;

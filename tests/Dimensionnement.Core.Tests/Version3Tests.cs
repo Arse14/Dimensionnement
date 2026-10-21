@@ -396,6 +396,35 @@ public class ChampMagnetiqueTests
     }
 
     [Fact]
+    public void Materiel_deporte_dans_un_coffret_dimensionne_pour_lui()
+    {
+        var projet = QuatreVariateurs(4);
+        var avant = CalculProjet.Calculer(projet);
+        Assert.False(avant.Armoire!.Tient);
+
+        var coffret = new CoffretDeporte { Nom = "Coffret variateurs", Marque = MarqueEnveloppe.Schneider };
+        projet.Armoire.Coffrets.Add(coffret);
+        foreach (var v in avant.Armoire.Appareils.Where(v => v.Famille == "Variateur").Take(2))
+            projet.Armoire.Affectations[CalculArmoire.CleAffectation(v)] = coffret.Id;
+        var r = CalculProjet.Calculer(projet);
+        var principale = r.Armoire!;
+        var deporte = Assert.Single(principale.Coffrets);
+
+        Assert.True(principale.Tient, principale.Alerte);
+        Assert.Equal(2, principale.Appareils.Count(a => a.Famille == "Variateur"));
+        Assert.Equal(2, deporte.Appareils.Count(a => a.Famille == "Variateur"));
+        Assert.Equal("Coffret variateurs", deporte.Nom);
+        Assert.True(deporte.Tient);
+        Assert.False(deporte.TailleImposee);
+        // Chaque enveloppe chauffe avec ses propres appareils.
+        Assert.True(deporte.Thermique!.PuissanceDissipee > 0);
+        Assert.True(principale.Thermique!.PuissanceDissipee < avant.Thermique!.PuissanceDissipee);
+        // Deux enveloppes au devis.
+        var devis = ListeDevis.Generer(r);
+        Assert.Equal(2, devis.Count(l => l.Categorie == ListeDevis.Enveloppe && l.Designation.StartsWith("Coffret électrique")));
+    }
+
+    [Fact]
     public void Taille_imposee_juste_reduit_la_reserve()
     {
         var projet = Version3Tests.ProjetMachine();

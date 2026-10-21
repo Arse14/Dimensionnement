@@ -235,6 +235,9 @@ public static class CalculProjet
         resultat.Selectivite = CalculSelectivite.Calculer(resultat);
         resultat.Armoire = CalculArmoire.Calculer(resultat, projet, enveloppes);
         resultat.Thermique = CalculThermique.Calculer(resultat, resultat.Armoire, projet.Armoire);
+        resultat.Armoire.Thermique = resultat.Thermique;
+        foreach (var coffret in resultat.Armoire.Coffrets)
+            coffret.Thermique = CalculThermique.Calculer(resultat, coffret, projet.Armoire.Coffrets.First(c => c.Id == coffret.Id));
         return resultat;
     }
 

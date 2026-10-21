@@ -14,7 +14,7 @@ using Microsoft.Win32;
 
 namespace Dimensionnement.App.ModelesVue;
 
-public class ModeleVuePrincipal : Observable
+public partial class ModeleVuePrincipal : Observable
 {
     const string Filtre = "Projet de dimensionnement (*.dimelec)|*.dimelec";
     readonly ProjetsRecents _recents = new();
@@ -141,25 +141,25 @@ public class ModeleVuePrincipal : Observable
         DeplacerAppareil = new Commande(p => Modifier(() =>
         {
             var d = (DeplacementAppareil)p!;
-            _projet.Armoire.Positions[d.Repere] = new PositionManuelle { X = d.X, Y = d.Y };
+            ConfigCourante.Positions[d.Repere] = new PositionManuelle { X = d.X, Y = d.Y };
         }), p => p is DeplacementAppareil);
         ReinitialiserImplantation = new Commande(() => Modifier(() =>
             {
-                _projet.Armoire.Positions.Clear();
-                _projet.Armoire.Rails.Clear();
-                _projet.Armoire.Goulottes.Clear();
+                ConfigCourante.Positions.Clear();
+                ConfigCourante.Rails.Clear();
+                ConfigCourante.Goulottes.Clear();
             }),
-            () => _projet.Armoire.Positions.Count > 0 || _projet.Armoire.Rails.Count > 0 || _projet.Armoire.Goulottes.Count > 0);
+            () => ConfigCourante.Positions.Count > 0 || ConfigCourante.Rails.Count > 0 || ConfigCourante.Goulottes.Count > 0);
         AjouterRail = new Commande(() => Modifier(() =>
         {
             var (x, y, longueur) = PositionNouvelle();
-            _projet.Armoire.Rails.Add(new RailManuel { X = x, Y = y, Longueur = longueur });
+            ConfigCourante.Rails.Add(new RailManuel { X = x, Y = y, Longueur = longueur });
         }));
         AjouterGoulotte = new Commande(p => Modifier(() =>
         {
             var (x, y, longueur) = PositionNouvelle();
             var verticale = p as string == "V";
-            _projet.Armoire.Goulottes.Add(verticale
+            ConfigCourante.Goulottes.Add(verticale
                 ? new GoulotteManuelle { X = x + longueur / 2, Y = y - longueur / 2, Longueur = longueur, Verticale = true }
                 : new GoulotteManuelle { X = x, Y = y + 60, Longueur = longueur });
         }));
@@ -258,7 +258,7 @@ public class ModeleVuePrincipal : Observable
     /// <summary>Position d'un rail ou d'une goulotte ajouté : au milieu de la plaque de la première cellule.</summary>
     (double X, double Y, double Longueur) PositionNouvelle()
     {
-        var a = Resultat.Armoire;
+        var a = ArmoireAffichee;
         if (a is null) return (100, 300, 400);
         var longueur = Math.Max(100, Math.Min(400, a.PlaqueLargeur - 2 * a.Laterale));
         return (Math.Round(a.PlaqueX + a.Laterale), Math.Round(a.Hauteur / 2), longueur);
@@ -266,7 +266,7 @@ public class ModeleVuePrincipal : Observable
 
     void AppliquerAction(ActionArmoire action)
     {
-        var config = _projet.Armoire;
+        var config = ConfigCourante;
         if (config.Rails.FirstOrDefault(r => r.Id == action.Id) is { } rail)
             switch (action.Action)
             {
@@ -336,10 +336,10 @@ public class ModeleVuePrincipal : Observable
         .ToList();
 
     /// <summary>Résumé de l'armoire et de sa thermique, pour les bandeaux.</summary>
-    public string ResumeArmoire => Resultat.Armoire is { } a
+    public string ResumeArmoire => ArmoireAffichee is { } a
         ? $"{a.Type} {a.Marque} {a.Gamme} {a.Largeur:0} × {a.Hauteur:0} × {a.Profondeur:0} mm{(a.Cellules > 1 ? $", {a.Cellules} cellules" : "")}" +
           $"{(a.TailleImposee ? " (imposée)" : "")} – " +
-          $"plaque occupée à {a.Occupation:0} % – {Resultat.Thermique?.PuissanceDissipee:0} W dissipés"
+          $"plaque occupée à {a.Occupation:0} % – {a.Thermique?.PuissanceDissipee:0} W dissipés"
         : "";
 
     List<ChoixEnveloppe>? _choixEnveloppes;
@@ -364,44 +364,54 @@ public class ModeleVuePrincipal : Observable
     }
 
     /// <summary>Enveloppe imposée : une du catalogue (marque et cotes reprises), des cotes libres, ou le choix automatique.</summary>
+    /// <summary>Enveloppe de l'armoire principale (panneau Armoire et implantation).</summary>
     public ChoixEnveloppe EnveloppeChoisie
     {
-        get
+        get => LireEnveloppe(_projet.Armoire);
+        set => EcrireEnveloppe(_projet.Armoire, value);
+    }
+
+    /// <summary>Enveloppe de l'armoire ou du coffret affiché dans la vue d'armoire.</summary>
+    public ChoixEnveloppe EnveloppeAffichee
+    {
+        get => LireEnveloppe(ConfigCourante);
+        set => EcrireEnveloppe(ConfigCourante, value);
+    }
+
+    ChoixEnveloppe LireEnveloppe(ConfigurationArmoire a)
+    {
+        if (!a.TailleImposee) return ChoixEnveloppe.Automatique;
+        return ChoixEnveloppes.FirstOrDefault(c => c.Modele is { } m && a.CellulesImposees == 1
+                   && m.Fabricant.Equals(a.Marque.ToString(), StringComparison.OrdinalIgnoreCase)
+                   && Math.Abs(m.Largeur - a.LargeurImposee) < 1 && Math.Abs(m.Hauteur - a.HauteurImposee) < 1
+                   && Math.Abs(m.Profondeur - a.ProfondeurImposee) < 1)
+               ?? ChoixEnveloppe.Libre;
+    }
+
+    void EcrireEnveloppe(ConfigurationArmoire a, ChoixEnveloppe? value)
+    {
+        if (value is null || value == LireEnveloppe(a)) return;
+        a.TailleImposee = value != ChoixEnveloppe.Automatique;
+        if (value.Modele is { } m)
         {
-            var a = _projet.Armoire;
-            if (!a.TailleImposee) return ChoixEnveloppe.Automatique;
-            return ChoixEnveloppes.FirstOrDefault(c => c.Modele is { } m && a.CellulesImposees == 1
-                       && m.Fabricant.Equals(a.Marque.ToString(), StringComparison.OrdinalIgnoreCase)
-                       && Math.Abs(m.Largeur - a.LargeurImposee) < 1 && Math.Abs(m.Hauteur - a.HauteurImposee) < 1
-                       && Math.Abs(m.Profondeur - a.ProfondeurImposee) < 1)
-                   ?? ChoixEnveloppe.Libre;
+            a.Marque = Enum.Parse<MarqueEnveloppe>(m.Fabricant, true);
+            a.LargeurImposee = m.Largeur;
+            a.HauteurImposee = m.Hauteur;
+            a.ProfondeurImposee = m.Profondeur;
+            a.CellulesImposees = 1;
         }
-        set
-        {
-            if (value is null || value == EnveloppeChoisie) return;
-            var a = _projet.Armoire;
-            a.TailleImposee = value != ChoixEnveloppe.Automatique;
-            if (value.Modele is { } m)
-            {
-                a.Marque = Enum.Parse<MarqueEnveloppe>(m.Fabricant, true);
-                a.LargeurImposee = m.Largeur;
-                a.HauteurImposee = m.Hauteur;
-                a.ProfondeurImposee = m.Profondeur;
-                a.CellulesImposees = 1;
-            }
-            Recalculer();
-        }
+        Recalculer();
     }
 
     /// <summary>Place libre à garder dans l'armoire, en %, réglable depuis la vue d'armoire.</summary>
     public double PlaceLibre
     {
-        get => _projet.Armoire.ReservePourcent;
+        get => ConfigCourante.ReservePourcent;
         set
         {
             var v = Math.Clamp(value, 0, 80);
-            if (Math.Abs(v - _projet.Armoire.ReservePourcent) < 1e-9) return;
-            _projet.Armoire.ReservePourcent = v;
+            if (Math.Abs(v - ConfigCourante.ReservePourcent) < 1e-9) return;
+            ConfigCourante.ReservePourcent = v;
             Recalculer();
         }
     }

@@ -67,7 +67,9 @@ public static class CalculThermique
     public static ResultatThermique Calculer(ResultatProjet r, ResultatArmoire armoire, ConfigurationArmoire c)
     {
         var note = new NoteDeCalcul("TH", c.Forcages);
-        var postes = Postes(r);
+        // Seuls les appareils posés dans cette enveloppe chauffent : l'armoire principale ou un coffret déporté.
+        var dedans = armoire.Appareils.Select(a => a.Element).OfType<ElementMateriel>().ToHashSet();
+        var postes = Postes(r, dedans);
         var appareils = postes.Sum(p => p.PuissanceW);
         var calcule = appareils * (1 + PartCablage);
         var p = note.Valeur(CodePuissance, "Puissance dissipée dans l'armoire", calcule, calcule, "W",
@@ -142,13 +144,16 @@ public static class CalculThermique
     }
 
     /// <summary>Pertes de chaque appareil de l'armoire à son courant de service.</summary>
-    public static List<PosteDissipation> Postes(ResultatProjet r)
+    public static List<PosteDissipation> Postes(ResultatProjet r, ISet<ElementMateriel>? dedans = null)
     {
         var courants = r.Departs.ToDictionary(d => d.Depart.Id, d => d.CourantEmploi);
         var postes = new List<PosteDissipation>();
+        var parents = r.Arbre.Parcourir().SelectMany(p => p.Enfants.Select(c => (c, p))).ToDictionary(x => x.c, x => x.p);
         foreach (var e in r.Arbre.Parcourir())
         {
             if (Encombrements.Estimer(e) is not { DissipationW: > 0 } enc) continue;
+            // Un appareil sans emprise propre (fusible) chauffe là où est posé son support.
+            if (dedans is not null && !dedans.Contains(enc.Largeur > 0 ? e : parents.GetValueOrDefault(e, e))) continue;
             var service = e.DepartId is { } id && courants.TryGetValue(id, out var ib) ? ib : r.CourantEmploi;
             var charge = e.Famille switch
             {

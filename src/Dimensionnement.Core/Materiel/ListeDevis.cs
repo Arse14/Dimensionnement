@@ -43,14 +43,22 @@ public static class ListeDevis
 
     static void EnveloppeEtThermique(ResultatProjet r, List<LigneDevis> l, string fabricant)
     {
-        if (r.Armoire is not { } a) return;
+        if (r.Armoire is not { } principale) return;
+        foreach (var a in principale.Enveloppes)
+            UneEnveloppe(r, a, l, fabricant, principale.Coffrets.Count > 0 ? a.Nom : "");
+    }
+
+    /// <summary>Une enveloppe, sa plaque, ses accessoires et sa solution thermique ; nom précisé quand il y a des coffrets déportés.</summary>
+    static void UneEnveloppe(ResultatProjet r, ResultatArmoire a, List<LigneDevis> l, string fabricant, string nom)
+    {
         var sol = a.Type == "Armoire au sol";
         // L'enveloppe et ses accessoires viennent du fabricant d'enveloppes retenu (Rittal, Legrand ou Schneider).
         var marque = a.Marque.Length > 0 ? $"{a.Marque} – {a.Gamme}" : fabricant;
         fabricant = a.Marque.Length > 0 ? a.Marque : fabricant;
         l.Add(new(Enveloppe, sol ? "Armoire électrique au sol" : "Coffret électrique mural",
             $"{N(a.Largeur)} × {N(a.Hauteur)} × {N(a.Profondeur)} mm, {CalculThermique.LibelleMateriau(r.Projet.Armoire.Materiau)}, IP55",
-            marque, a.Reference, a.Cellules, "u", Remarque: a.Cellules > 1 ? "Cellules juxtaposables" : ""));
+            marque, a.Reference, a.Cellules, "u", nom,
+            string.Join(" ; ", new[] { a.Cellules > 1 ? "Cellules juxtaposables" : "", a.Id is null ? "" : "Coffret déporté" }.Where(t => t.Length > 0))));
         l.Add(new(Enveloppe, "Plaque de montage", $"surface utile {N(a.PlaqueLargeur)} × {N(a.PlaqueHauteur)} mm", marque, a.ReferencePlaque, a.Cellules, "u"));
         if (sol)
         {
@@ -62,7 +70,7 @@ public static class ListeDevis
         l.Add(new(Enveloppe, "Plaque passe-câbles / bride d'entrée", "bas d'enveloppe", fabricant, "", a.Cellules, "u"));
         l.Add(new(Enveloppe, "Pochette à schémas", "format A4", fabricant, "", 1, "u"));
 
-        if (r.Thermique is not { } t) return;
+        if (a.Thermique is not { } t) return;
         switch (t.Solution)
         {
             case SolutionThermique.Ventilation:
@@ -198,35 +206,40 @@ public static class ListeDevis
             l.Add(new(Borniers, "Repères de bornes", "planches à imprimer", fabricant, "", borniers, "lot"));
         }
 
-        if (r.Armoire is not { } a) return;
-        l.Add(new(Montage, "Rail DIN symétrique 35 mm", "longueur 2 m", fabricant, "", Math.Ceiling(a.LongueurRail / 2), "u",
-            Remarque: $"{N(a.LongueurRail, 1)} m nécessaires"));
-        foreach (var g in a.Cablage.Goulottes.GroupBy(x => x.Modele).OrderBy(g => g.Key.Section))
+        if (r.Armoire is not { } principale) return;
+        // Armoire principale et coffrets déportés additionnés.
+        var enveloppes = principale.Enveloppes.ToList();
+        var rail = enveloppes.Sum(a => a.LongueurRail);
+        var cellules = enveloppes.Sum(a => a.Cellules);
+        l.Add(new(Montage, "Rail DIN symétrique 35 mm", "longueur 2 m", fabricant, "", Math.Ceiling(rail / 2), "u",
+            Remarque: $"{N(rail, 1)} m nécessaires"));
+        foreach (var g in enveloppes.SelectMany(a => a.Cablage.Goulottes).GroupBy(x => x.Modele).OrderBy(g => g.Key.Section))
         {
             var metres = g.Sum(x => x.Longueur) / 1000;
             l.Add(new(Montage, "Goulotte de câblage à fentes avec couvercle", $"{g.Key.Libelle}, longueur 2 m", fabricant, "",
                 Math.Ceiling(metres * 1.1 / 2), "u", Remarque: $"{N(metres, 1)} m nécessaires, 10 % de chutes"));
         }
-        l.Add(new(Montage, "Barrette de terre / collecteur PE", "cuivre, avec bornes", fabricant, "", a.Cellules, "u"));
+        l.Add(new(Montage, "Barrette de terre / collecteur PE", "cuivre, avec bornes", fabricant, "", cellules, "u"));
         if (r.Departs.Any(d => d.Depart is DepartMoteur { SurVariateur: true }))
-            l.Add(new(Montage, "Barre de reprise de blindage", "cuivre, avec supports", fabricant, "", a.Cellules, "u"));
+            l.Add(new(Montage, "Barre de reprise de blindage", "cuivre, avec supports", fabricant, "", cellules, "u"));
 
-        // Filerie interne estimée par appareil implanté, à la longueur moyenne d'un fil sur la plaque.
-        var longueur = a.Cablage.LongueurMoyenne;
-        foreach (var f in a.Cablage.Fils.GroupBy(f => (f.Section, f.Usage)).OrderBy(g => g.Key.Usage).ThenByDescending(g => g.Key.Section))
+        // Filerie interne estimée par appareil implanté, à la longueur moyenne d'un fil sur la plaque de son enveloppe.
+        var fils = enveloppes.SelectMany(a => a.Cablage.Fils.Select(f => (Fil: f, a.Cablage.LongueurMoyenne))).ToList();
+        foreach (var f in fils.GroupBy(f => (f.Fil.Section, f.Fil.Usage)).OrderBy(g => g.Key.Usage).ThenByDescending(g => g.Key.Section))
         {
-            var nombre = f.Sum(x => x.Nombre);
+            var nombre = f.Sum(x => x.Fil.Nombre);
+            var metres = f.Sum(x => x.Fil.Nombre * x.LongueurMoyenne);
             var (designation, type) = f.Key.Usage switch
             {
                 "Terre" => ("Fil de câblage vert/jaune (PE)", "H07V-K"),
                 "Commande" => ("Fil de câblage bleu foncé (commande 24 V)", f.Key.Section < 1 ? "H05V-K" : "H07V-K"),
                 _ => ("Fil de câblage noir (puissance)", "H07V-K"),
             };
-            l.Add(new(Montage, designation, $"{type} {N(f.Key.Section)} mm²", "", "", Math.Ceiling(nombre * longueur * 1.15), "m",
-                Remarque: $"{nombre} fils × {N(longueur, 1)} m + 15 % ; estimation"));
+            l.Add(new(Montage, designation, $"{type} {N(f.Key.Section)} mm²", "", "", Math.Ceiling(metres * 1.15), "m",
+                Remarque: $"{nombre} fils × {N(metres / Math.Max(1, nombre), 1)} m + 15 % ; estimation"));
         }
-        foreach (var g in a.Cablage.Fils.GroupBy(f => f.Section).OrderBy(g => g.Key))
-            l.Add(new(Montage, "Embouts de câblage isolés", $"{N(g.Key)} mm²", "", "", Math.Ceiling(2 * g.Sum(f => f.Nombre) * 1.1), "u",
+        foreach (var g in fils.GroupBy(f => f.Fil.Section).OrderBy(g => g.Key))
+            l.Add(new(Montage, "Embouts de câblage isolés", $"{N(g.Key)} mm²", "", "", Math.Ceiling(2 * g.Sum(f => f.Fil.Nombre) * 1.1), "u",
                 Remarque: "2 par fil + 10 %"));
         l.Add(new(Montage, "Repères d'appareils et de fils", "étiquettes", "", "", 1, "lot"));
     }

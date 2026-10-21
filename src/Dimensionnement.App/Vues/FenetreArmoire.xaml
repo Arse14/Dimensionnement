@@ -38,8 +38,17 @@
                 <Button Content="Ajouter une goulotte horizontale" Command="{Binding AjouterGoulotte}" CommandParameter="H" Margin="0,0,6,0"/>
                 <Button Content="Ajouter une goulotte verticale" Command="{Binding AjouterGoulotte}" CommandParameter="V" Margin="0,0,16,0"/>
                 <Button Content="Réinitialiser l'implantation" Command="{Binding ReinitialiserImplantation}" Margin="0,0,16,0"/>
+                <TextBlock Text="Afficher" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <ComboBox ItemsSource="{Binding ChoixArmoires}" SelectedItem="{Binding ArmoireChoisie}" DisplayMemberPath="Libelle"
+                          Width="180" Margin="0,0,6,0"
+                          ToolTip="Armoire principale ou coffret déporté. Clic droit sur un appareil pour le déporter, seul ou avec tout son départ."/>
+                <TextBox Text="{Binding NomCoffret, UpdateSourceTrigger=LostFocus}" Width="140" VerticalAlignment="Center" Margin="0,0,6,0"
+                         ToolTip="Nom du coffret déporté" Visibility="{Binding CoffretAffiche, Converter={StaticResource VraiVisible}}"/>
+                <Button Content="Supprimer ce coffret" Command="{Binding SupprimerCoffret}" Margin="0,0,16,0"
+                        ToolTip="Son matériel revient dans l'armoire principale."
+                        Visibility="{Binding CoffretAffiche, Converter={StaticResource VraiVisible}}"/>
                 <TextBlock Text="Enveloppe" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                <ComboBox ItemsSource="{Binding ChoixEnveloppes}" SelectedItem="{Binding EnveloppeChoisie}" DisplayMemberPath="Libelle"
+                <ComboBox ItemsSource="{Binding ChoixEnveloppes}" SelectedItem="{Binding EnveloppeAffichee}" DisplayMemberPath="Libelle"
                           Width="420" MaxDropDownHeight="420" IsTextSearchEnabled="True" TextSearch.TextPath="Libelle" Margin="0,0,16,0"
                           ToolTip="Choisir une enveloppe du catalogue l'impose (marque et cotes reprises) ; « Automatique » prend la plus petite qui reçoit le matériel ; les cotes libres se saisissent dans le panneau Armoire et implantation."/>
                 <TextBlock Text="Place libre (%)" VerticalAlignment="Center" Margin="0,0,6,0"/>
@@ -50,10 +59,13 @@
         </Border>
 
         <Border DockPanel.Dock="Top" Background="#3A1F22" BorderBrush="#F85149" BorderThickness="1" CornerRadius="3" Padding="10,8" Margin="0,0,0,8"
-                Visibility="{Binding Resultat.Armoire.Alerte, Converter={StaticResource VideMasque}}">
+                Visibility="{Binding ArmoireAffichee.Alerte, Converter={StaticResource VideMasque}}">
             <DockPanel>
                 <TextBlock DockPanel.Dock="Left" FontFamily="{StaticResource Icones}" Text="&#xE7BA;" Foreground="#F85149" FontSize="16" Margin="0,0,8,0"/>
-                <TextBlock TextWrapping="Wrap" FontWeight="SemiBold" Text="{Binding Resultat.Armoire.Alerte}"/>
+                <Button DockPanel.Dock="Right" Content="Déporter ce qui n'entre pas dans un coffret" Command="{Binding DeporterCeQuiNEntrePas}"
+                        Margin="8,0,0,0" ToolTip="Crée un coffret dimensionné pour le matériel de la zone « À placer », avec le reste de leurs départs."
+                        Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={StaticResource VraiVisible}}"/>
+                <TextBlock TextWrapping="Wrap" FontWeight="SemiBold" Text="{Binding ArmoireAffichee.Alerte}" VerticalAlignment="Center"/>
             </DockPanel>
         </Border>
 
@@ -69,7 +81,7 @@
                 <Grid>
                     <ScrollViewer VerticalScrollBarVisibility="Auto"
                                   Visibility="{Binding IsChecked, ElementName=CaseExplications, Converter={StaticResource FauxVisible}}">
-                        <ItemsControl ItemsSource="{Binding Resultat.Armoire.Note.Lignes}" ItemTemplate="{StaticResource LigneControle}"/>
+                        <ItemsControl ItemsSource="{Binding ArmoireAffichee.Note.Lignes}" ItemTemplate="{StaticResource LigneControle}"/>
                     </ScrollViewer>
                     <ScrollViewer VerticalScrollBarVisibility="Auto"
                                   Visibility="{Binding IsChecked, ElementName=CaseExplications, Converter={StaticResource VraiVisible}}">
@@ -92,7 +104,9 @@
 
         <Border Style="{StaticResource CadrePanneau}" ClipToBounds="True">
             <inf:VueArmoire Interactif="True" Background="{StaticResource Champ}"
-                            Armoire="{Binding Resultat.Armoire}"
+                            Armoire="{Binding ArmoireAffichee}"
+                            DeporterCommande="{Binding Deporter}"
+                            Destinations="{Binding DestinationsDeport}"
                             AfficherZones="{Binding IsChecked, ElementName=CaseZones}"
                             AfficherChamps="{Binding IsChecked, ElementName=CaseChamps}"
                             DeplacerCommande="{Binding DeplacerAppareil}"

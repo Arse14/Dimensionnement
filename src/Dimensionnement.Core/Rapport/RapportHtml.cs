@@ -153,6 +153,17 @@ public static class RapportHtml
             sb.Append(SchemaArmoire.Svg(arm));
             sb.Append("</div>");
             Note(sb, arm.Note);
+            foreach (var c in arm.Coffrets)
+            {
+                sb.Append($"<h3>Coffret déporté : {E(c.Nom)}</h3><p>{E(c.Type)} {E(c.Marque)} {E(c.Gamme)} {N(c.Largeur)} × {N(c.Hauteur)} × {N(c.Profondeur)} mm" +
+                          (c.Reference.Length > 0 ? $" ({E(c.Reference)})" : "") + $", {c.Appareils.Count} appareil(s), hauteur de plaque occupée {Pct(c.Occupation)}" +
+                          (c.Thermique is { } tc ? $", {N(tc.PuissanceDissipee, 0)} W dissipés." : ".") + "</p>");
+                sb.Append("<div class=\"schema armoire\">");
+                sb.Append(SchemaArmoire.Svg(c));
+                sb.Append("</div>");
+                Note(sb, c.Note);
+                if (c.Thermique is { } t) Note(sb, t.Note);
+            }
         }
 
         if (r.Thermique is { } th)

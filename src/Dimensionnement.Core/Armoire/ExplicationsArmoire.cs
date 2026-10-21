@@ -70,5 +70,11 @@ public static class ExplicationsArmoire
             "au repère calculé, elle suit donc un appareil renommé. Les contrôles signalent un appareil hors rail, un chevauchement, ou un " +
             "mélange de zones propre et sale sur une même rangée. « Réinitialiser l'implantation » efface les positions, rails et goulottes " +
             "ajoutés. Clic droit sur un appareil : le renommer."),
+        new("Coffrets déportés",
+            "Clic droit sur un appareil : « Déporter vers » l'envoie dans un autre coffret, « Déporter tout son départ » emmène aussi sa " +
+            "protection, son contacteur et son variateur. « Nouveau coffret » en crée un (jusqu'à 8), aux réglages de l'armoire principale. " +
+            "Quand du matériel attend dans la zone « À placer », le bouton du bandeau rouge le déporte d'un coup avec le reste de ses départs. " +
+            "Chaque coffret est dimensionné sur son seul matériel (plus petite enveloppe, ou enveloppe imposée avec la liste « Enveloppe »), " +
+            "avec son propre bilan thermique, et figure au devis et au rapport. La liste « Afficher » passe d'une enveloppe à l'autre."),
     };
 }

@@ -86,6 +86,22 @@ public class ConfigurationArmoire
     /// <summary>Rails DIN et goulottes ajoutés par l'utilisateur, en plus de l'implantation automatique.</summary>
     public List<RailManuel> Rails { get; set; } = new();
     public List<GoulotteManuelle> Goulottes { get; set; } = new();
+
+    /// <summary>Coffrets supplémentaires où l'on déporte du matériel qui n'entre pas dans l'armoire principale.</summary>
+    public List<CoffretDeporte> Coffrets { get; set; } = new();
+
+    /// <summary>Appareils déportés : clé de l'appareil (repère calculé) → coffret qui le reçoit.</summary>
+    public Dictionary<string, Guid> Affectations { get; set; } = new();
+}
+
+/// <summary>
+/// Coffret supplémentaire : mêmes réglages qu'une armoire (marque, taille imposée ou automatique, place libre, implantation
+/// manuelle), dimensionné sur le seul matériel qu'on y déporte.
+/// </summary>
+public class CoffretDeporte : ConfigurationArmoire
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string Nom { get; set; } = "Coffret 2";
 }
 
 /// <summary>Choix des références de matériel.</summary>
