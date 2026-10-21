@@ -68,6 +68,12 @@ public class ConfigurationArmoire
     /// <summary>Place libre à garder sur les rails pour les évolutions, en %.</summary>
     public double ReservePourcent { get; set; } = 25;
 
+    /// <summary>
+    /// Dégagement minimal au-dessus et au-dessous des variateurs quand l'armoire est ventilée, en mm (notice du fabricant) :
+    /// une armoire trop petite pour les 100 mm habituels devient valable avec une ventilation forcée.
+    /// </summary>
+    public double DegagementVariateurVentile { get; set; } = 50;
+
     /// <summary>Montage du sectionneur général : hors plaque (porte, côté), il ne prend pas de place et sort des zones CEM.</summary>
     public MontageSectionneur MontageSectionneur { get; set; } = MontageSectionneur.PlaqueCommandeFrontale;
 

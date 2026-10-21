@@ -68,6 +68,10 @@ public class ResultatArmoire
     public ElementMateriel? SectionneurHorsPlaque { get; set; }
     public MontageSectionneur MontageSectionneur { get; set; }
 
+    /// <summary>Le dégagement des variateurs n'est tenu qu'avec une ventilation forcée : le bilan thermique l'impose.</summary>
+    public bool VentilationForcee { get; set; }
+    public double DegagementRetenu { get; set; } = CalculArmoire.DegagementVariateur;
+
     /// <summary>L'armoire principale puis ses coffrets déportés.</summary>
     public IEnumerable<ResultatArmoire> Enveloppes => Coffrets.Prepend(this);
 
@@ -291,7 +295,16 @@ public static class CalculArmoire
         var palier = 0;
         if (imposee && !implantation.Tient && !libre)
         {
-            var paliers = new[] { gabarit, gabarit with { DegagementPartage = true }, Gabarit.Fines, Gabarit.Verticales, Gabarit.SansGoulotte };
+            // Avec ventilation forcée, le dégagement des variateurs peut descendre au minimum saisi (notice du fabricant) :
+            // essayé avant de retirer les goulottes.
+            var reduit = Math.Clamp(config.DegagementVariateurVentile, 0, DegagementVariateur);
+            var paliers = new[]
+            {
+                gabarit, gabarit with { DegagementPartage = true }, Gabarit.Fines,
+                gabarit with { DegagementPartage = true, Degagement = reduit }, Gabarit.Fines with { Degagement = reduit },
+                Gabarit.Verticales, Gabarit.Verticales with { Degagement = reduit },
+                Gabarit.SansGoulotte, Gabarit.SansGoulotte with { Degagement = reduit },
+            };
             var essais = paliers.Select((g, i) => (Palier: i, Reserve: reserve))
                 .Concat(Enumerable.Range(1, (int)Math.Ceiling(reserve / 0.05))
                     .SelectMany(k => paliers.Select((g, i) => (Palier: i, Reserve: Math.Max(0, reserve - 0.05 * k)))));
@@ -317,14 +330,14 @@ public static class CalculArmoire
         if (tientALaMain) tient = true;
         var attente = tient ? 0 : RangerEnAttente(appareils, largeur * cellules, hauteur);
         var alerte = "";
-        var allegement = palier switch
+        var allegement = string.Join(" et ", new[]
         {
-            1 => "en prenant le dégagement bas des variateurs sur la marge des presse-étoupes",
-            2 => "en réduisant les goulottes à 25 mm",
-            3 => "en ne gardant que les goulottes verticales (25 mm)",
-            4 => "en retirant les goulottes (fils posés en direct)",
-            _ => "",
-        };
+            gabarit.SansGoulottes ? "en retirant les goulottes (fils posés en direct)"
+                : gabarit.SansHorizontales ? "en ne gardant que les goulottes verticales (25 mm)"
+                : gabarit.GoulotteMax < double.MaxValue ? "en réduisant les goulottes à 25 mm"
+                : palier > 0 && gabarit.DegagementPartage ? "en prenant le dégagement bas des variateurs sur la marge des presse-étoupes" : "",
+            palier > 0 && gabarit.Ventile ? $"en ramenant le dégagement des variateurs à {N(gabarit.Degagement)} mm avec une ventilation forcée" : "",
+        }.Where(t => t.Length > 0));
         var reduite = reserveEffective < reserve - 1e-6;
         if (libre)
             alerte = tient ? "" : "Ta disposition ne tient pas encore : " + string.Join(" ; ", new[]
@@ -336,7 +349,7 @@ public static class CalculArmoire
             }.Where(t => t.Length > 0)) + ".";
         else if (tientALaMain)
             alerte = "L'implantation automatique ne tient pas (elle demanderait " + $"{N(auto.L)} × {N(auto.H)} mm" + (auto.N > 1 ? $" × {auto.N} cellules" : "") +
-                     DegagementManquant(elements, enveloppe) + "), mais les appareils déplacés à la main font tout entrer : implantation manuelle retenue, sans réserve garantie.";
+                     DegagementManquant(elements, enveloppe, config.DegagementVariateurVentile) + "), mais les appareils déplacés à la main font tout entrer : implantation manuelle retenue, sans réserve garantie.";
         else if (palier > 0 || (reduite && implantation.Tient))
             alerte = $"Le matériel ne tient dans l'armoire imposée {N(largeur)} × {N(hauteur)} mm qu'" +
                      string.Join(" et ", new[] { allegement, reduite ? $"en réduisant la place libre à {N(reserveEffective * 100)} % au lieu de {N(config.ReservePourcent)} %" : "" }
@@ -386,9 +399,12 @@ public static class CalculArmoire
             $"variateurs et démarreurs regroupés côte à côte sur le côté, fixés sur la plaque avec {N(DegagementVariateur, 0)} mm de dégagement " +
             "en haut et en bas pour la ventilation.", RefCem);
 
-        var bandes = RognerSurPlaque(RecalculerZones(bandesPosees, appareils, config.Rails, largeur * cellules, hauteur), enveloppe, largeur, cellules);
+        var bandes = RognerSurPlaque(ZonesHorsRails(RecalculerZones(bandesPosees, appareils, config.Rails, largeur * cellules, hauteur),
+            appareils, largeur * cellules, gabarit.Degagement), enveloppe, largeur, cellules);
         ControlerManuel(note, appareils, bandes, largeur * cellules, hauteur);
-        if (appareils.Any(a => a.Manuel) || libre) ControlerDegagementVariateurs(note, appareils, enveloppe, largeur, cellules);
+        var ventilee = gabarit.Ventile && !libre && !appareils.Any(a => a.Manuel);
+        if (appareils.Any(a => a.Manuel) || libre)
+            ventilee = ControlerDegagementVariateurs(note, appareils, enveloppe, largeur, cellules, Math.Clamp(config.DegagementVariateurVentile, 0, DegagementVariateur));
 
         var cablage = CalculCablage.Estimer(r, appareils, bandesPosees, largeur, enveloppe.PlaqueLargeur, enveloppe.PlaqueHauteur,
             hauteur, cellules, gabarit);
@@ -427,6 +443,7 @@ public static class CalculArmoire
             TailleImposee = imposee, ReserveEffective = reserveEffective * 100, Libre = libre, ProfondeurNecessaire = profondeurMini,
             LargeurAttente = attente,
             Tient = tient && !(imposee && profondeur < profondeurMini), Alerte = alerte,
+            VentilationForcee = ventilee, DegagementRetenu = gabarit.Degagement,
         };
     }
 
@@ -570,7 +587,7 @@ public static class CalculArmoire
         var margeLaterale = g.Laterale;
         var entreRangees = g.EntreRangees;
         var goulotteVariateurs = g.SansGoulottes ? JeuVariateurs : GoulotteVariateurs;
-        var partage = g.DegagementPartage ? Math.Min(DegagementVariateur, MargeBasse) : 0;
+        var partage = g.DegagementPartage ? Math.Min(g.Degagement, MargeBasse) : 0;
         // Coordonnées dans l'enveloppe ; le matériel est posé sur la plaque de montage, centrée dans chaque cellule.
         var largeur = enveloppe.Largeur;
         var plaque = enveloppe.PlaqueLargeur;
@@ -632,7 +649,7 @@ public static class CalculArmoire
             if (rangeesRail.Any(r => r.Sum(e => e.Largeur) > largeurRails)) tient = false;
 
             double HauteurRail(IEnumerable<List<AppareilImplante>> r) => r.Sum(x => x.Max(e => e.Hauteur) + entreRangees);
-            double HauteurBloc(IEnumerable<List<AppareilImplante>> r) => r.Sum(x => x.Max(e => e.Hauteur) + DegagementVariateur) + DegagementVariateur - entreRangees;
+            double HauteurBloc(IEnumerable<List<AppareilImplante>> r) => r.Sum(x => x.Max(e => e.Hauteur) + g.Degagement) + g.Degagement - entreRangees;
 
             if (aCote)
             {
@@ -649,10 +666,10 @@ public static class CalculArmoire
                     yRail += hr + entreRangees;
                 }
                 var xBloc = x0 + largeurRails + goulotteVariateurs;
-                var yBloc = y - entreRangees / 2 + DegagementVariateur;
+                var yBloc = y - entreRangees / 2 + g.Degagement;
                 foreach (var rangee in rangeesVariateurs)
                     yBloc += Poser(rangee, xBloc + largeurBloc - (rangee.Sum(e => e.Largeur) + (rangee.Count - 1) * JeuVariateurs), yBloc, JeuVariateurs, false)
-                             + DegagementVariateur;
+                             + g.Degagement;
                 bandes.Add(new BandeZone(zone, xBloc - goulotteVariateurs / 2, y - entreRangees / 2,
                     cellule * largeur + dx + plaque - (xBloc - goulotteVariateurs / 2), Math.Max(h, hBloc), false));
                 y += h;
@@ -669,9 +686,9 @@ public static class CalculArmoire
             }
             foreach (var rangee in rangeesVariateurs)
             {
-                var hr = rangee.Max(e => e.Hauteur) + 2 * DegagementVariateur - entreRangees;
+                var hr = rangee.Max(e => e.Hauteur) + 2 * g.Degagement - entreRangees;
                 Reserver(rangee == rangeesVariateurs[^1] ? hr - partage : hr);
-                var yr = y - entreRangees / 2 + DegagementVariateur;
+                var yr = y - entreRangees / 2 + g.Degagement;
                 Poser(rangee, cellule * largeur + dx + margeLaterale, yr, JeuVariateurs, false);
                 bandes.Add(new BandeZone(zone, cellule * largeur + dx, y - entreRangees / 2, plaque, hr + entreRangees, false));
                 y += hr + entreRangees;
@@ -813,12 +830,30 @@ public static class CalculArmoire
     /// Raison la plus fréquente d'un refus de l'implantation automatique : un variateur plus haut que la plaque une fois
     /// ajoutés ses dégagements de ventilation haut et bas.
     /// </summary>
-    static string DegagementManquant(IEnumerable<AppareilImplante> elements, ModeleEnveloppe enveloppe)
+    static string DegagementManquant(IEnumerable<AppareilImplante> elements, ModeleEnveloppe enveloppe, double reduit)
     {
         var v = elements.Where(EstVariateur).OrderByDescending(e => e.Hauteur).FirstOrDefault();
         if (v is null || v.Hauteur + 2 * DegagementVariateur <= enveloppe.PlaqueHauteur) return "";
         return $" : le variateur {v.Repere} fait {N(v.Hauteur)} mm de haut et demande {N(DegagementVariateur)} mm libres au-dessus et au-dessous " +
-               $"pour sa ventilation, soit {N(v.Hauteur + 2 * DegagementVariateur)} mm pour {N(enveloppe.PlaqueHauteur)} mm de plaque";
+               $"pour sa ventilation, soit {N(v.Hauteur + 2 * DegagementVariateur)} mm pour {N(enveloppe.PlaqueHauteur)} mm de plaque" +
+               (v.Hauteur + 2 * reduit > enveloppe.PlaqueHauteur
+                   ? $", et même {N(v.Hauteur + 2 * reduit)} mm avec le dégagement réduit à {N(reduit)} mm sous ventilation forcée" : "");
+    }
+
+    /// <summary>
+    /// Appareils posés sur la plaque hors de toute rangée (variateurs fixés directement, disposition faite à la main) :
+    /// chacun reçoit sa propre zone, avec le dégagement de ventilation d'un variateur, pour que les zones restent visibles.
+    /// </summary>
+    static List<BandeZone> ZonesHorsRails(List<BandeZone> bandes, IReadOnlyList<AppareilImplante> appareils, double largeurTotale, double degagement)
+    {
+        var resultat = new List<BandeZone>(bandes);
+        foreach (var a in appareils.Where(a => a.X < largeurTotale && a.Zone != ZoneCem.HorsArmoire && a.Famille != "Bornier"))
+        {
+            if (resultat.Any(b => a.CentreX >= b.X && a.CentreX <= b.X + b.Largeur && a.CentreY >= b.Y && a.CentreY <= b.Y + b.Hauteur)) continue;
+            var marge = EstVariateur(a) ? degagement : 15;
+            resultat.Add(new BandeZone(a.Zone, a.X - 15, a.Y - marge, a.Largeur + 30, a.Hauteur + 2 * marge, false));
+        }
+        return resultat;
     }
 
     /// <summary>Limite les zones dessinées à la plaque de montage de leur cellule : une zone ne sort jamais de l'enveloppe.</summary>
@@ -844,12 +879,14 @@ public static class CalculArmoire
     /// Contrôle, sur une disposition faite à la main, la place libre au-dessus et au-dessous de chaque variateur ou
     /// démarreur : bord de plaque ou appareil le plus proche dans sa largeur, comparé au dégagement de ventilation.
     /// </summary>
-    static void ControlerDegagementVariateurs(NoteDeCalcul note, List<AppareilImplante> appareils, ModeleEnveloppe enveloppe, double largeur, int cellules)
+    static bool ControlerDegagementVariateurs(NoteDeCalcul note, List<AppareilImplante> appareils, ModeleEnveloppe enveloppe, double largeur,
+        int cellules, double reduit)
     {
         var dy = (enveloppe.Hauteur - enveloppe.PlaqueHauteur) / 2;
         var variateurs = appareils.Where(a => EstVariateur(a) && a.X < largeur * cellules).ToList();
-        if (variateurs.Count == 0) return;
+        if (variateurs.Count == 0) return false;
         var manques = new List<string>();
+        var sousMinimum = false;
         foreach (var v in variateurs)
         {
             var voisins = appareils.Where(a => !ReferenceEquals(a, v) && a.X < largeur * cellules
@@ -858,13 +895,21 @@ public static class CalculArmoire
             var dessous = voisins.Where(a => a.Y >= v.Y + v.Hauteur - PasManuel).Select(a => a.Y).Append(dy + enveloppe.PlaqueHauteur).Min() - (v.Y + v.Hauteur);
             if (dessus < DegagementVariateur - 1e-6 || dessous < DegagementVariateur - 1e-6)
                 manques.Add($"{v.Repere} : {N(Math.Max(0, dessus))} mm au-dessus et {N(Math.Max(0, dessous))} mm au-dessous");
+            if (dessus < reduit - 1e-6 || dessous < reduit - 1e-6) sousMinimum = true;
         }
-        note.Verifier("Dégagement des variateurs", manques.Count == 0,
-            manques.Count == 0
-                ? $"Chaque variateur garde au moins {N(DegagementVariateur)} mm libres au-dessus et au-dessous pour sa ventilation."
-                : $"Ventilation gênée, {N(DegagementVariateur)} mm demandés au-dessus et au-dessous : " + string.Join(" ; ", manques) +
-                  ". Le variateur risque de chauffer ou de se déclasser ; vérifier la notice du fabricant ou prévoir une ventilation forcée.",
-            RefCem, StatutCalcul.Alerte);
+        if (manques.Count == 0)
+            note.Verifier("Dégagement des variateurs", true,
+                $"Chaque variateur garde au moins {N(DegagementVariateur)} mm libres au-dessus et au-dessous pour sa ventilation.", RefCem);
+        else if (!sousMinimum)
+            note.Verifier("Dégagement des variateurs", false,
+                $"Moins de {N(DegagementVariateur)} mm au-dessus ou au-dessous ({string.Join(" ; ", manques)}), mais au moins {N(reduit)} mm : " +
+                "ventilation forcée ajoutée à l'armoire, voir le bilan thermique. Minimum à confirmer dans la notice du variateur.",
+                RefCem, StatutCalcul.Alerte);
+        else
+            note.Verifier("Dégagement des variateurs", false,
+                $"Ventilation du variateur impossible : {string.Join(" ; ", manques)}, sous le minimum de {N(reduit)} mm même avec une ventilation " +
+                "forcée. Le variateur chaufferait ou se déclasserait : armoire trop petite ou variateur à déplacer.", RefCem, StatutCalcul.NonConforme);
+        return manques.Count > 0 && !sousMinimum;
     }
 
     /// <summary>Vrai si chaque appareil est entièrement sur la plaque de montage d'une des cellules.</summary>

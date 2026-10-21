@@ -40,6 +40,9 @@ public record Gabarit(double Laterale, double EntreRangees)
     public double GoulotteMax { get; init; } = double.MaxValue;
     /// <summary>Gabarit réduit pour faire entrer le matériel : il n'est pas recalculé d'après le remplissage.</summary>
     public bool Allege { get; init; }
+    /// <summary>Dégagement au-dessus et au-dessous des variateurs, en mm ; réduit seulement avec une ventilation forcée.</summary>
+    public double Degagement { get; init; } = CalculArmoire.DegagementVariateur;
+    public bool Ventile => Degagement < CalculArmoire.DegagementVariateur - 1e-6;
 }
 
 public class ResultatCablage

@@ -363,12 +363,15 @@ public class ChampMagnetiqueTests
     [Fact]
     public void Taille_imposee_trop_juste_allege_les_goulottes_en_gardant_la_place_libre()
     {
-        var a = CalculProjet.Calculer(QuatreVariateurs(1.5)).Armoire!;
+        var r = CalculProjet.Calculer(QuatreVariateurs(1.5));
+        var a = r.Armoire!;
 
         Assert.True(a.Tient);
         Assert.Contains("goulottes", a.Alerte);
-        // Goulottes allégées d'abord ; borniers, thermostat et protection de la ventilation prennent ensuite un peu de la place libre.
-        Assert.Equal(5, a.ReserveEffective, 3);
+        // Goulottes allégées et dégagement des variateurs réduit sous ventilation forcée : la place libre demandée est gardée.
+        Assert.Equal(25, a.ReserveEffective, 3);
+        Assert.True(a.VentilationForcee);
+        Assert.Equal(SolutionThermique.Ventilation, r.Thermique!.Solution);
         Assert.DoesNotContain(a.Note.Lignes, l => l.Libelle == "Implantation" && l.Statut == StatutCalcul.NonConforme);
     }
 
@@ -596,8 +599,8 @@ public class VentilationAutomatiqueTests
     [Fact]
     public void Ventilateur_choisi_pour_tenir_dans_la_porte()
     {
-        var petit = new ResultatArmoire { Note = new NoteDeCalcul("T"), Largeur = 300, Hauteur = 400, Cellules = 1 };
-        // 300 m³/h : le 560 m³/h (340 mm de haut) ne tient pas deux fois dans 400 mm ; deux 165 m³/h non plus en largeur.
+        var petit = new ResultatArmoire { Note = new NoteDeCalcul("T"), Largeur = 300, Hauteur = 300, Cellules = 1 };
+        // 300 m³/h : le 300 m³/h (268 mm de haut) ne tient pas avec ses marges dans une porte de 300 mm, deux 165 m³/h non plus en largeur.
         Assert.Null(CalculThermique.ChoisirVentilateur(300, petit, CatalogueVentilateurs.Actif));
         var choix = CalculThermique.ChoisirVentilateur(150, new ResultatArmoire { Note = new NoteDeCalcul("T"), Largeur = 600, Hauteur = 800, Cellules = 1 }, CatalogueVentilateurs.Actif);
         Assert.Equal("NSYCVF165M230PF", choix!.Value.Modele.Reference);

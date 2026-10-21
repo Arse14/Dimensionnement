@@ -1161,6 +1161,11 @@
                               ToolTip="Hors plaque (porte ou côté), il ne prend pas de place sur la plaque et ne compte pas dans les zones CEM"/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Dégagement mini des variateurs ventilés (mm)" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien Projet.Armoire.DegagementVariateurVentile}"
+                             ToolTip="Armoire trop petite pour 100 mm au-dessus et au-dessous des variateurs : on descend à cette valeur et une ventilation forcée est ajoutée. À prendre dans la notice du variateur."/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Réserve de place sur les rails (%)" Style="{StaticResource Etiquette}"/>
                     <TextBox Text="{inf:Lien Projet.Armoire.ReservePourcent}"/>
                 </DockPanel>
