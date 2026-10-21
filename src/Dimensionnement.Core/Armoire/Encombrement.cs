@@ -7,7 +7,14 @@ namespace Dimensionnement.Core.Armoire;
 /// Encombrement en mm et puissance dissipée en W d'un appareil à son courant assigné.
 /// Une largeur nulle signale un appareil logé dans un autre (cartouches fusibles) : il dissipe sans occuper de place.
 /// </summary>
-public record Encombrement(double Largeur, double Hauteur, double Profondeur, double DissipationW);
+public record Encombrement(double Largeur, double Hauteur, double Profondeur, double DissipationW)
+{
+    /// <summary>D'où viennent les cotes : fiche du modèle choisi, gamme relevée, ou moyenne de la famille.</summary>
+    public string Origine { get; init; } = "estimation moyenne de la famille";
+
+    /// <summary>Vrai si les cotes ont été relevées sur une fiche (modèle du catalogue vérifié ou gamme vérifiée).</summary>
+    public bool CotesVerifiees { get; init; }
+}
 
 /// <summary>
 /// Encombrements et pertes moyens des gammes courantes (modulaire, TeSys / SIRIUS / AF, variateurs en livre).
@@ -26,7 +33,11 @@ public static class Encombrements
         if (e.HorsArmoire) return null;
         if (e.Loge || e.EnPorte) return new(0, 0, 0, e.PertesW);
         if (e.LargeurMm > 0 && e.HauteurMm > 0)
-            return new(e.LargeurMm, e.HauteurMm, e.ProfondeurMm, e.PertesW);
+            return new(e.LargeurMm, e.HauteurMm, e.ProfondeurMm, e.PertesW)
+            {
+                Origine = e.AVerifier ? "catalogue du modèle, valeurs indicatives" : "catalogue du modèle",
+                CotesVerifiees = !e.AVerifier,
+            };
         var moyen = Moyen(e, q, poles, i);
         // Cotes relevées de la gamme quand la référence est reconnue ; la dissipation de la fiche quand elle est relevée,
         // sinon l'estimation de la famille.
@@ -36,6 +47,8 @@ public static class Encombrements
             {
                 Largeur = c.ParPole ? c.Largeur * poles : c.Largeur, Hauteur = c.Hauteur, Profondeur = c.Profondeur,
                 DissipationW = c.Pertes > 0 ? c.Pertes * q : moyen.DissipationW,
+                Origine = $"gamme {c.Fabricant} {c.Gamme} {c.Taille}".TrimEnd() + (c.Verifie ? ", relevée" : ", indicative"),
+                CotesVerifiees = c.Verifie,
             };
         return moyen;
     }

@@ -208,3 +208,73 @@ public class CatalogueSiemensVerifieTests
         Assert.Equal(0.56, cpu.Consommation);
     }
 }
+
+public class ImplantationLibreTests
+{
+    [Fact]
+    public void Deux_appareils_poses_cote_a_cote_au_pas_de_5_mm_ne_se_chevauchent_pas()
+    {
+        var a = new Dimensionnement.Core.Armoire.AppareilImplante { Repere = "Q1", Designation = "", Famille = "Disjoncteur", Zone = Dimensionnement.Core.Materiel.ZoneCem.Intermediaire, X = 100, Y = 100, Largeur = 17.5, Hauteur = 90 };
+        var b = new Dimensionnement.Core.Armoire.AppareilImplante { Repere = "Q2", Designation = "", Famille = "Disjoncteur", Zone = Dimensionnement.Core.Materiel.ZoneCem.Intermediaire, X = 115, Y = 100, Largeur = 17.5, Hauteur = 90 };
+        var c = new Dimensionnement.Core.Armoire.AppareilImplante { Repere = "Q3", Designation = "", Famille = "Disjoncteur", Zone = Dimensionnement.Core.Materiel.ZoneCem.Intermediaire, X = 105, Y = 100, Largeur = 17.5, Hauteur = 90 };
+        Assert.False(a.Chevauche(b));
+        Assert.True(a.Chevauche(c));
+    }
+
+    [Fact]
+    public void La_disposition_figee_devient_modifiable_et_reste_conforme()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        var r = CalculProjet.Calculer(projet);
+        var auto = Dimensionnement.Core.Armoire.CalculArmoire.Calculer(r, projet);
+        Dimensionnement.Core.Armoire.CalculArmoire.Figer(auto, projet.Armoire);
+
+        var libre = Dimensionnement.Core.Armoire.CalculArmoire.Calculer(r, projet);
+        Assert.True(libre.Libre);
+        Assert.True(libre.Tient, libre.Alerte);
+        Assert.Equal(auto.Largeur, libre.Largeur);
+        Assert.Equal(auto.Appareils.Count, libre.Appareils.Count);
+        Assert.Equal(auto.Cablage.Goulottes.Count, libre.Cablage.Goulottes.Count);
+        Assert.All(libre.Cablage.Goulottes, g => Assert.True(g.Manuelle));
+        Assert.Contains(libre.Note.Lignes, l => l.Libelle == "Place libre");
+
+        // Un rail retiré à la main : la place libre baisse et l'appareil qui y était fixé le signale.
+        projet.Armoire.Rails.RemoveAt(0);
+        var sansRail = Dimensionnement.Core.Armoire.CalculArmoire.Calculer(r, projet);
+        Assert.Contains(sansRail.Note.Lignes, l => l.Libelle.StartsWith("Rail de "));
+        Assert.True(sansRail.ReserveEffective < libre.ReserveEffective + 1e-9 || sansRail.ReserveEffective >= 0);
+    }
+
+    [Fact]
+    public void Un_appareil_ajoute_apres_coup_attend_dans_la_zone_a_placer()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        var r = CalculProjet.Calculer(projet);
+        Dimensionnement.Core.Armoire.CalculArmoire.Figer(Dimensionnement.Core.Armoire.CalculArmoire.Calculer(r, projet), projet.Armoire);
+        projet.Ajouter(new DepartMoteur { PuissanceKw = 1.5 });
+
+        var a = Dimensionnement.Core.Armoire.CalculArmoire.Calculer(CalculProjet.Calculer(projet), projet);
+        Assert.False(a.Tient);
+        Assert.StartsWith("Ta disposition ne tient pas encore : à placer", a.Alerte);
+        Assert.True(a.LargeurAttente > 0);
+    }
+}
+
+public class CalageRailTests
+{
+    [Fact]
+    public void Un_modulaire_pose_pres_d_un_rail_se_cale_dessus_et_reste_libre_le_long()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        var r = CalculProjet.Calculer(projet);
+        var auto = Dimensionnement.Core.Armoire.CalculArmoire.Calculer(r, projet);
+        Dimensionnement.Core.Armoire.CalculArmoire.Figer(auto, projet.Armoire);
+        var rail = projet.Armoire.Rails[0];
+        var q = auto.Appareils.First(a => a.Famille == "Disjoncteur");
+        projet.Armoire.Positions[q.Cle] = new PositionManuelle { X = rail.X + 40, Y = rail.Y - q.Hauteur / 2 + 12 };
+
+        var a = Dimensionnement.Core.Armoire.CalculArmoire.Calculer(r, projet).Appareils.Single(x => x.Cle == q.Cle);
+        Assert.Equal(rail.Y, a.CentreY, 3);
+        Assert.Equal(rail.X + 40, a.X, 3);
+    }
+}

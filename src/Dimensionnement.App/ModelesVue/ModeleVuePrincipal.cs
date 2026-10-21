@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows;
 using Dimensionnement.App.Infrastructure;
 using Dimensionnement.App.Vues;
+using Dimensionnement.Core.Armoire;
 using Dimensionnement.Core.Calculs;
 using Dimensionnement.Core.Materiel;
 using Dimensionnement.Core.Modele;
@@ -151,8 +152,17 @@ public partial class ModeleVuePrincipal : Observable
                 ConfigCourante.Positions.Clear();
                 ConfigCourante.Rails.Clear();
                 ConfigCourante.Goulottes.Clear();
+                if (ConfigCourante.ImplantationLibre) ConfigCourante.TailleImposee = ConfigCourante.TailleImposeeAvantLibre;
+                ConfigCourante.ImplantationLibre = false;
             }),
-            () => ConfigCourante.Positions.Count > 0 || ConfigCourante.Rails.Count > 0 || ConfigCourante.Goulottes.Count > 0);
+            () => ConfigCourante.Positions.Count > 0 || ConfigCourante.Rails.Count > 0 || ConfigCourante.Goulottes.Count > 0
+                  || ConfigCourante.ImplantationLibre);
+        // La disposition calculée devient celle de l'utilisateur : rails, goulottes et appareils deviennent tous modifiables.
+        ImplantationLibre = new Commande(() =>
+            {
+                if (ArmoireAffichee is { } a) Modifier(() => CalculArmoire.Figer(a, ConfigCourante));
+            },
+            () => ArmoireAffichee is not null && !ConfigCourante.ImplantationLibre);
         AjouterRail = new Commande(() => Modifier(() =>
         {
             var (x, y, longueur) = PositionNouvelle();
@@ -257,6 +267,7 @@ public partial class ModeleVuePrincipal : Observable
     public Commande OuvrirCarte { get; }
     public Commande DeplacerAppareil { get; }
     public Commande ReinitialiserImplantation { get; }
+    public Commande ImplantationLibre { get; }
     public Commande AjouterRail { get; }
     public Commande AjouterGoulotte { get; }
     public Commande ModifierArmoire { get; }
@@ -384,7 +395,10 @@ public partial class ModeleVuePrincipal : Observable
     public string ResumeArmoire => ArmoireAffichee is { } a
         ? $"{a.Type} {a.Marque} {a.Gamme} {a.Largeur:0} × {a.Hauteur:0} × {a.Profondeur:0} mm{(a.Cellules > 1 ? $", {a.Cellules} cellules" : "")}" +
           $"{(a.TailleImposee ? " (imposée)" : "")} – " +
-          $"plaque occupée à {a.Occupation:0} % – {a.Thermique?.PuissanceDissipee:0} W dissipés"
+          (a.Libre ? $"implantation libre, place libre {a.ReserveEffective:0} % (plaque moins goulottes)"
+                   : $"plaque occupée à {a.Occupation:0} %") +
+          $" – profondeur {a.Profondeur:0} mm pour {a.ProfondeurNecessaire:0} nécessaires{(a.Profondeur < a.ProfondeurNecessaire ? " (insuffisante)" : "")}" +
+          $" – {a.Thermique?.PuissanceDissipee:0} W dissipés"
         : "";
 
     List<ChoixEnveloppe>? _choixEnveloppes;

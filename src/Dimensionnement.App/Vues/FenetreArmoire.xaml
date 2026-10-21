@@ -37,6 +37,8 @@
                 <Button Content="Ajouter un rail DIN" Command="{Binding AjouterRail}" Margin="0,0,6,0"/>
                 <Button Content="Ajouter une goulotte horizontale" Command="{Binding AjouterGoulotte}" CommandParameter="H" Margin="0,0,6,0"/>
                 <Button Content="Ajouter une goulotte verticale" Command="{Binding AjouterGoulotte}" CommandParameter="V" Margin="0,0,16,0"/>
+                <Button Content="Modifier à la main" Command="{Binding ImplantationLibre}" Margin="0,0,6,0"
+                        ToolTip="La disposition calculée devient la tienne : rails DIN, goulottes et appareils se déplacent, se changent ou se suppriment (clic droit). Place libre, chevauchements et profondeur sont recalculés sur ta disposition. « Réinitialiser l'implantation » revient au calcul automatique."/>
                 <Button Content="Réinitialiser l'implantation" Command="{Binding ReinitialiserImplantation}" Margin="0,0,16,0"/>
                 <TextBlock Text="Afficher" VerticalAlignment="Center" Margin="0,0,6,0"/>
                 <ComboBox ItemsSource="{Binding ChoixArmoires}" SelectedItem="{Binding ArmoireChoisie}" DisplayMemberPath="Libelle"
@@ -111,7 +113,8 @@
                             AfficherChamps="{Binding IsChecked, ElementName=CaseChamps}"
                             DeplacerCommande="{Binding DeplacerAppareil}"
                             ActionCommande="{Binding ModifierArmoire}"
-                            RenommerCommande="{Binding RenommerElement}"/>
+                            RenommerCommande="{Binding RenommerElement}"
+                            LibreCommande="{Binding ImplantationLibre}"/>
         </Border>
     </DockPanel>
 </Window>

@@ -80,6 +80,15 @@ public class ConfigurationArmoire
     /// <summary>Valeurs forcées de l'armoire et de sa thermique (dimensions, puissance dissipée).</summary>
     public Dictionary<string, Forcage> Forcages { get; set; } = new();
 
+    /// <summary>
+    /// Implantation libre : la disposition automatique a servi de base, l'utilisateur la modifie entièrement (appareils,
+    /// rails, goulottes) et les contrôles portent sur sa disposition. « Réinitialiser l'implantation » revient à l'automatique.
+    /// </summary>
+    public bool ImplantationLibre { get; set; }
+
+    /// <summary>Taille imposée ou non avant le passage en implantation libre (qui fige l'enveloppe), rétablie au retour à l'automatique.</summary>
+    public bool TailleImposeeAvantLibre { get; set; }
+
     /// <summary>Appareils déplacés à la main, par repère.</summary>
     public Dictionary<string, PositionManuelle> Positions { get; set; } = new();
 

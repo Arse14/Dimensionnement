@@ -59,6 +59,12 @@ public class VueArmoire : Border
     public static readonly DependencyProperty RenommerCommandeProperty = DependencyProperty.Register(nameof(RenommerCommande),
         typeof(ICommand), typeof(VueArmoire), new PropertyMetadata(null, Redessiner));
 
+    public static readonly DependencyProperty LibreCommandeProperty = DependencyProperty.Register(nameof(LibreCommande),
+        typeof(ICommand), typeof(VueArmoire), new PropertyMetadata(null, Redessiner));
+
+    /// <summary>Passe en implantation libre (clic droit sur une goulotte calculée).</summary>
+    public ICommand? LibreCommande { get => (ICommand?)GetValue(LibreCommandeProperty); set => SetValue(LibreCommandeProperty, value); }
+
     /// <summary>Reçoit l'appareil à renommer (clic droit sur un appareil de la plaque).</summary>
     public ICommand? RenommerCommande { get => (ICommand?)GetValue(RenommerCommandeProperty); set => SetValue(RenommerCommandeProperty, value); }
 
@@ -155,9 +161,17 @@ public class VueArmoire : Border
                 ToolTip = $"Goulotte {g.Modele.Libelle}, {g.Longueur:0} mm" +
                           (g.Manuelle ? "\nAjoutée à la main : glisser pour déplacer, clic droit pour la modifier"
                                       : $"\n{g.Fils} fils estimés, remplissage {g.Remplissage:0} % (≤ {CalculCablage.RemplissageMax:0} %)"),
-                IsHitTestVisible = g.Manuelle,
+                IsHitTestVisible = g.Manuelle || (Interactif && LibreCommande is not null),
             };
             if (Interactif && g.Id is { } id) Manipulable(goulotte, id, true);
+            else if (Interactif && LibreCommande is { } libre)
+            {
+                // Goulotte calculée : on la modifie en reprenant la main sur toute l'implantation.
+                var item = new MenuItem { Header = "Modifier les goulottes et les rails à la main…" };
+                item.Click += (_, _) => { if (libre.CanExecute(null)) libre.Execute(null); };
+                goulotte.ContextMenu = new ContextMenu { Items = { item } };
+                goulotte.ToolTip += "\nClic droit pour la modifier à la main";
+            }
             Placer(goulotte, g.X, g.Y);
         }
 
@@ -186,7 +200,10 @@ public class VueArmoire : Border
                 BorderBrush = x.Manuel ? Pinceau("#F5A623") : Pinceau("#37414B"),
                 BorderThickness = new Thickness(x.Manuel ? 4 : 2),
                 Tag = x,
-                ToolTip = $"{x.Repere} – {x.Designation}\n{x.Largeur:0} × {x.Hauteur:0} × {x.Profondeur:0} mm, {x.DissipationW:0.#} W\n" +
+                ToolTip = $"{x.Repere} – {x.Designation}\n" +
+                          (x.Element is { Reference.Length: > 0 } ref_ ? $"Référence : {ref_.Fabricant} {ref_.Reference}\n".Replace("  ", " ") : "") +
+                          $"{x.Largeur:0} × {x.Hauteur:0} × {x.Profondeur:0} mm, {x.DissipationW:0.#} W" +
+                          (x.Origine.Length > 0 ? $" ({x.Origine}{(x.CotesVerifiees ? "" : ", à vérifier")})" : "") + "\n" +
                           $"{LibelleEnum.Libelle(x.Zone)}{(x.Manuel ? "\nPlacé à la main" : "")}" +
                           (a.Expositions.TryGetValue(x.Repere, out var h) ? $"\nChamp reçu ≈ {h:0.#} A/m (immunité industrielle {ChampMagnetique.ImmuniteIndustrielle:0} A/m)" : "") +
                           (a.Sources.FirstOrDefault(c => c.Repere == x.Repere) is { } src
@@ -195,7 +212,20 @@ public class VueArmoire : Border
                 Child = new Viewbox
                 {
                     Margin = new Thickness(2), StretchDirection = StretchDirection.DownOnly,
-                    Child = new TextBlock { Text = x.Repere, FontWeight = FontWeights.Bold, FontSize = 22, Foreground = Pinceau("#1D232A") },
+                    Child = new StackPanel
+                    {
+                        Children =
+                        {
+                            new TextBlock { Text = x.Repere, FontWeight = FontWeights.Bold, FontSize = 22, Foreground = Pinceau("#1D232A"), HorizontalAlignment = HorizontalAlignment.Center },
+                            // Référence sous le repère : cotes à contrôler sur la fiche ; en orange quand elles sont estimées.
+                            new TextBlock
+                            {
+                                Text = x.Element?.Reference ?? "", FontSize = 11, HorizontalAlignment = HorizontalAlignment.Center,
+                                Foreground = Pinceau(x.CotesVerifiees ? "#57606A" : "#B26A00"),
+                                Visibility = string.IsNullOrEmpty(x.Element?.Reference) ? Visibility.Collapsed : Visibility.Visible,
+                            },
+                        },
+                    },
                 },
             };
             if (Interactif)

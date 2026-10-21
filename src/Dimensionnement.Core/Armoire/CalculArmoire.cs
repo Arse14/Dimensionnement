@@ -24,14 +24,23 @@ public class AppareilImplante
     public double Profondeur { get; init; }
     public double DissipationW { get; init; }
 
+    /// <summary>Origine des cotes (fiche du modèle, gamme relevée, estimation) et si elles sont vérifiées.</summary>
+    public string Origine { get; init; } = "";
+    public bool CotesVerifiees { get; init; }
+
     /// <summary>Vrai si l'utilisateur a déplacé l'appareil à la main.</summary>
     public bool Manuel { get; set; }
 
     public double CentreX => X + Largeur / 2;
     public double CentreY => Y + Hauteur / 2;
 
+    /// <summary>
+    /// Vrai si les deux appareils empiètent l'un sur l'autre au-delà du pas de déplacement à la main (5 mm) : deux appareils
+    /// posés côte à côte au pas de 5 mm, dont la largeur n'en est pas un multiple (17,5 mm), se touchent sans se chevaucher.
+    /// </summary>
     public bool Chevauche(AppareilImplante a) =>
-        X < a.X + a.Largeur - 0.5 && a.X < X + Largeur - 0.5 && Y < a.Y + a.Hauteur - 0.5 && a.Y < Y + Hauteur - 0.5;
+        X < a.X + a.Largeur - CalculArmoire.PasManuel && a.X < X + Largeur - CalculArmoire.PasManuel
+        && Y < a.Y + a.Hauteur - CalculArmoire.PasManuel && a.Y < Y + Hauteur - CalculArmoire.PasManuel;
 }
 
 /// <summary>Bande d'une zone CEM sur la plaque : une rangée de rail et ses goulottes, ou un bloc fixé sur la plaque (variateurs).</summary>
@@ -102,6 +111,12 @@ public class ResultatArmoire
     /// <summary>Hauteur de plaque occupée, en % de la hauteur disponible de toutes les cellules.</summary>
     public double Occupation { get; init; }
 
+    /// <summary>Implantation libre : la disposition est entièrement celle de l'utilisateur (rails, goulottes, appareils).</summary>
+    public bool Libre { get; init; }
+
+    /// <summary>Profondeur nécessaire au matériel le plus profond (et à l'IHM en porte), en mm.</summary>
+    public double ProfondeurNecessaire { get; init; }
+
     /// <summary>Vrai si la taille est imposée par l'utilisateur.</summary>
     public bool TailleImposee { get; init; }
 
@@ -142,6 +157,9 @@ public static class CalculArmoire
     public const double SeparationCem = 200;
     /// <summary>Jeu entre deux appareils de départs différents, en mm.</summary>
     const double JeuDeparts = 5;
+
+    /// <summary>Pas de déplacement des appareils à la main, en mm : tolérance des contrôles de chevauchement et de plaque.</summary>
+    public const double PasManuel = 5;
     /// <summary>Dégagement au-dessus et au-dessous des variateurs pour leur ventilation (notices fabricants), en mm.</summary>
     public const double DegagementVariateur = 100;
     /// <summary>Jeu entre deux variateurs montés côte à côte, en mm.</summary>
@@ -254,10 +272,12 @@ public static class CalculArmoire
 
         // Taille imposée trop juste : on essaie par paliers, en gardant d'abord la réserve demandée et en allégeant les
         // goulottes (25 mm, puis verticales seules, puis aucune) ; ensuite seulement la réserve est réduite par pas de 5 %.
-        var implantation = Implanter(elements, enveloppe, cellules, reserve, gabarit);
+        var libre = config.ImplantationLibre;
+        if (libre) gabarit = Gabarit.SansGoulotte;
+        var implantation = libre ? ImplanterLibre(elements, config, largeur * cellules) : Implanter(elements, enveloppe, cellules, reserve, gabarit);
         var reserveEffective = reserve;
         var palier = 0;
-        if (imposee && !implantation.Tient)
+        if (imposee && !implantation.Tient && !libre)
         {
             var paliers = new[] { gabarit, gabarit with { DegagementPartage = true }, Gabarit.Fines, Gabarit.Verticales, Gabarit.SansGoulotte };
             var essais = paliers.Select((g, i) => (Palier: i, Reserve: reserve))
@@ -273,6 +293,9 @@ public static class CalculArmoire
         }
         var appareils = implantation.Appareils;
         AppliquerPositionsManuelles(appareils, config, largeur * cellules, hauteur);
+        CalerSurRails(appareils, implantation.Bandes.Where(b => b.Rail)
+            .Select(b => (b.X + gabarit.Laterale, b.X + b.Largeur - gabarit.Laterale, b.Y + b.Hauteur / 2))
+            .Concat(config.Rails.Select(x => (x.X, x.X + x.Longueur, x.Y))).ToList());
         // Les rangées qui débordent de l'enveloppe ne sont pas dessinées hors de l'armoire.
         var bandesPosees = implantation.Bandes.Where(b => b.X < largeur * cellules - 1).ToList();
         // L'implantation automatique déborde, mais les appareils déplacés à la main font tout entrer : elle est retenue.
@@ -291,12 +314,28 @@ public static class CalculArmoire
             _ => "",
         };
         var reduite = reserveEffective < reserve - 1e-6;
-        if (tientALaMain)
+        if (libre)
+            alerte = tientALaMain ? "" : "Ta disposition ne tient pas encore : " + string.Join(" ; ", new[]
+            {
+                appareils.Any(a => a.X >= largeur * cellules) ? "à placer : " + string.Join(", ", appareils.Where(a => a.X >= largeur * cellules).Select(a => a.Repere)) : "",
+                appareils.Where(a => a.X < largeur * cellules && !ToutSurLaPlaque(new[] { a }, enveloppe, largeur, cellules)).Select(a => a.Repere).ToList() is { Count: > 0 } hors
+                    ? "hors de la plaque : " + string.Join(", ", hors) : "",
+                Chevauchements(appareils) is { Count: > 0 } chl ? "appareils qui se chevauchent : " + string.Join(", ", chl) : "",
+            }.Where(t => t.Length > 0)) + ".";
+        else if (tientALaMain)
             alerte = "L'implantation automatique ne tient pas, mais les appareils déplacés à la main font tout entrer : implantation manuelle retenue, sans réserve garantie.";
         else if (palier > 0 || (reduite && implantation.Tient))
             alerte = $"Le matériel ne tient dans l'armoire imposée {N(largeur)} × {N(hauteur)} mm qu'" +
                      string.Join(" et ", new[] { allegement, reduite ? $"en réduisant la place libre à {N(reserveEffective * 100)} % au lieu de {N(config.ReservePourcent)} %" : "" }
                          .Where(t => t.Length > 0)) + (palier > 0 ? " ; à valider au câblage." : ".");
+        else if (!implantation.Tient && appareils.Any(a => a.Manuel))
+            alerte = "Ta disposition à la main ne tient pas encore : " + string.Join(" ; ", new[]
+            {
+                ToutSurLaPlaque(appareils, enveloppe, largeur, cellules) ? "" :
+                    "hors de la plaque : " + string.Join(", ", appareils.Where(a => !ToutSurLaPlaque(new[] { a }, enveloppe, largeur, cellules)).Select(a => a.Repere)),
+                Chevauchements(appareils) is { Count: > 0 } ch ? "appareils qui se chevauchent : " + string.Join(", ", ch) : "",
+            }.Where(t => t.Length > 0)) + ". Corrige-les et elle sera retenue (l'implantation automatique, elle, demanderait " +
+                $"{N(auto.L)} × {N(auto.H)} mm" + (auto.N > 1 ? $" × {auto.N} cellules" : "") + ").";
         else if (!implantation.Tient)
             alerte = imposee
                 ? $"Impossible de tout faire entrer dans l'armoire imposée {N(largeur)} × {N(hauteur)} mm" +
@@ -309,8 +348,24 @@ public static class CalculArmoire
             (cellules > 1 ? $", {cellules} cellules juxtaposées (largeur totale {N(largeur * cellules)} mm)" : "") +
             $" : {enveloppe.Reference} ; plaque : {enveloppe.ReferencePlaque}, surface utile {N(enveloppe.PlaqueLargeur)} × {N(enveloppe.PlaqueHauteur)} mm" +
             (enveloppe.Verifie ? "." : " (références indicatives, à vérifier)."), "Catalogues Rittal, Legrand, Schneider ; " + RefArmoire);
+        var bandesLibres = libre ? RecalculerZones(bandesPosees, appareils, config.Rails, largeur * cellules, hauteur) : null;
+        var placeRails = libre ? PlaceLibreRails(bandesLibres!, appareils) : null;
+        if (libre)
+        {
+            var goulottesPosees = config.Goulottes.Select(g => (g.Verticale ? g.Largeur : g.Longueur) * (g.Verticale ? g.Longueur : g.Largeur)).Sum();
+            var surface = SurfaceLibre(appareils, enveloppe, largeur * cellules, cellules, goulottesPosees);
+            reserveEffective = surface.Libre;
+            note.Verifier("Implantation", tient,
+                tient ? "Ta disposition tient : tout est sur la plaque, sans chevauchement." : alerte, RefArmoire, StatutCalcul.NonConforme);
+            note.Verifier("Place libre", surface.Libre * 100 >= config.ReservePourcent - 1e-6,
+                $"Plaque {N(surface.Plaque / 1e6, 3)} m² − goulottes {N(surface.Goulottes / 1e6, 3)} m² = {N(surface.Utile / 1e6, 3)} m² utiles ; " +
+                $"appareils {N(surface.Appareils / 1e6, 3)} m² : {N(surface.Libre * 100)} % de place libre pour {N(config.ReservePourcent)} % demandés.",
+                RefArmoire, StatutCalcul.Alerte);
+            if (placeRails is { } pr)
+                note.Info("Rails DIN", $"{N(pr.Longueur)} mm de rail, {N(pr.Occupe)} mm occupés : {N(pr.Libre * 100)} % de rail libre ({N(pr.Longueur - pr.Occupe)} mm).", RefArmoire);
+        }
         var complet = implantation.Tient && palier == 0 && reserveEffective >= reserve - 1e-6;
-        note.Verifier("Implantation", complet,
+        if (!libre) note.Verifier("Implantation", complet,
             complet ? $"Tout le matériel tient avec {N(config.ReservePourcent)} % de réserve ; hauteur occupée {Pct(implantation.Occupation)}." : alerte,
             RefArmoire, tient ? StatutCalcul.Alerte : StatutCalcul.NonConforme);
         note.Info("Zones CEM", "Zone propre en haut (automate, E/S, sécurité), zone intermédiaire (protections, alimentations), " +
@@ -333,6 +388,11 @@ public static class CalculArmoire
         };
         CalculCablage.Noter(note, cablage, appareils.Count(a => a.Element is not null));
 
+        var aVerifier = appareils.Where(a => a.Element is not null && !a.CotesVerifiees).ToList();
+        if (aVerifier.Count > 0)
+            note.Info("Cotes à vérifier", $"{aVerifier.Count} appareil(s) implanté(s) avec des cotes non relevées sur fiche : " +
+                string.Join(" ; ", aVerifier.Select(a => $"{a.Repere} {a.Element!.Reference}".TrimEnd() + $" {N(a.Largeur)} × {N(a.Hauteur)} × {N(a.Profondeur)} mm ({a.Origine})")) +
+                ". La référence s'affiche sous chaque appareil (en orange quand ses cotes sont estimées).", Encombrements.Source);
         var ihm = PlacerPorte(note, porte, appareils, largeur, hauteur, profondeur);
 
         var sources = ChampMagnetique.Sources(appareils);
@@ -349,8 +409,8 @@ public static class CalculArmoire
             Cablage = cablage, Laterale = gabarit.Laterale,
             Marque = marque.ToString(), Gamme = enveloppe.Gamme, Reference = enveloppe.Reference, ReferencePlaque = enveloppe.ReferencePlaque,
             PlaqueLargeur = enveloppe.PlaqueLargeur, PlaqueHauteur = enveloppe.PlaqueHauteur,
-            Occupation = implantation.Occupation,
-            TailleImposee = imposee, ReserveEffective = reserveEffective * 100,
+            Occupation = libre ? SurfaceOccupee(appareils, enveloppe, largeur * cellules, cellules) : implantation.Occupation,
+            TailleImposee = imposee, ReserveEffective = reserveEffective * 100, Libre = libre, ProfondeurNecessaire = profondeurMini,
             LargeurAttente = attente,
             Tient = tient && !(imposee && profondeur < profondeurMini), Alerte = alerte,
         };
@@ -421,6 +481,7 @@ public static class CalculArmoire
             {
                 Repere = e.Repere, Designation = e.Designation, Famille = e.Famille, Zone = e.Zone, Element = e,
                 Largeur = enc.Largeur, Hauteur = enc.Hauteur, Profondeur = enc.Profondeur, DissipationW = enc.DissipationW,
+                Origine = enc.Origine, CotesVerifiees = enc.CotesVerifiees,
             });
         }
 
@@ -704,7 +765,7 @@ public static class CalculArmoire
     static AppareilImplante Copier(AppareilImplante e, double x, double y) => new()
     {
         Repere = e.Repere, Designation = e.Designation, Famille = e.Famille, Zone = e.Zone, Element = e.Element,
-        X = x, Y = y, Largeur = e.Largeur, Hauteur = e.Hauteur, Profondeur = e.Profondeur, DissipationW = e.DissipationW,
+        X = x, Y = y, Largeur = e.Largeur, Hauteur = e.Hauteur, Profondeur = e.Profondeur, DissipationW = e.DissipationW, Origine = e.Origine, CotesVerifiees = e.CotesVerifiees,
     };
 
     /// <summary>Écart entre l'armoire et la zone « à placer », en mm.</summary>
@@ -743,9 +804,106 @@ public static class CalculArmoire
         {
             var c = (int)Math.Floor(a.X / largeur);
             var x0 = c * largeur + dx;
-            return c >= 0 && c < cellules && a.X >= x0 - 0.5 && a.X + a.Largeur <= x0 + enveloppe.PlaqueLargeur + 0.5
-                   && a.Y >= dy - 0.5 && a.Y + a.Hauteur <= dy + enveloppe.PlaqueHauteur + 0.5;
+            return c >= 0 && c < cellules && a.X >= x0 - PasManuel && a.X + a.Largeur <= x0 + enveloppe.PlaqueLargeur + PasManuel
+                   && a.Y >= dy - PasManuel && a.Y + a.Hauteur <= dy + enveloppe.PlaqueHauteur + PasManuel;
         });
+    }
+
+    /// <summary>
+    /// Implantation libre : chaque appareil reste là où l'utilisateur l'a posé ; un appareil sans position (ajouté depuis)
+    /// part dans la zone « à placer ». Il n'y a ni rangée ni goulotte automatique : seulement les rails et goulottes de l'utilisateur.
+    /// </summary>
+    static Implantation ImplanterLibre(IReadOnlyList<AppareilImplante> elements, ConfigurationArmoire config, double largeurTotale)
+    {
+        // Un bornier coupé en tronçons dans la disposition de base garde ses tronçons.
+        IEnumerable<AppareilImplante> Troncons(AppareilImplante e)
+        {
+            var n = 0;
+            while (e.Famille == "Bornier" && !config.Positions.ContainsKey(e.Cle) && config.Positions.ContainsKey($"{e.Repere}.{n + 1}")) n++;
+            return n > 1 ? Decouper(e, e.Largeur / n + 0.01) : new[] { e };
+        }
+        var appareils = elements.SelectMany(Troncons).Select(e => new AppareilImplante
+        {
+            Repere = e.Repere, Designation = e.Designation, Famille = e.Famille, Zone = e.Zone, Element = e.Element,
+            Largeur = e.Largeur, Hauteur = e.Hauteur, Profondeur = e.Profondeur, DissipationW = e.DissipationW, Origine = e.Origine, CotesVerifiees = e.CotesVerifiees,
+            X = largeurTotale + EcartAttente, Y = 0,
+        }).ToList();
+        var tous = appareils.All(a => config.Positions.ContainsKey(a.Cle));
+        return new Implantation(tous, appareils, new List<BandeZone>(), 0);
+    }
+
+    /// <summary>Part de la plaque couverte par les appareils posés dessus, en %.</summary>
+    static double SurfaceOccupee(IEnumerable<AppareilImplante> appareils, ModeleEnveloppe enveloppe, double largeurTotale, int cellules) =>
+        enveloppe.PlaqueLargeur * enveloppe.PlaqueHauteur <= 0 ? 0
+            : 100 * appareils.Where(a => a.X < largeurTotale).Sum(a => a.Largeur * a.Hauteur) / (enveloppe.PlaqueLargeur * enveloppe.PlaqueHauteur * Math.Max(1, cellules));
+
+    /// <summary>Surfaces en mm² : plaque de fond complète, goulottes posées, reste utile, appareils, et part libre de l'utile (0 à 1).</summary>
+    public record Surfaces(double Plaque, double Goulottes, double Utile, double Appareils, double Libre);
+
+    /// <summary>
+    /// Place libre : la plaque de fond entière est l'espace de départ ; on retire la surface des goulottes, puis celle des
+    /// appareils posés. La place libre est rapportée à la surface utile (plaque moins goulottes).
+    /// </summary>
+    public static Surfaces SurfaceLibre(IEnumerable<AppareilImplante> appareils, ModeleEnveloppe enveloppe, double largeurTotale, int cellules,
+        double surfaceGoulottes)
+    {
+        var plaque = enveloppe.PlaqueLargeur * enveloppe.PlaqueHauteur * Math.Max(1, cellules);
+        var utile = Math.Max(0, plaque - surfaceGoulottes);
+        var occupe = appareils.Where(a => a.X < largeurTotale).Sum(a => a.Largeur * a.Hauteur);
+        return new Surfaces(plaque, surfaceGoulottes, utile, occupe, utile <= 0 ? 0 : Math.Max(0, 1 - occupe / utile));
+    }
+
+    /// <summary>Longueur de rail DIN posée, largeur occupée par les appareils qui y sont fixés et part libre (0 à 1), ou null sans rail.</summary>
+    public record PlaceRails(double Longueur, double Occupe, double Libre);
+
+    static PlaceRails? PlaceLibreRails(IReadOnlyList<BandeZone> bandes, IReadOnlyList<AppareilImplante> appareils)
+    {
+        var rails = bandes.Where(b => b.Rail).ToList();
+        var longueur = rails.Sum(b => b.Largeur);
+        if (longueur <= 0) return null;
+        var occupe = Math.Min(longueur, rails.Sum(b => Dans(b, appareils).Where(a => !EstVariateur(a)).Sum(a => a.Largeur)));
+        return new PlaceRails(longueur, occupe, 1 - occupe / longueur);
+    }
+
+    /// <summary>
+    /// Passe en implantation libre : la disposition calculée (appareils, rails, goulottes) devient celle de l'utilisateur,
+    /// qui peut tout déplacer, allonger, changer ou supprimer. L'enveloppe est figée à sa taille actuelle.
+    /// </summary>
+    public static void Figer(ResultatArmoire a, ConfigurationArmoire config)
+    {
+        foreach (var x in a.Appareils.Where(x => x.X < a.LargeurTotale))
+            config.Positions[x.Cle] = new PositionManuelle { X = x.X, Y = x.Y };
+        foreach (var b in a.Bandes.Where(b => b.Rail && b.Id is null))
+            config.Rails.Add(new RailManuel { X = b.X + a.Laterale, Y = b.Y + b.Hauteur / 2, Longueur = Math.Max(50, b.Largeur - 2 * a.Laterale) });
+        foreach (var g in a.Cablage.Goulottes.Where(g => !g.Manuelle))
+            config.Goulottes.Add(new GoulotteManuelle
+            {
+                X = g.X, Y = g.Y, Verticale = g.Verticale, Longueur = g.Verticale ? g.Hauteur : g.Largeur,
+                Largeur = g.Modele.Largeur, Hauteur = g.Modele.Hauteur,
+            });
+        var avant = config.TailleImposee;
+        config.TailleImposee = true;
+        config.LargeurImposee = a.Largeur;
+        config.HauteurImposee = a.Hauteur;
+        config.ProfondeurImposee = a.Profondeur;
+        config.CellulesImposees = a.Cellules;
+        if (!config.ImplantationLibre) config.TailleImposeeAvantLibre = avant;
+        config.ImplantationLibre = true;
+    }
+
+    /// <summary>
+    /// Un appareil modulaire posé à la main se cale en hauteur sur le rail DIN qu'il touche (axe du rail au milieu de
+    /// l'appareil, le plus proche s'il en touche deux) ; il reste libre le long du rail. Les variateurs, fixés sur la plaque,
+    /// et les appareils posés hors de tout rail ne bougent pas.
+    /// </summary>
+    static void CalerSurRails(List<AppareilImplante> appareils, IReadOnlyList<(double X0, double X1, double Axe)> rails)
+    {
+        foreach (var a in appareils.Where(a => a.Manuel && !EstVariateur(a)))
+        {
+            var rail = rails.Where(r => a.CentreX >= r.X0 && a.CentreX <= r.X1 && r.Axe >= a.Y && r.Axe <= a.Y + a.Hauteur)
+                .OrderBy(r => Math.Abs(r.Axe - a.CentreY)).Select(r => (double?)r.Axe).FirstOrDefault();
+            if (rail is { } axe) a.Y = axe - a.Hauteur / 2;
+        }
     }
 
     static void AppliquerPositionsManuelles(List<AppareilImplante> appareils, ConfigurationArmoire config, double largeur, double hauteur)
@@ -786,6 +944,16 @@ public static class CalculArmoire
         return resultat;
     }
 
+    static List<string> Chevauchements(List<AppareilImplante> appareils)
+    {
+        var liste = new List<string>();
+        for (var i = 0; i < appareils.Count; i++)
+            for (var j = i + 1; j < appareils.Count; j++)
+                if (appareils[i].Chevauche(appareils[j]))
+                    liste.Add($"{appareils[i].Repere} / {appareils[j].Repere}");
+        return liste;
+    }
+
     static void ControlerManuel(NoteDeCalcul note, List<AppareilImplante> appareils, List<BandeZone> bandes, double largeur, double hauteur)
     {
         var manuels = appareils.Where(a => a.Manuel).ToList();
@@ -814,11 +982,7 @@ public static class CalculArmoire
                 note.Verifier($"Rail de {a.Repere}", false, $"{a.Designation} n'est sur aucun rail DIN : ajouter un rail sous l'appareil.",
                     RefArmoire, StatutCalcul.Alerte);
 
-        var chevauchements = new List<string>();
-        for (var i = 0; i < appareils.Count; i++)
-            for (var j = i + 1; j < appareils.Count; j++)
-                if ((appareils[i].Manuel || appareils[j].Manuel) && appareils[i].Chevauche(appareils[j]))
-                    chevauchements.Add($"{appareils[i].Repere} / {appareils[j].Repere}");
+        var chevauchements = Chevauchements(appareils);
         if (manuels.Count > 0)
             note.Verifier("Chevauchements", chevauchements.Count == 0,
                 chevauchements.Count == 0 ? "Aucun appareil ne se chevauche." : $"Appareils qui se chevauchent : {string.Join(", ", chevauchements)}.",
