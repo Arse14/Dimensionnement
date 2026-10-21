@@ -28,3 +28,21 @@ jobs:
         with:
           name: Dimensionnement-windows-x64
           path: publication/
+
+  # Ne garde que les 3 derniers exécutables publiés, toutes branches confondues.
+  menage:
+    needs: windows
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Suppression des anciens exécutables
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --paginate "repos/${{ github.repository }}/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.name == "Dimensionnement-windows-x64" and (.expired | not)) | "\(.created_at) \(.id)"' \
+            | sort -r | tail -n +4 | while read -r date id; do
+              echo "Suppression de l'exécutable du $date ($id)"
+              gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id"
+            done
