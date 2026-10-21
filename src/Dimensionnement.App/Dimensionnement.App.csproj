@@ -9,6 +9,9 @@
     <!-- Permet de compiler l'interface depuis Linux ou macOS (intégration continue) ; l'exécution reste sous Windows. -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <AssemblyTitle>Dimensionnement électrique</AssemblyTitle>
+    <Product>Dimensionnement électrique</Product>
+    <Company>ITP INTERPIPE</Company>
+    <Version>1.0.0</Version>
     <RootNamespace>Dimensionnement.App</RootNamespace>
     <ApplicationIcon>Ressources\icone.ico</ApplicationIcon>
   </PropertyGroup>

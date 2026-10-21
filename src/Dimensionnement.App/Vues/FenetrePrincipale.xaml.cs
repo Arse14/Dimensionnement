@@ -16,6 +16,10 @@ public partial class FenetrePrincipale : Window
     {
         InitializeComponent();
         DataContext = _modele;
+        // Projet ouvert par double-clic sur un fichier .dimelec (association créée par l'installateur).
+        var arguments = Environment.GetCommandLineArgs();
+        if (arguments.Length > 1 && System.IO.File.Exists(arguments[1]))
+            Loaded += (_, _) => _modele.OuvrirChemin(arguments[1], confirmer: false);
     }
 
     /// <summary>Chaque valeur saisie relance le calcul de tout le projet.</summary>

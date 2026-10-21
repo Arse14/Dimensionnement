@@ -26,16 +26,33 @@ jobs:
       - name: Publication de l'exécutable Windows
         shell: pwsh
         run: |
-          # Sur une étiquette vX.Y.Z, l'exécutable porte ce numéro de version.
-          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { '0.0.0-dev' }
-          dotnet publish src/Dimensionnement.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:Version=$version -o publication
+          # Sur une étiquette vX.Y.Z, l'exécutable porte ce numéro ; sinon celui du projet.
+          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { @("-p:Version=$($env:GITHUB_REF_NAME.TrimStart('v'))") } else { @() }
+          dotnet publish src/Dimensionnement.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true @version -o publication
 
       - uses: actions/upload-artifact@v4
         with:
           name: Dimensionnement-windows-x64
           path: publication/
 
-  # Release GitHub sur une étiquette vX.Y.Z : l'exécutable zippé en pièce jointe.
+      # Installateur Inno Setup (raccourcis, association .dimelec, désinstallation), compilé à chaque fois pour être vérifié,
+      # publié seulement sur une étiquette.
+      - name: Installateur Windows
+        shell: pwsh
+        run: |
+          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { '0.0.0' }
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress; $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
+          & $iscc "/DVersion=$version" "/DSource=$PWD\publication" "/O$PWD\installation" installateur\Dimensionnement.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - uses: actions/upload-artifact@v4
+        if: github.ref_type == 'tag'
+        with:
+          name: Dimensionnement-installation
+          path: installation/
+
+  # Release GitHub sur une étiquette vX.Y.Z : l'installateur et la version portable en pièces jointes.
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: windows
@@ -47,12 +64,17 @@ jobs:
         with:
           name: Dimensionnement-windows-x64
           path: publication
+      - uses: actions/download-artifact@v4
+        with:
+          name: Dimensionnement-installation
+          path: installation
       - name: Création de la release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cd publication && zip -r "../Dimensionnement-${{ github.ref_name }}-windows-x64.zip" . && cd ..
-          gh release create "${{ github.ref_name }}" "Dimensionnement-${{ github.ref_name }}-windows-x64.zip" \
+          # Version portable : l'exécutable prêt à lancer, sans installation.
+          cd publication && zip -r "../Dimensionnement-${{ github.ref_name }}-portable-windows-x64.zip" . && cd ..
+          gh release create "${{ github.ref_name }}" installation/*.exe "Dimensionnement-${{ github.ref_name }}-portable-windows-x64.zip" \
             --repo "${{ github.repository }}" --title "Dimensionnement ${{ github.ref_name }}" --generate-notes
 
   # Ne garde que les 3 derniers exécutables publiés, toutes branches confondues.
