@@ -9,14 +9,14 @@ namespace Dimensionnement.Core.Rapport;
 
 /// <summary>
 /// Organigramme du matériel au format SVG : l'arrivée en tête, un jeu de barres, puis une colonne par départ
-/// groupée par rubrique, de l'amont vers l'aval. La commande (automate, sécurité) est à droite, hors puissance.
+/// groupée par rubrique, de l'amont vers l'aval. Les appareils d'un domaine de tension (automate, sécurité, IHM en 24 V DC)
+/// pendent sous l'alimentation qui les nourrit.
 /// </summary>
 public static class SchemaOrganigramme
 {
     const double Boite = 200;
     const double Hauteur = 44;
     const double Ecart = 20;
-    const double Colonne = 24;
     const double Parallele = 14;
     const double Marge = 30;
 
@@ -29,6 +29,23 @@ public static class SchemaOrganigramme
     };
 
     static double Largeur(CarteMateriel c) => Boite + (c.Chaine.Any(m => m.EnParallele) ? Parallele + Boite : 0);
+    static double Largeur(IReadOnlyList<MaillonMateriel> chaine) => Boite + (chaine.Any(m => m.EnParallele) ? Parallele + Boite : 0);
+
+    /// <summary>
+    /// Colonne d'un départ. Quand une alimentation de la chaîne nourrit un domaine de tension, ses appareils pendent sous
+    /// elle : un jeu de barres secondaire violet se divise vers la suite de la chaîne puis vers chaque appareil du domaine.
+    /// </summary>
+    sealed record Colonne(CarteMateriel Carte, GroupeMateriel? Domaine, int IndexSource, List<IReadOnlyList<MaillonMateriel>> SousColonnes)
+    {
+        public double LargeurSous => SousColonnes.Sum(c => SchemaOrganigramme.Largeur(c)) + ColonneEcart * Math.Max(0, SousColonnes.Count - 1);
+        public double Largeur => Domaine is null ? SchemaOrganigramme.Largeur(Carte) : Math.Max(SchemaOrganigramme.Largeur(Avant), LargeurSous);
+        public IReadOnlyList<MaillonMateriel> Avant => Domaine is null ? Carte.Chaine : Carte.Chaine.Take(IndexSource + 1).ToList();
+        public double HauteurTotale => Domaine is null
+            ? Hauteur + Rangs(Carte.Chaine) * (Hauteur + Ecart)
+            : Hauteur + Rangs(Avant) * (Hauteur + Ecart) + Ecart + SousColonnes.Select(Rangs).DefaultIfEmpty(0).Max() * (Hauteur + Ecart);
+    }
+
+    const double ColonneEcart = 24;
 
     public static string Svg(ResultatProjet r)
     {
@@ -37,34 +54,54 @@ public static class SchemaOrganigramme
         var rubriques = groupes.Skip(1).Where(g => !g.Domaine).ToList();
         var domaines = groupes.Skip(1).Where(g => g.Domaine).ToList();
 
-        // Les rubriques de puissance sous le jeu de barres, puis les domaines de tension à droite, hors du jeu de barres :
-        // chacun est relié par un lien à l'alimentation qui le nourrit.
-        var ordre = rubriques.Concat(domaines).ToList();
+        // Un domaine dont l'alimentation est dessinée dans une rubrique pend sous elle ; les autres (alimentation à ajouter)
+        // restent un cadre à part à droite.
+        var accroches = new Dictionary<ElementMateriel, GroupeMateriel>();
+        foreach (var d in domaines)
+            if (d.Source is { } source && !d.Cartes.Any(c => c.Chaine.Any(m => m.Element == source))
+                && rubriques.Any(g => g.Cartes.Any(c => c.Chaine.Any(m => m.Element == source))))
+                accroches.TryAdd(source, d);
+        var ordre = rubriques.Concat(domaines.Where(d => !accroches.ContainsValue(d))).ToList();
+
+        Colonne Construire(CarteMateriel c)
+        {
+            for (var i = 0; i < c.Chaine.Count; i++)
+                if (accroches.TryGetValue(c.Chaine[i].Element, out var d))
+                {
+                    var sous = new List<IReadOnlyList<MaillonMateriel>>();
+                    var reste = c.Chaine.Skip(i + 1).ToList();
+                    if (reste.Count > 0) sous.Add(reste);
+                    sous.AddRange(d.Cartes.Select(k => k.Chaine));
+                    return new Colonne(c, d, i, sous);
+                }
+            return new Colonne(c, null, -1, new());
+        }
 
         // Position horizontale de chaque groupe, puis de chaque colonne.
         var x = Marge;
-        var placements = new List<(GroupeMateriel Groupe, double X, double Largeur, List<(CarteMateriel Carte, double X)> Colonnes)>();
+        var placements = new List<(GroupeMateriel Groupe, double X, double Largeur, List<(Colonne Colonne, double X)> Colonnes)>();
         foreach (var g in ordre)
         {
-            if (g.Domaine) x += 2 * Colonne;
+            if (g.Domaine) x += 2 * ColonneEcart;
             var debut = x;
-            var colonnes = new List<(CarteMateriel Carte, double X)>();
+            var colonnes = new List<(Colonne, double)>();
             foreach (var c in g.Cartes)
             {
-                colonnes.Add((c, x));
-                x += Largeur(c) + Colonne;
+                var col = Construire(c);
+                colonnes.Add((col, x));
+                x += col.Largeur + ColonneEcart;
             }
-            placements.Add((g, debut, x - Colonne - debut, colonnes));
-            x += Colonne;
+            placements.Add((g, debut, x - ColonneEcart - debut, colonnes));
+            x += ColonneEcart;
         }
-        var largeurTotale = Math.Max(x - Colonne + Marge, Boite + 2 * Marge + 260);
+        var largeurTotale = Math.Max(x - ColonneEcart + Marge, Boite + 2 * Marge + 260);
 
         var lignesArrivee = arrivee.Chaine.Count;
         var yBarre = Marge + 40 + lignesArrivee * (Hauteur + Ecart) + 10;
         var yGroupe = yBarre + 30;
         var yCarte = yGroupe + 34;
-        var lignes = placements.SelectMany(p => p.Colonnes).Select(c => Lignes(c.Carte)).DefaultIfEmpty(0).Max();
-        var hauteurTotale = yCarte + Hauteur + 10 + lignes * (Hauteur + Ecart) + Marge;
+        var hauteurColonnes = placements.SelectMany(p => p.Colonnes).Select(c => c.Colonne.HauteurTotale).DefaultIfEmpty(Hauteur).Max();
+        var hauteurTotale = yCarte + hauteurColonnes + 10 + Marge;
 
         var s = new StringBuilder();
         s.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{F(largeurTotale)}\" height=\"{F(hauteurTotale)}\" " +
@@ -100,44 +137,53 @@ public static class SchemaOrganigramme
             var domaine = groupe.Domaine;
             s.Append($"<rect x=\"{F(gx - 8)}\" y=\"{F(yGroupe)}\" width=\"{F(gl + 16)}\" height=\"{F(hauteurTotale - yGroupe - Marge + 10)}\" rx=\"8\" " +
                      $"fill=\"{(domaine ? "#f3f0fa" : "#f2f5f8")}\" stroke=\"#d5dbe1\"/>");
-            Texte(s, gx, yGroupe + 18, groupe.Titre, 12, domaine ? "#6f42c1" : "#1f6feb", "start", true);
-            foreach (var (carte, cx) in colonnes) Carte(s, carte, cx, yCarte, positions);
+            Texte(s, gx, yGroupe + 18, groupe.Titre, 12, domaine ? Violet : "#1f6feb", "start", true);
+            foreach (var (col, cx) in colonnes) DessinerColonne(s, col, cx, yCarte, positions);
         }
 
-        // Domaines de tension : un jeu de barres secondaire en tête du groupe, relié à l'alimentation qui le nourrit.
-        var rang = 0;
-        foreach (var (groupe, gx, _, colonnes) in placements.Where(p => p.Groupe.Domaine))
+        // Domaines restés à part (alimentation à ajouter) : un jeu de barres secondaire en tête du groupe.
+        foreach (var (_, _, _, colonnes) in placements.Where(p => p.Groupe.Domaine))
         {
             var yBus = yCarte - 12;
             var gauche = colonnes[0].X + Boite / 2;
             var droite = colonnes[^1].X + Boite / 2;
-            s.Append($"<line x1=\"{F(gauche)}\" y1=\"{F(yBus)}\" x2=\"{F(droite)}\" y2=\"{F(yBus)}\" stroke=\"#6f42c1\" stroke-width=\"4\" stroke-linecap=\"round\"/>");
+            s.Append($"<line x1=\"{F(gauche)}\" y1=\"{F(yBus)}\" x2=\"{F(droite)}\" y2=\"{F(yBus)}\" stroke=\"{Violet}\" stroke-width=\"4\" stroke-linecap=\"round\"/>");
             foreach (var (_, cx) in colonnes)
-                s.Append($"<line x1=\"{F(cx + Boite / 2)}\" y1=\"{F(yBus)}\" x2=\"{F(cx + Boite / 2)}\" y2=\"{F(yCarte)}\" stroke=\"#6f42c1\" stroke-width=\"2\"/>");
-            // Liaison depuis l'alimentation dessinée dans une autre rubrique (l'alimentation « à ajouter » ouvre le groupe elle-même).
-            // Le lien part sous l'alimentation, passe sous les colonnes (plancher du cadre) et remonte dans l'écart
-            // qui précède le domaine, pour ne traverser aucun appareil.
-            if (groupe.Source is { } source && positions.TryGetValue(source, out var ps)
-                && !colonnes.Any(c => c.Carte.Chaine.Any(m => m.Element == source)))
-            {
-                var xSource = ps.X + Boite / 2;
-                var xLien = gx - 8 - Colonne / 2 - 4 * rang;
-                var yBas = hauteurTotale - Marge + 4 - 5 * rang;
-                s.Append($"<polyline points=\"{F(xSource)},{F(ps.Y + Hauteur)} {F(xSource)},{F(yBas)} {F(xLien)},{F(yBas)} {F(xLien)},{F(yBus)} {F(gauche)},{F(yBus)}\" " +
-                         "fill=\"none\" stroke=\"#6f42c1\" stroke-width=\"2\"/>");
-                s.Append($"<circle cx=\"{F(xSource)}\" cy=\"{F(ps.Y + Hauteur)}\" r=\"3.5\" fill=\"#6f42c1\"/>");
-                rang++;
-            }
+                s.Append($"<line x1=\"{F(cx + Boite / 2)}\" y1=\"{F(yBus)}\" x2=\"{F(cx + Boite / 2)}\" y2=\"{F(yCarte)}\" stroke=\"{Violet}\" stroke-width=\"2\"/>");
         }
 
         s.Append("</svg>");
         return s.ToString();
     }
 
-    /// <summary>Nombre de lignes d'appareils sous l'en-tête d'une carte (les appareils en parallèle partagent la ligne de leur homologue).</summary>
-    static int Lignes(CarteMateriel c) => c.Chaine.Count(m => !m.EnParallele);
+    const string Violet = "#6f42c1";
 
-    static void Carte(StringBuilder s, CarteMateriel carte, double x, double y, Dictionary<ElementMateriel, (double X, double Y)> positions)
+    static void DessinerColonne(StringBuilder s, Colonne col, double x, double y, Dictionary<ElementMateriel, (double X, double Y)> positions)
+    {
+        var bas = Carte(s, col.Carte, col.Avant, x, y, positions);
+        if (col.Domaine is null) return;
+        // Jeu de barres secondaire sous l'alimentation, puis une descente par sous-colonne.
+        var xs = new List<double>();
+        var xc = x;
+        foreach (var sous in col.SousColonnes)
+        {
+            xs.Add(xc);
+            xc += Largeur(sous) + ColonneEcart;
+        }
+        var yBus = bas + Ecart;
+        s.Append($"<line x1=\"{F(x + Boite / 2)}\" y1=\"{F(bas)}\" x2=\"{F(x + Boite / 2)}\" y2=\"{F(yBus)}\" stroke=\"{Violet}\" stroke-width=\"2.5\"/>");
+        s.Append($"<circle cx=\"{F(x + Boite / 2)}\" cy=\"{F(bas)}\" r=\"3.5\" fill=\"{Violet}\"/>");
+        s.Append($"<line x1=\"{F(xs[0] + Boite / 2)}\" y1=\"{F(yBus)}\" x2=\"{F(xs[^1] + Boite / 2)}\" y2=\"{F(yBus)}\" stroke=\"{Violet}\" stroke-width=\"4\" stroke-linecap=\"round\"/>");
+        Texte(s, x + Boite / 2 + 8, yBus - 6, col.Domaine.Titre, 11, Violet, "start", true);
+        for (var i = 0; i < col.SousColonnes.Count; i++)
+            Chaine(s, col.SousColonnes[i], xs[i], yBus, positions, Violet);
+    }
+
+    /// <summary>Nombre de rangs d'appareils (les appareils en parallèle partagent le rang de leur homologue).</summary>
+    static int Rangs(IReadOnlyList<MaillonMateriel> chaine) => chaine.Count(m => !m.EnParallele);
+
+    static double Carte(StringBuilder s, CarteMateriel carte, IReadOnlyList<MaillonMateriel> chaine, double x, double y,
+        Dictionary<ElementMateriel, (double X, double Y)> positions)
     {
         // En-tête : repère et désignation du départ, type, liseré de statut.
         var titre = carte.Titre;
@@ -147,10 +193,16 @@ public static class SchemaOrganigramme
         Texte(s, x + 14, y + 18, Couper(titre, 26), 12.5, "#ffffff", "start", true);
         Texte(s, x + 14, y + 35, Couper(carte.SousTitre, 31), 11, "#b7c1cb", "start", false);
         s.Append("</g>");
+        return Chaine(s, chaine, x, y + Hauteur, positions, null);
+    }
 
-        var yl = y + Hauteur;
+    /// <summary>Appareils l'un sous l'autre à partir de <paramref name="y"/> ; renvoie le bas du dernier.</summary>
+    static double Chaine(StringBuilder s, IReadOnlyList<MaillonMateriel> chaine, double x, double y,
+        Dictionary<ElementMateriel, (double X, double Y)> positions, string? couleurPremier)
+    {
+        var yl = y;
         double? yPrecedent = null;
-        foreach (var m in carte.Chaine)
+        foreach (var m in chaine)
         {
             if (m.EnParallele && yPrecedent is { } yp)
             {
@@ -159,12 +211,16 @@ public static class SchemaOrganigramme
                 Appareil(s, m.Element, xp, yp, positions);
                 continue;
             }
-            Trait(s, x + Boite / 2, yl, x + Boite / 2, yl + Ecart);
+            if (yPrecedent is null && couleurPremier is not null)
+                s.Append($"<line x1=\"{F(x + Boite / 2)}\" y1=\"{F(yl)}\" x2=\"{F(x + Boite / 2)}\" y2=\"{F(yl + Ecart)}\" stroke=\"{couleurPremier}\" stroke-width=\"2\"/>");
+            else
+                Trait(s, x + Boite / 2, yl, x + Boite / 2, yl + Ecart);
             yl += Ecart;
             Appareil(s, m.Element, x, yl, positions);
             yPrecedent = yl;
             yl += Hauteur;
         }
+        return yl;
     }
 
     static void Appareil(StringBuilder s, ElementMateriel e, double x, double y, Dictionary<ElementMateriel, (double X, double Y)> positions)

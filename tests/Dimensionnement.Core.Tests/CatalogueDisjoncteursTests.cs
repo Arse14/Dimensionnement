@@ -67,6 +67,6 @@ public class CatalogueDisjoncteursTests
         var e = new ElementMateriel { Repere = "Q9", Famille = "Disjoncteur", Courant = 1000, Poles = 3, Courbe = "C", Calibre = "1000 A" };
         var arbre = new ElementMateriel { Repere = "R", Famille = "Réseau" }.Ajouter(e);
         CatalogueReferences.Appliquer(arbre, new ConfigurationReferences(), CatalogueReferences.Charger());
-        Assert.False(CatalogueDisjoncteurs.Actif.Any(m => m.Reference == e.Reference));
+        Assert.DoesNotContain(CatalogueDisjoncteurs.Actif, m => m.Reference == e.Reference);
     }
 }

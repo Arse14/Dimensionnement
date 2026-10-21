@@ -47,7 +47,13 @@ public class SchemaOrganigrammeTests
         foreach (var d in r.Departs) Assert.Contains($"D{d.Depart.Numero:00}", svg);
         Assert.Contains(">QG<", svg);
         Assert.Contains("24 V DC – ", svg);
-        // Le domaine 24 V DC est relié par un bus secondaire à l'alimentation qui le nourrit.
-        Assert.Contains("<polyline", svg);
+        // Le domaine 24 V DC pend sous l'alimentation qui le nourrit : un bus secondaire, sans lien qui traverse le schéma.
+        Assert.Contains("<circle", svg);
+        Assert.DoesNotContain("<polyline", svg);
+        var g5 = r.Arbre.Parcourir().First(e => e.Famille == "Alimentation");
+        var api = r.Arbre.Parcourir().First(e => e.Famille == "Automate");
+        double X(string repere) => double.Parse(System.Text.RegularExpressions.Regex.Match(svg,
+            $"<rect x=\"([0-9.]+)\"[^>]*/><circle[^>]*/><text[^>]*>{repere}<").Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+        Assert.InRange(X(api.Repere) - X(g5.Repere), 0, 1200);
     }
 }

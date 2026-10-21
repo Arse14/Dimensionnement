@@ -168,7 +168,9 @@ public class CommandeAlimenteeTests
         var domaine = Assert.Single(domaines);
         Assert.Contains("AUTOMATE", domaine.Titre);
         Assert.Equal(r.Departs.Single(d => d.Depart.Id == dediee.Id).Materiel.Parcourir().Single(e => e.Famille == "Alimentation"), domaine.Source);
-        Assert.Contains("polyline", Dimensionnement.Core.Rapport.SchemaOrganigramme.Svg(r));
+        var svg = Dimensionnement.Core.Rapport.SchemaOrganigramme.Svg(r);
+        Assert.Contains(domaine.Titre, svg);
+        Assert.DoesNotContain("<polyline", svg);
     }
 
     [Fact]
