@@ -19,6 +19,8 @@ public partial class ModeleVuePrincipal
     ConfigurationArmoire ConfigCourante =>
         _affichee is { } id && _projet.Armoire.Coffrets.FirstOrDefault(c => c.Id == id) is { } c ? c : _projet.Armoire;
 
+    string NomCourant => (ConfigCourante as CoffretDeporte)?.Nom ?? "armoire principale";
+
     public ResultatArmoire? ArmoireAffichee =>
         Resultat.Armoire?.Enveloppes.FirstOrDefault(e => e.Id == _affichee) ?? Resultat.Armoire;
 
@@ -32,6 +34,13 @@ public partial class ModeleVuePrincipal
         {
             if (value is null || value.Id == _affichee) return;
             _affichee = value.Id;
+            // Les pages de réglages suivent l'enveloppe affichée.
+            Selection = Selection switch
+            {
+                PageArmoire => new PageArmoire(_projet, ConfigCourante, NomCourant),
+                PageThermique => new PageThermique(_projet, ConfigCourante, NomCourant),
+                var page => page,
+            };
             SignalerTout();
         }
     }
@@ -112,6 +121,8 @@ public partial class ModeleVuePrincipal
             Nom = $"Coffret {numero}", Marque = a.Marque, ReservePourcent = a.ReservePourcent, Materiau = a.Materiau,
             Installation = a.Installation, TemperatureAmbianteMax = a.TemperatureAmbianteMax, TemperatureAmbianteMin = a.TemperatureAmbianteMin,
             TemperatureInterieureMax = a.TemperatureInterieureMax, TemperatureInterieureMin = a.TemperatureInterieureMin,
+            DegagementVariateurVentile = a.DegagementVariateurVentile, CommandeVentilation = a.CommandeVentilation,
+            ConsigneThermostat = a.ConsigneThermostat, PositionVentilation = a.PositionVentilation, TensionVentilation = a.TensionVentilation,
         };
         a.Coffrets.Add(coffret);
         _affichee = coffret.Id;

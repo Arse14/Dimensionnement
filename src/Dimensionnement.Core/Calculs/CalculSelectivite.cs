@@ -48,11 +48,27 @@ public static class CalculSelectivite
         note.Info("Disjoncteur général", $"QG {A(qg)}, seuil magnétique minimal ≈ {A(imAmont)} ; Icc au jeu de barres ≈ {N(icc / 1000)} kA.", Ref);
 
         var lignes = new List<LigneSelectivite>();
+        var alimentesPar = SourcesCommande.AlimentesPar(r.Projet);
         foreach (var d in r.Departs)
         {
             var protection = d.Materiel;
             var nom = $"{d.Depart.Code}";
-            var rapport = d.CalibreProtection > 0 ? qg / d.CalibreProtection : double.MaxValue;
+            // Départ derrière un transformateur 400/230 V : l'amont est la protection du primaire, ramenée au secondaire par
+            // le rapport des tensions ; l'Icc est limité par le transformateur (≈ 20 × In secondaire, ucc ≈ 5 %, indicatif).
+            var calibreAmont = qg;
+            var seuilAmont = imAmont;
+            var iccLocal = icc;
+            var libelleAmont = $"QG {A(qg)}";
+            if (alimentesPar.TryGetValue(d.Depart.Id, out var source) && r.Departs.FirstOrDefault(x => x.Depart.Id == source) is { } t)
+            {
+                var rapportTensions = (t.Depart.Alimentation == TypeAlimentation.Mono230 ? 230 : 400) / 230.0;
+                calibreAmont = t.CalibreProtection * rapportTensions;
+                seuilAmont = SeuilAmontPrimaire(t.Materiel) * rapportTensions;
+                var va = t.Materiel.Parcourir().FirstOrDefault(e => e.Famille == "Alimentation" && e.PuissanceKw > 0)?.PuissanceKw * 1000 ?? 0;
+                if (va > 0) iccLocal = 20 * va / 230;
+                libelleAmont = $"{t.Materiel.Repere} {A(t.CalibreProtection)} (primaire de T{t.Depart.Numero}, ramené à {A(calibreAmont)} en 230 V)";
+            }
+            var rapport = d.CalibreProtection > 0 ? calibreAmont / d.CalibreProtection : double.MaxValue;
             var (imAval, type) = SeuilAval(protection);
             NiveauSelectivite niveau;
             string commentaire;
@@ -61,37 +77,41 @@ public static class CalculSelectivite
             {
                 niveau = NiveauSelectivite.Absente;
                 limite = 0;
-                commentaire = $"Rapport des calibres {N(rapport)} < {N(RapportSurchargeMini)} : le général peut déclencher sur une surcharge du départ.";
+                commentaire = $"Rapport des calibres {N(rapport)} < {N(RapportSurchargeMini)} : l'amont peut déclencher sur une surcharge du départ.";
             }
-            else if (imAval >= imAmont)
+            else if (imAval >= seuilAmont)
             {
                 niveau = NiveauSelectivite.AVerifier;
                 limite = 0;
                 commentaire = $"Seuils magnétiques qui se recouvrent ({type}) : sélectivité à confirmer dans les tables du fabricant.";
             }
-            else if (icc <= imAmont)
+            else if (iccLocal <= seuilAmont)
             {
                 niveau = NiveauSelectivite.Totale;
-                limite = icc;
-                commentaire = "Totale : l'Icc reste sous le seuil magnétique du général.";
+                limite = iccLocal;
+                commentaire = "Totale : l'Icc reste sous le seuil magnétique de l'amont.";
             }
             else
             {
                 niveau = NiveauSelectivite.Partielle;
-                limite = imAmont;
-                commentaire = $"Partielle jusqu'à {A(imAmont)} ; au-delà, voir les tables de sélectivité (souvent totale entre gammes adaptées).";
+                limite = seuilAmont;
+                commentaire = $"Partielle jusqu'à {A(seuilAmont)} ; au-delà, voir les tables de sélectivité (souvent totale entre gammes adaptées).";
             }
-            lignes.Add(new LigneSelectivite(nom, $"QG {A(qg)}", $"{protection.Repere} {protection.Calibre}", rapport, imAmont, imAval,
+            lignes.Add(new LigneSelectivite(nom, libelleAmont, $"{protection.Repere} {protection.Calibre}", rapport, seuilAmont, imAval,
                 limite, niveau, commentaire));
 
             if (niveau is NiveauSelectivite.Absente or NiveauSelectivite.AVerifier)
                 note.Verifier($"Sélectivité avec {nom}", false, commentaire, Ref, StatutCalcul.Alerte);
             else
                 note.Verifier($"Sélectivité avec {nom}", true,
-                    $"Rapport {N(rapport)} ; magnétique aval ≈ {A(imAval)} < {A(imAmont)} ({type}). {commentaire}", Ref);
+                    $"Rapport {N(rapport)} ; magnétique aval ≈ {A(imAval)} < {A(seuilAmont)} ({type}). {commentaire}", Ref);
         }
         return new ResultatSelectivite { Note = note, Lignes = lignes };
     }
+
+    /// <summary>Seuil magnétique minimal de la protection du primaire d'un transformateur (courbe D : 10 × In ; fusibles : 5 × In).</summary>
+    static double SeuilAmontPrimaire(ElementMateriel protection) =>
+        protection.Famille == "Sectionneur porte-fusibles" ? 5 * protection.Courant : 10 * protection.Courant;
 
     /// <summary>Seuil magnétique maximal (ou courant de fusion rapide) de la protection d'un départ, en A.</summary>
     static (double Seuil, string Type) SeuilAval(ElementMateriel protection) => protection.Famille switch

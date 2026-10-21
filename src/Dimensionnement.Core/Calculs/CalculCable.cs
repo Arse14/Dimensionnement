@@ -19,6 +19,9 @@ public static class CalculCable
     /// <param name="courantProtection">Courant assigné ou de réglage de la protection, que Iz doit couvrir.</param>
     /// <param name="courantEmploi">Courant d'emploi qui circule dans le câble, pour la chute de tension.</param>
     /// <param name="chuteAmont">Chute de tension déjà consommée en amont, en %.</param>
+    /// <summary>Vrai : en TN-C, la section permet un conducteur PEN (10 mm² cuivre au moins).</summary>
+    public static bool Pen(double section) => section >= 10;
+
     public static ResultatCable Dimensionner(NoteDeCalcul note, CaracteristiquesCable cable, TypeAlimentation alimentation,
         double courantProtection, double courantEmploi, double cosPhi, Reseau reseau, double chuteAmont)
     {
@@ -61,6 +64,11 @@ public static class CalculCable
 
         var pe = TablesCables.SectionPe(section);
         note.Info("Section du conducteur de protection", $"PE = {Mm2(pe)}", "NF C 15-100, tableau 54.2");
+        if (reseau.Slt == SchemaLiaisonTerre.TNC && alimentation is TypeAlimentation.Mono230 or TypeAlimentation.Tetra400)
+            note.Info("Conducteur PEN", Pen(section)
+                ? $"Section {Mm2(section)} ≥ 10 mm² : neutre et protection confondus (PEN), un conducteur de moins."
+                : $"Section {Mm2(section)} < 10 mm² : le PEN est interdit, le circuit est en TN-S (neutre et PE séparés).",
+                "NF C 15-100, 543.4");
 
         return new ResultatCable(section, iz, du, pe) { ChuteAmont = chuteAmont };
     }

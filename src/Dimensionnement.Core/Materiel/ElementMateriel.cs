@@ -78,6 +78,12 @@ public class ElementMateriel
     /// <summary>Sa référence vient d'un catalogue dont les valeurs sont encore indicatives (à vérifier sur la fiche du fabricant).</summary>
     public bool AVerifier { get; set; }
 
+    /// <summary>
+    /// Faux quand aucune référence générique de sa famille ne convient (servovariateur, variateur monophasé, transformateur,
+    /// alimentation de frein, appareil pour courant continu…) : la référence reste à compléter au lieu d'être devinée.
+    /// </summary>
+    public bool ReferenceAuto { get; set; } = true;
+
     /// <summary>Départ auquel l'appareil appartient ; null pour l'arrivée.</summary>
     public Guid? DepartId { get; set; }
 

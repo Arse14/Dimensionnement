@@ -269,7 +269,14 @@ public static class CalculAutomate
             return new ResultatAutomate { Note = note, Appareils = appareils, Consommations = estimation };
         }
 
-        var nom = c.SecuriteIntegree && choix.Marque == "Siemens" && !choix.Securite ? $"{choix.Cpu} F" : choix.Cpu;
+        // CPU de sécurité demandée mais absente du catalogue en version F : le nom porte « F », la référence reste celle de la
+        // version standard et doit être remplacée par la référence F du fabricant.
+        var sansVersionF = c.SecuriteIntegree && choix.Marque == "Siemens" && !choix.Securite;
+        var nom = sansVersionF ? $"{choix.Cpu} F" : choix.Cpu;
+        if (sansVersionF)
+            note.Verifier("Version F de la CPU", false,
+                $"Le catalogue n'a pas la version F de la {choix.Cpu} : la référence {choix.Reference} est celle de la version standard, " +
+                "à remplacer par la référence F du fabricant.", Ref, StatutCalcul.Alerte);
         note.Info("CPU retenue", $"{choix.Gamme} {nom} ({choix.Reference}) : " +
             $"{Capacite(choix.PeripheriquesReseauMax)} périphériques, {Capacite(choix.ConnexionsMax)} connexions, " +
             $"OPC UA {(choix.OpcUa switch { true => "oui", false => "non", _ => "non renseigné" })}.", Ref);
@@ -335,7 +342,7 @@ public static class CalculAutomate
         var cpuElement = new ElementMateriel { Repere = "API1", Famille = "Automate", Designation = $"{choix.Gamme} {nom}",
             Calibre = choix.Reference, Fabricant = marque, Reference = choix.Reference,
             LargeurMm = choix.Largeur, HauteurMm = choix.Hauteur, ProfondeurMm = choix.Profondeur, PertesW = choix.Pertes,
-            Loge = choix.Largeur <= 0 && plan.Chassis is not null };
+            Loge = choix.Largeur <= 0 && plan.Chassis is not null, AVerifier = sansVersionF };
         appareils.Add(cpuElement);
         var consommations = new List<ConsommationCommande>
         {
@@ -433,9 +440,22 @@ public static class CalculAutomate
             if (modele is null)
             {
                 note.Verifier($"IHM {p.Nom}", false, p.ReferenceImposee.Length > 0
-                    ? $"Référence {p.ReferenceImposee} absente du catalogue des IHM."
+                    ? $"Référence {p.ReferenceImposee} absente du catalogue des IHM : gardée telle quelle, cotes et consommation estimées à vérifier."
                     : $"Aucun pupitre {marque} de gamme {p.Gamme} au catalogue.", RefIhm, StatutCalcul.Alerte);
                 consommations.Add(new($"IHM {p.Nom} × {p.Quantite} (estimation)", ConsommationIhm * p.Quantite));
+                // Une référence imposée reste dans l'arborescence, la porte et le devis, avec des cotes à compléter.
+                if (p.ReferenceImposee.Length > 0)
+                    for (var k = 0; k < p.Quantite; k++)
+                    {
+                        n++;
+                        appareils.Add(new ElementMateriel
+                        {
+                            Repere = $"HMI{n}", Famille = "IHM", Designation = $"{p.Nom} – {p.ReferenceImposee}",
+                            Calibre = $"{N(p.Diagonale)}\"" + (p.EnPorte ? ", en porte" : ", pupitre machine"),
+                            Fabricant = marque, Reference = p.ReferenceImposee, PertesW = 24 * ConsommationIhm,
+                            EnPorte = p.EnPorte, HorsArmoire = !p.EnPorte, AVerifier = true, CotesIncompletes = true,
+                        });
+                    }
                 continue;
             }
             note.Verifier($"IHM {p.Nom}", modele.Verifie,

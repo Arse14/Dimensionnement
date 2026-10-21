@@ -81,7 +81,7 @@ public class RegleVraisemblance : ValidationRule
     {
         if (value is not double v) return ValidationResult.ValidResult;
         var propriete = _chemin.Split('.').Last();
-        if (v < 0 && propriete != "TemperatureAmbiante")
+        if (v < 0 && !propriete.StartsWith("Temperature"))
             return Refus($"Une valeur négative n'a pas de sens ici ({propriete}).", v);
         if (!Plages.TryGetValue(propriete, out var p) || (v >= p.Min && v <= p.Max)) return ValidationResult.ValidResult;
         return Refus($"{p.Raison} Valeur saisie : {v.ToString(CultureInfo.CurrentCulture)}.", v);

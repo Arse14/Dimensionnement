@@ -319,6 +319,12 @@ public static class CalculSecurite
                       $"{N(f.HauteurProtegee)} mm et {N(f.Portee)} m : compléter le catalogue des capteurs.", StatutCalcul.NonConforme));
                 continue;
             }
+            // Référence imposée absente du catalogue : elle est gardée ; le modèle choisi ne sert qu'à estimer consommation et caractéristiques.
+            var imposee = f.ReferenceCapteur.Trim();
+            var horsCatalogue = imposee.Length > 0 && !m.Reference.Contains(imposee, StringComparison.OrdinalIgnoreCase);
+            if (horsCatalogue)
+                selection.Messages.Add(($"Référence imposée : {f.Nom}", $"{imposee} est absente du catalogue des capteurs : référence gardée, " +
+                    $"caractéristiques et consommation estimées d'après {m.Fabricant} {m.Gamme}, à vérifier sur sa fiche.", StatutCalcul.Alerte));
             var hauteur = CatalogueCapteursSecurite.HauteurRetenue(m, f.HauteurProtegee);
             var calibre = m.EstBarriere
                 ? (m.MultiFaisceaux
@@ -331,7 +337,8 @@ public static class CalculSecurite
                 appareils.Add(new ElementMateriel
                 {
                     Repere = repere, Famille = "Capteur de sécurité", Designation = $"{(m.EstBarriere ? "Barrière immatérielle" : "Scrutateur laser")} – {f.Nom}",
-                    Calibre = calibre, Fabricant = $"{m.Fabricant} – {m.Gamme}", Reference = m.Reference, HorsArmoire = true,
+                    Calibre = calibre, Fabricant = horsCatalogue ? "" : $"{m.Fabricant} – {m.Gamme}",
+                    Reference = horsCatalogue ? imposee : m.Reference, HorsArmoire = true, AVerifier = horsCatalogue,
                     PertesW = 24 * m.Consommation,
                 });
             }

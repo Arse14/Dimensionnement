@@ -25,6 +25,9 @@ public record ModeleVariateur
     /// <summary>Servovariateur (servomoteur et codeur), à part des variateurs de fréquence.</summary>
     public bool Servo { get; init; }
 
+    /// <summary>Variateur alimenté en monophasé 230 V (les modèles du catalogue sont triphasés 400 V par défaut).</summary>
+    public bool Monophase { get; init; }
+
     /// <summary>Filtre CEM réseau (catégorie C2) intégré au variateur : pas de filtre à ajouter au devis.</summary>
     public bool FiltreCemIntegre { get; init; }
 
@@ -79,9 +82,9 @@ public static class CatalogueVariateurs
     /// d'abord, puis la gamme usage général.
     /// </summary>
     public static ModeleVariateur? Choisir(FabricantMateriel fabricant, double kw, double courant, IReadOnlyList<ModeleVariateur> catalogue,
-        bool servo = false) =>
+        bool servo = false, bool monophase = false) =>
         catalogue
-            .Where(v => v.Servo == servo && v.Fabricant.Equals(fabricant.ToString(), StringComparison.OrdinalIgnoreCase)
+            .Where(v => v.Servo == servo && v.Monophase == monophase && v.Fabricant.Equals(fabricant.ToString(), StringComparison.OrdinalIgnoreCase)
                         && v.Kw >= kw - 1e-6 && v.Courant >= courant - 1e-6)
             .OrderBy(v => v.Rang).ThenBy(v => v.Kw).ThenBy(v => v.Largeur * v.Hauteur)
             .FirstOrDefault();

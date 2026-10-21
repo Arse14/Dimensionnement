@@ -52,11 +52,13 @@ public static class ListeDevis
     static void UneEnveloppe(ResultatProjet r, ResultatArmoire a, List<LigneDevis> l, string fabricant, string nom)
     {
         var sol = a.Type == "Armoire au sol";
+        // Chaque coffret déporté a ses propres réglages, dont le matériau.
+        var config = r.Projet.Armoire.Coffrets.FirstOrDefault(c => c.Id == a.Id) as ConfigurationArmoire ?? r.Projet.Armoire;
         // L'enveloppe et ses accessoires viennent du fabricant d'enveloppes retenu (Rittal, Legrand ou Schneider).
         var marque = a.Marque.Length > 0 ? $"{a.Marque} – {a.Gamme}" : fabricant;
         fabricant = a.Marque.Length > 0 ? a.Marque : fabricant;
         l.Add(new(Enveloppe, sol ? "Armoire électrique au sol" : "Coffret électrique mural",
-            $"{N(a.Largeur)} × {N(a.Hauteur)} × {N(a.Profondeur)} mm, {CalculThermique.LibelleMateriau(r.Projet.Armoire.Materiau)}, IP55",
+            $"{N(a.Largeur)} × {N(a.Hauteur)} × {N(a.Profondeur)} mm, {CalculThermique.LibelleMateriau(config.Materiau)}, IP55",
             marque, a.Reference, a.Cellules, "u", nom,
             string.Join(" ; ", new[] { a.Cellules > 1 ? "Cellules juxtaposables" : "", a.Id is null ? "" : "Coffret déporté" }.Where(t => t.Length > 0))));
         l.Add(new(Enveloppe, "Plaque de montage", $"surface utile {N(a.PlaqueLargeur)} × {N(a.PlaqueHauteur)} mm", marque, a.ReferencePlaque, a.Cellules, "u"));

@@ -214,7 +214,7 @@ public static class CalculProjet
 
         var arbre = new ElementMateriel { Repere = "Réseau", Famille = "Réseau",
             Designation = $"Arrivée {Libelle(reseau.Alimentation)}, {reseau.Slt}", Calibre = $"Icc {N(reseau.IccKiloAmperes)} kA" };
-        var conducteurs = reseau.Alimentation switch { TypeAlimentation.Mono230 => 3, TypeAlimentation.Tri400 => 4, _ => 5 };
+        var conducteurs = CalculDepart.Conducteurs(reseau.Alimentation, reseau.Slt, cable.Section);
         var sectionneur = arbre
             .Ajouter(new ElementMateriel { Repere = "W0", Famille = "Câble", Designation = $"Câble d'arrivée cuivre {reseau.CableArrivee.Isolant}",
                 Calibre = $"{conducteurs}G{N(cable.Section)} mm², {N(reseau.CableArrivee.Longueur)} m" })
@@ -271,8 +271,11 @@ public static class CalculProjet
         foreach (var appareil in PeripheriquesMachine(projet))
             Alimentation(ConsommationCommande.Actionneurs).Ajouter(appareil);
 
-        var resultatReferences = CatalogueReferences.Appliquer(arbre, projet.References, references ?? CatalogueReferences.Charger());
-        foreach (var km in arbre.Parcourir().Where(e => e.Famille == "Contacteur"))
+        var resultatReferences = CatalogueReferences.Appliquer(arbre, projet.References, references ?? CatalogueReferences.Charger(),
+            projet.Reseau.IccKiloAmperes);
+        // Une référence saisie à la main reste telle quelle : la bobine est celle que l'utilisateur a choisie.
+        foreach (var km in arbre.Parcourir().Where(e => e.Famille == "Contacteur"
+                     && !(projet.References.Forcees.TryGetValue(e.Repere, out var f) && f.Length > 0)))
         {
             km.Reference = CatalogueReferences.Bobine(km.Reference, projet.TensionBobines);
             km.Fabricant = km.Fabricant.Replace("bobine 24 V DC", $"bobine {SourcesCommande.Libelle(projet.TensionBobines)}");
@@ -298,6 +301,7 @@ public static class CalculProjet
         // est refaite pour placer thermostats et disjoncteurs sur les rails.
         if (AjouterVentilation(resultat, projet, references))
         {
+            AppliquerRenommages(resultat.Arbre, projet);
             resultat.Armoire = CalculArmoire.Calculer(resultat, projet, enveloppes);
             Thermique(resultat, projet);
         }
@@ -337,7 +341,7 @@ public static class CalculProjet
             var continu = m.EnContinu24V;
             var courant = t.NombreVentilateurs * m.Puissance / 24;
             var calibre = continu ? Calibres.Superieur(Calibres.Disjoncteurs, Math.Max(1, 1.25 * courant)) ?? 2 : 2;
-            var amont = continu && r.Arbre.Parcourir().FirstOrDefault(e => e.Famille == "Alimentation") is { } alimentation ? alimentation : sectionneur;
+            var amont = continu ? Source24VDC(r) ?? sectionneur : sectionneur;
             var protection = new ElementMateriel { Repere = $"Q-EV{suffixe}", Famille = "Disjoncteur", Designation = "Protection de la ventilation" + lieu,
                 Calibre = continu ? $"{calibre:0.#} A, courbe C, 24 V DC" : "2 A, courbe C", CoffretId = enveloppe.Id }
                 .Avec(calibre, continu ? 1 : poles, courbe: "C");
@@ -360,9 +364,18 @@ public static class CalculProjet
         if (ajoutes.Count == 0) return false;
         var racine = new ElementMateriel { Repere = "ventilation" };
         foreach (var q in ajoutes) racine.Enfants.Add(q);
-        CatalogueReferences.Appliquer(racine, projet.References, references ?? CatalogueReferences.Charger());
+        CatalogueReferences.Appliquer(racine, projet.References, references ?? CatalogueReferences.Charger(),
+            projet.Reseau.IccKiloAmperes);
         return true;
     }
+
+    /// <summary>Sortie 24 V DC du projet (alimentation, ou redresseur derrière un transformateur), sinon l'alimentation « à ajouter ».</summary>
+    static ElementMateriel? Source24VDC(ResultatProjet r) =>
+        r.Departs.Where(d => d.Depart is DepartAlimentation24V { Sortie: TensionCommande.Continu24 })
+            .Select(d => d.Materiel.Parcourir().FirstOrDefault(e => e.Famille == "Redresseur")
+                         ?? d.Materiel.Parcourir().FirstOrDefault(e => e.Famille == "Alimentation"))
+            .FirstOrDefault(e => e is not null)
+        ?? r.Arbre.Parcourir().FirstOrDefault(e => e.Famille == SourceManquante);
 
     static string Paroi(PositionVentilation p) => p switch
     {

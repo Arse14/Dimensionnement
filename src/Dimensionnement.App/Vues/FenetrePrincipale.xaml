@@ -1141,6 +1141,8 @@
         <DataTemplate DataType="{x:Type mv:PageArmoire}">
             <StackPanel>
                 <TextBlock Text="ARMOIRE ET IMPLANTATION" Style="{StaticResource TitrePanneau}"/>
+                <TextBlock Text="{Binding Nom, StringFormat='Réglages du {0} (choisi dans la vue d’armoire)'}" FontWeight="SemiBold"
+                           Foreground="{StaticResource Accent}" Margin="0,0,0,8" Visibility="{Binding Coffret, Converter={StaticResource VraiVisible}}"/>
                 <TextBlock TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,8"
                            Text="{Binding DataContext.ResumeArmoire, RelativeSource={RelativeSource AncestorType=Window}}"/>
                 <Border Background="#3A1F22" BorderBrush="#F85149" BorderThickness="1" CornerRadius="3" Padding="10,8" Margin="0,0,0,8"
@@ -1153,7 +1155,7 @@
                 </Border>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Marque des enveloppes" Style="{StaticResource Etiquette}"/>
-                    <ComboBox ItemsSource="{x:Static inf:Listes.MarquesEnveloppe}" SelectedItem="{inf:Lien Projet.Armoire.Marque}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.MarquesEnveloppe}" SelectedItem="{inf:Lien Config.Marque}"/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Sectionneur général" Style="{StaticResource Etiquette}"/>
@@ -1162,12 +1164,12 @@
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Dégagement mini des variateurs ventilés (mm)" Style="{StaticResource Etiquette}"/>
-                    <TextBox Text="{inf:Lien Projet.Armoire.DegagementVariateurVentile}"
+                    <TextBox Text="{inf:Lien Config.DegagementVariateurVentile}"
                              ToolTip="Armoire trop petite pour 100 mm au-dessus et au-dessous des variateurs : on descend à cette valeur et une ventilation forcée est ajoutée. À prendre dans la notice du variateur."/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Réserve de place sur les rails (%)" Style="{StaticResource Etiquette}"/>
-                    <TextBox Text="{inf:Lien Projet.Armoire.ReservePourcent}"/>
+                    <TextBox Text="{inf:Lien Config.ReservePourcent}"/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Enveloppe" Style="{StaticResource Etiquette}"/>
@@ -1176,24 +1178,24 @@
                               DisplayMemberPath="Libelle" MaxDropDownHeight="420" IsTextSearchEnabled="True" TextSearch.TextPath="Libelle"
                               ToolTip="Choisir une enveloppe du catalogue l'impose (marque et cotes reprises) ; « Automatique » prend la plus petite qui reçoit le matériel."/>
                 </DockPanel>
-                <CheckBox x:Name="CaseTailleImposee" Content="Imposer la taille de l'armoire" IsChecked="{inf:Lien Projet.Armoire.TailleImposee}" Margin="0,8,0,4"
+                <CheckBox x:Name="CaseTailleImposee" Content="Imposer la taille de l'armoire" IsChecked="{inf:Lien Config.TailleImposee}" Margin="0,8,0,4"
                           ToolTip="L'implantation essaie de tout faire entrer dans cette taille, en réduisant la réserve si besoin ; une alerte signale si c'est impossible."/>
                 <StackPanel IsEnabled="{Binding IsChecked, ElementName=CaseTailleImposee}">
                     <DockPanel Style="{StaticResource Ligne}">
                         <TextBlock Text="Largeur d'une cellule (mm)" Style="{StaticResource Etiquette}"/>
-                        <TextBox Text="{inf:Lien Projet.Armoire.LargeurImposee}"/>
+                        <TextBox Text="{inf:Lien Config.LargeurImposee}"/>
                     </DockPanel>
                     <DockPanel Style="{StaticResource Ligne}">
                         <TextBlock Text="Hauteur (mm)" Style="{StaticResource Etiquette}"/>
-                        <TextBox Text="{inf:Lien Projet.Armoire.HauteurImposee}"/>
+                        <TextBox Text="{inf:Lien Config.HauteurImposee}"/>
                     </DockPanel>
                     <DockPanel Style="{StaticResource Ligne}">
                         <TextBlock Text="Profondeur (mm)" Style="{StaticResource Etiquette}"/>
-                        <TextBox Text="{inf:Lien Projet.Armoire.ProfondeurImposee}"/>
+                        <TextBox Text="{inf:Lien Config.ProfondeurImposee}"/>
                     </DockPanel>
                     <DockPanel Style="{StaticResource Ligne}">
                         <TextBlock Text="Nombre de cellules" Style="{StaticResource Etiquette}"/>
-                        <TextBox Text="{inf:Lien Projet.Armoire.CellulesImposees}"/>
+                        <TextBox Text="{inf:Lien Config.CellulesImposees}"/>
                     </DockPanel>
                 </StackPanel>
                 <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,4,0,8"
@@ -1213,6 +1215,8 @@
         <DataTemplate DataType="{x:Type mv:PageThermique}">
             <StackPanel>
                 <TextBlock Text="BILAN THERMIQUE – IEC TR 60890" Style="{StaticResource TitrePanneau}"/>
+                <TextBlock Text="{Binding Nom, StringFormat='Réglages du {0} (choisi dans la vue d’armoire)'}" FontWeight="SemiBold"
+                           Foreground="{StaticResource Accent}" Margin="0,0,0,8" Visibility="{Binding Coffret, Converter={StaticResource VraiVisible}}"/>
                 <TextBlock TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource Accent}" Margin="0,0,0,8"
                            Text="{Binding DataContext.ResumeThermique, RelativeSource={RelativeSource AncestorType=Window}}"/>
                 <Button Content="Réglages de la ventilation…" HorizontalAlignment="Left" Margin="0,0,0,8" Padding="10,3"
@@ -1220,27 +1224,27 @@
                         Command="{Binding DataContext.AfficherVentilation, RelativeSource={RelativeSource AncestorType=Window}}"/>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Matériau de l'enveloppe" Style="{StaticResource Etiquette}"/>
-                    <ComboBox ItemsSource="{x:Static inf:Listes.Materiaux}" SelectedItem="{inf:Lien Projet.Armoire.Materiau}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.Materiaux}" SelectedItem="{inf:Lien Config.Materiau}"/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Installation" Style="{StaticResource Etiquette}"/>
-                    <ComboBox ItemsSource="{x:Static inf:Listes.Installations}" SelectedItem="{inf:Lien Projet.Armoire.Installation}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.Installations}" SelectedItem="{inf:Lien Config.Installation}"/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Ambiance maximale (°C)" Style="{StaticResource Etiquette}"/>
-                    <TextBox Text="{inf:Lien Projet.Armoire.TemperatureAmbianteMax}"/>
+                    <TextBox Text="{inf:Lien Config.TemperatureAmbianteMax}"/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Ambiance minimale (°C)" Style="{StaticResource Etiquette}"/>
-                    <TextBox Text="{inf:Lien Projet.Armoire.TemperatureAmbianteMin}"/>
+                    <TextBox Text="{inf:Lien Config.TemperatureAmbianteMin}"/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Intérieur maximal admis (°C)" Style="{StaticResource Etiquette}"/>
-                    <TextBox Text="{inf:Lien Projet.Armoire.TemperatureInterieureMax}"/>
+                    <TextBox Text="{inf:Lien Config.TemperatureInterieureMax}"/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Intérieur minimal (°C)" Style="{StaticResource Etiquette}"/>
-                    <TextBox Text="{inf:Lien Projet.Armoire.TemperatureInterieureMin}"/>
+                    <TextBox Text="{inf:Lien Config.TemperatureInterieureMin}"/>
                 </DockPanel>
 
                 <TextBlock Text="Pertes des appareils à leur courant de service" Style="{StaticResource Section}"/>

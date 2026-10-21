@@ -137,8 +137,8 @@ public partial class ModeleVuePrincipal : Observable
         AjouterStation = new Commande(() => Modifier(() => _projet.Automate.Stations.Add(new StationDeportee
             { Nom = $"Station {_projet.Automate.Stations.Count + 1}", EntreesTor = 16, SortiesTor = 8 })));
         SupprimerStation = new Commande(p => Modifier(() => _projet.Automate.Stations.Remove((StationDeportee)p!)), p => p is StationDeportee);
-        AfficherArmoire = new Commande(() => Selection = new PageArmoire(_projet));
-        AfficherThermique = new Commande(() => Selection = new PageThermique(_projet));
+        AfficherArmoire = new Commande(() => Selection = new PageArmoire(_projet, ConfigCourante, NomCourant));
+        AfficherThermique = new Commande(() => Selection = new PageThermique(_projet, ConfigCourante, NomCourant));
         AfficherVentilation = new Commande(() => Selection = new PageVentilation(_projet, _projet.Armoire, "armoire principale"));
         AfficherSelectivite = new Commande(() => Selection = new PageSelectivite(_projet));
         AfficherReferences = new Commande(() => Selection = new PageReferences(_projet));
@@ -741,7 +741,8 @@ public partial class ModeleVuePrincipal : Observable
     Dictionary<string, Forcage> Forcages() => Selection switch
     {
         Depart d => d.Forcages,
-        PageArmoire or PageThermique => _projet.Armoire.Forcages,
+        PageArmoire a => a.Config.Forcages,
+        PageThermique t => t.Config.Forcages,
         PageVentilation v => v.Config.Forcages,
         _ => _projet.ForcagesArrivee,
     };

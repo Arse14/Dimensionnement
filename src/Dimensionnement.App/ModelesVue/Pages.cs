@@ -7,11 +7,17 @@ public record PageBilan24V(Projet Projet);
 
 /// <summary>Page de la liste de contrôle CEM et basse tension.</summary>
 
-/// <summary>Page de l'armoire : enveloppe, réserve, aperçu de l'implantation.</summary>
-public record PageArmoire(Projet Projet);
+/// <summary>Page de l'armoire : enveloppe, réserve, aperçu de l'implantation ; réglages de l'enveloppe affichée (armoire ou coffret).</summary>
+public record PageArmoire(Projet Projet, ConfigurationArmoire Config, string Nom)
+{
+    public bool Coffret => Config is CoffretDeporte;
+}
 
-/// <summary>Page du bilan thermique de l'armoire.</summary>
-public record PageThermique(Projet Projet);
+/// <summary>Page du bilan thermique ; réglages de l'enveloppe affichée (armoire ou coffret).</summary>
+public record PageThermique(Projet Projet, ConfigurationArmoire Config, string Nom)
+{
+    public bool Coffret => Config is CoffretDeporte;
+}
 
 /// <summary>Page de la sélectivité entre le général et les départs.</summary>
 public record PageSelectivite(Projet Projet);
