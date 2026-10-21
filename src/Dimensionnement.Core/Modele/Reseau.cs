@@ -17,6 +17,9 @@ public class Reseau
     /// <summary>Câble entre la source et l'armoire.</summary>
     public CaracteristiquesCable CableArrivee { get; set; } = new() { Longueur = 20 };
 
+    /// <summary>Répartiteur de puissance en aval du disjoncteur général, dimensionné sur les départs qu'il alimente.</summary>
+    public bool Repartiteur { get; set; } = true;
+
     /// <summary>Parafoudre de type 2 en tête d'armoire, avec sa protection.</summary>
     public bool Parafoudre { get; set; }
 

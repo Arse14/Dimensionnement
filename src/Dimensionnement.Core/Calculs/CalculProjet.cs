@@ -187,6 +187,9 @@ public static class CalculProjet
         foreach (var e in arbre.Parcourir()) e.Statut = note.StatutGlobal;
         ElementMateriel? Source(Guid id) => departs.FirstOrDefault(r => r.Depart.Id == id)?.Materiel.Parcourir()
             .FirstOrDefault(e => e.Famille == "Alimentation");
+        var directs = departs.Where(d => !alimentesPar.TryGetValue(d.Depart.Id, out var s) || Source(s) is null).ToList();
+        // Le répartiteur est posé sous le général, sans s'intercaler : l'arborescence ne le montre pas, l'implantation et le devis oui.
+        AjouterRepartiteur(tete, directs, reseau, qg, projet.References, note);
         foreach (var d in departs)
             (alimentesPar.TryGetValue(d.Depart.Id, out var source) ? Source(source) ?? tete : tete).Ajouter(d.Materiel);
         MarquerBobines(arbre, projet.TensionBobines);
@@ -252,6 +255,54 @@ public static class CalculProjet
     public const double ProtectionParafoudre = 25;
 
     /// <summary>Parafoudre de type 2 et relais de contrôle de phases branchés en aval du sectionneur général.</summary>
+    /// <summary>Réserve de sorties laissée sur le répartiteur pour les évolutions.</summary>
+    public const double ReserveRepartiteur = 0.2;
+
+    /// <summary>
+    /// Répartiteur sous le disjoncteur général : courant ≥ calibre du général, une sortie par pôle et par départ alimenté
+    /// directement, plus 20 % de réserve, et la plus grosse section de départ admise en sortie.
+    /// </summary>
+    static void AjouterRepartiteur(ElementMateriel tete, IReadOnlyList<ResultatDepart> directs, Reseau reseau, double qg,
+        ConfigurationReferences references, NoteDeCalcul note)
+    {
+        if (!reseau.Repartiteur || directs.Count < 2) return;
+        var poles = CalculDepart.NombrePoles(reseau.Alimentation, reseau.Slt);
+        var sorties = (int)Math.Ceiling(directs.Count * (1 + ReserveRepartiteur));
+        var section = directs.Max(d => d.Section);
+        var marque = references.FabricantDe("Répartiteur") is FabricantMateriel.Schneider ? "Schneider" : "Siemens";
+        var modele = CatalogueRepartiteurs.Choisir(marque, poles, qg, sorties, section);
+        var calibre = $"{A(qg)}, {poles} pôles, {directs.Count} départ(s) + réserve = {sorties} sorties par pôle, jusqu'à {N(section)} mm²";
+        if (modele is null)
+        {
+            note.Verifier("Répartiteur", false, $"Aucun répartiteur {marque} de {A(qg)} au catalogue : à choisir à la main.",
+                "NF EN 61439-1", StatutCalcul.Alerte);
+            tete.Ajouter(new ElementMateriel { Repere = "XR", Famille = "Répartiteur", Designation = "Répartiteur de puissance",
+                Calibre = calibre }.Avec(qg, poles));
+            return;
+        }
+        var blocsParPole = modele.Poles == 1 ? poles : 1;
+        var enSerie = (int)Math.Ceiling(sorties / (double)Math.Max(1, modele.Sorties));
+        var quantite = blocsParPole * enSerie;
+        // Pertes non données par la fiche : environ 0,04 W par ampère et par pôle au courant assigné, en I².
+        var pertes = modele.Pertes ?? poles * 0.04 * modele.Courant * Math.Pow(qg / Math.Max(1, modele.Courant), 2);
+        var e = new ElementMateriel
+        {
+            Repere = "XR", Famille = "Répartiteur", Designation = "Répartiteur de puissance", Calibre = calibre, Quantite = quantite,
+            Reference = modele.Reference, Fabricant = $"{modele.Fabricant} – {modele.Gamme}",
+            LargeurMm = modele.Largeur * quantite, HauteurMm = modele.Hauteur, ProfondeurMm = modele.Profondeur, PertesW = pertes,
+        }.Avec(qg, poles);
+        note.Info("Répartiteur", $"{modele.Fabricant} {modele.Gamme} {modele.Reference} : {A(modele.Courant)}, {modele.Poles} pôle(s), " +
+            $"{modele.Sorties} sorties par pôle jusqu'à {N(modele.SectionMaxSortie)} mm²" +
+            (quantite > 1 ? $" ; {quantite} blocs" : "") + (modele.Verifie ? "." : " (cotes estimées, à vérifier sur la fiche)."),
+            "Catalogues Siemens et Schneider ; NF EN 61439-1");
+        note.Verifier("Sorties du répartiteur", modele.Sorties * enSerie >= sorties && modele.SectionMaxSortie >= section - 1e-6,
+            modele.SectionMaxSortie < section - 1e-6
+                ? $"Section de départ {N(section)} mm² supérieure à la section de sortie du répartiteur ({N(modele.SectionMaxSortie)} mm²) : prévoir un bloc plus gros ou un raccordement direct."
+                : $"{modele.Sorties * enSerie} sorties par pôle pour {sorties} nécessaires ({directs.Count} départs + {ReserveRepartiteur:P0} de réserve).",
+            "NF EN 61439-1", StatutCalcul.Alerte);
+        tete.Ajouter(e);
+    }
+
     static void AjouterProtectionsDeTete(ElementMateriel sectionneur, Reseau reseau, NoteDeCalcul note)
     {
         var poles = CalculDepart.NombrePoles(reseau.Alimentation, reseau.Slt);

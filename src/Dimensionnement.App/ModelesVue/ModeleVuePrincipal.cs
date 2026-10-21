@@ -47,6 +47,8 @@ public class ModeleVuePrincipal : Observable
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueCapteursSecurite.NomFichier);
     static readonly string CheminEncombrements = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueEncombrements.NomFichier);
+    static readonly string CheminRepartiteurs = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueRepartiteurs.NomFichier);
     IReadOnlyList<ModeleCapteurSecurite> _capteurs = CatalogueCapteursSecurite.Charger(CheminCapteurs);
     IReadOnlyList<CarteEs> _cartes = CatalogueCartesEs.Charger(CheminCartes);
     IReadOnlyList<ChoixCpu> _cpus = Array.Empty<ChoixCpu>();
@@ -72,6 +74,7 @@ public class ModeleVuePrincipal : Observable
     {
         _selection = _projet;
         CatalogueEncombrements.Actif = CatalogueEncombrements.Charger(CheminEncombrements);
+        CatalogueRepartiteurs.Actif = CatalogueRepartiteurs.Charger(CheminRepartiteurs);
         _cpus = ListerCpus(_catalogue);
         Resultat = CalculerProjet();
 
@@ -730,6 +733,7 @@ public class ModeleVuePrincipal : Observable
         _securite = CatalogueSecurite.Charger(CheminSecurite);
         _capteurs = CatalogueCapteursSecurite.Charger(CheminCapteurs);
         CatalogueEncombrements.Actif = CatalogueEncombrements.Charger(CheminEncombrements);
+        CatalogueRepartiteurs.Actif = CatalogueRepartiteurs.Charger(CheminRepartiteurs);
         _cartes = CatalogueCartesEs.Charger(CheminCartes);
         _alimentations = CatalogueAlimentations.Charger(CheminAlimentations);
         _ihm = CatalogueIhm.Charger(CheminIhm);

@@ -131,6 +131,11 @@
                 </DockPanel>
 
                 <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Répartiteur de puissance" Style="{StaticResource Etiquette}"/>
+                    <CheckBox IsChecked="{inf:Lien Reseau.Repartiteur}"
+                              ToolTip="Répartiteur Siemens ou Schneider sous le disjoncteur général, choisi selon le nombre de départs à raccorder (20 % de réserve), le courant et la plus grosse section. Visible dans l'implantation et le devis."/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Parafoudre en tête d'armoire" Style="{StaticResource Etiquette}"/>
                     <CheckBox IsChecked="{inf:Lien Reseau.Parafoudre}"
                               ToolTip="Parafoudre de type 2 avec son disjoncteur de déconnexion, en aval du sectionneur général."/>

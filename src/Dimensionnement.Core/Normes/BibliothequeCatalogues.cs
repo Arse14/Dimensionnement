@@ -133,6 +133,14 @@ public static class BibliothequeCatalogues
                     T("source", "Source des cotes"), T("note", "Remarque") }
                 .Concat(Cotes(true)).ToArray())
             { LireType = t => CatalogueEncombrements.Lire(t), ChampPrincipal = "max", ChampGamme = "famille", Designation = "Taille" },
+        new FamilleCatalogue("repartiteurs", "Répartiteurs", CatalogueRepartiteurs.NomFichier, CatalogueRepartiteurs.TexteEmbarque,
+            new[] { T("fabricant", "Fabricant"), T("gamme", "Gamme", true), T("reference", "Référence"), N("poles", "Pôles", "", true, true),
+                    N("courant", "Courant assigné", "A", true, true), N("sorties", "Sorties par pôle", "", true, true),
+                    N("sectionMaxSortie", "Section max. en sortie", "mm²", false, true), N("sectionEntree", "Section max. en entrée", "mm²"),
+                    T("montage", "Montage (rail DIN, plaque)"), N("pertes", "Pertes relevées (vide = estimées)", "W"),
+                    T("fiabilite", "Fiabilité (verifie, une_source, estime)", true), T("source", "Source des cotes"), T("note", "Remarque") }
+                .Concat(Cotes(true)).ToArray())
+            { LireType = t => CatalogueRepartiteurs.Lire(t), ChampPrincipal = "courant", Designation = "Répartiteur" },
         new FamilleCatalogue("references", "Appareillage (références)", CatalogueReferences.NomFichier, CatalogueReferences.TexteEmbarque,
             new[] { T("fabricant", "Fabricant"), T("famille", "Famille d'appareil", true), T("gamme", "Gamme", true), T("reference", "Référence"),
                     N("min", "Calibre min.", "A", true, true), N("max", "Calibre max.", "A", true, true), T("courbe", "Courbe"), T("taille", "Taille"),

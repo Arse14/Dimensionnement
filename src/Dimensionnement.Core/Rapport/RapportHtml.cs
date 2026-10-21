@@ -207,7 +207,8 @@ public static class RapportHtml
         if (e.Enfants.Count > 0)
         {
             sb.Append("<ul>");
-            foreach (var enfant in e.Enfants) Arbre(sb, enfant);
+            // Le répartiteur figure dans l'implantation et le devis, pas dans l'arborescence.
+            foreach (var enfant in e.Enfants.Where(c => c.Famille != "Répartiteur")) Arbre(sb, enfant);
             sb.Append("</ul>");
         }
         sb.Append("</li>");
