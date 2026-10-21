@@ -23,6 +23,12 @@ public class Reseau
     /// </summary>
     public double CoefficientExtension { get; set; } = 1;
 
+    /// <summary>
+    /// Coefficient de simultanéité ks de l'armoire : 1 par défaut (armoire de machine, tous les départs en service).
+    /// Il peut être réduit sur justification, jamais sous la valeur du guide UTE C 15-105 pour le nombre de départs.
+    /// </summary>
+    public double CoefficientSimultaneite { get; set; } = 1;
+
     /// <summary>Répartiteur de puissance en aval du disjoncteur général, dimensionné sur les départs qu'il alimente.</summary>
     public bool Repartiteur { get; set; } = true;
 

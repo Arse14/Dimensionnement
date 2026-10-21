@@ -19,6 +19,7 @@
     <EmbeddedResource Include="Normes\catalogue-repartiteurs.json" LogicalName="Dimensionnement.Core.Normes.catalogue-repartiteurs.json" />
     <EmbeddedResource Include="Normes\catalogue-ventilateurs.json" LogicalName="Dimensionnement.Core.Normes.catalogue-ventilateurs.json" />
     <EmbeddedResource Include="Normes\catalogue-alimentations.json" LogicalName="Dimensionnement.Core.Normes.catalogue-alimentations.json" />
+    <EmbeddedResource Include="Normes\catalogue-disjoncteurs.json" LogicalName="Dimensionnement.Core.Normes.catalogue-disjoncteurs.json" />
   </ItemGroup>
 
   <ItemGroup>

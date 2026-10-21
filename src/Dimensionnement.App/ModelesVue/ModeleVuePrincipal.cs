@@ -52,6 +52,8 @@ public partial class ModeleVuePrincipal : Observable
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueRepartiteurs.NomFichier);
     static readonly string CheminVentilateurs = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueVentilateurs.NomFichier);
+    static readonly string CheminDisjoncteurs = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", CatalogueDisjoncteurs.NomFichier);
     IReadOnlyList<ModeleCapteurSecurite> _capteurs = CatalogueCapteursSecurite.Charger(CheminCapteurs);
     IReadOnlyList<CarteEs> _cartes = CatalogueCartesEs.Charger(CheminCartes);
     IReadOnlyList<ChoixCpu> _cpus = Array.Empty<ChoixCpu>();
@@ -79,6 +81,7 @@ public partial class ModeleVuePrincipal : Observable
         CatalogueEncombrements.Actif = CatalogueEncombrements.Charger(CheminEncombrements);
         CatalogueRepartiteurs.Actif = CatalogueRepartiteurs.Charger(CheminRepartiteurs);
         CatalogueVentilateurs.Actif = CatalogueVentilateurs.Charger(CheminVentilateurs);
+        CatalogueDisjoncteurs.Actif = CatalogueDisjoncteurs.Charger(CheminDisjoncteurs);
         _cpus = ListerCpus(_catalogue);
         Resultat = CalculerProjet();
 
@@ -956,6 +959,7 @@ public partial class ModeleVuePrincipal : Observable
         CatalogueEncombrements.Actif = CatalogueEncombrements.Charger(CheminEncombrements);
         CatalogueRepartiteurs.Actif = CatalogueRepartiteurs.Charger(CheminRepartiteurs);
         CatalogueVentilateurs.Actif = CatalogueVentilateurs.Charger(CheminVentilateurs);
+        CatalogueDisjoncteurs.Actif = CatalogueDisjoncteurs.Charger(CheminDisjoncteurs);
         _cartes = CatalogueCartesEs.Charger(CheminCartes);
         _alimentations = CatalogueAlimentations.Charger(CheminAlimentations);
         _ihm = CatalogueIhm.Charger(CheminIhm);

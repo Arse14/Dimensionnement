@@ -134,6 +134,12 @@
                     <TextBlock Text="Température ambiante (°C)" Style="{StaticResource Etiquette}"/>
                     <TextBox Text="{inf:Lien Reseau.TemperatureAmbiante}"/>
                 </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Coefficient de simultanéité ks" Style="{StaticResource Etiquette}"
+                               ToolTip="Part des départs en service en même temps, appliquée au bilan de puissance de l'armoire."/>
+                    <TextBox Text="{inf:Lien Reseau.CoefficientSimultaneite}"
+                             ToolTip="1 = tous les départs fonctionnent ensemble (défaut pour une armoire de machine). Minimum du guide UTE C 15-105 : 1 pour 1 départ, 0,9 jusqu'à 3, 0,8 jusqu'à 5, 0,7 jusqu'à 9, 0,6 au-delà. Une valeur plus basse est ramenée au minimum, avec une alerte dans la note de calcul."/>
+                </DockPanel>
 
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Répartiteur de puissance" Style="{StaticResource Etiquette}"/>
@@ -1674,6 +1680,9 @@
         <Border DockPanel.Dock="Top" Background="{StaticResource Panneau}" BorderBrush="{StaticResource Bordure}"
                 BorderThickness="0,0,0,1" Padding="10,6">
             <!-- Les boutons passent à la ligne quand la fenêtre est étroite. -->
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Right" Text="ITP INTERPIPE · logiciel interne" Foreground="{StaticResource TexteSecondaire}"
+                           FontSize="11" VerticalAlignment="Center" Margin="12,0,4,0"/>
             <WrapPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,0,16,0">
                     <Image Source="/Ressources/logo-256.png" Width="24" Height="24" VerticalAlignment="Center" Margin="2,0,0,0"
@@ -1764,6 +1773,7 @@
                     </Button>
                 </StackPanel>
             </WrapPanel>
+            </DockPanel>
         </Border>
 
         <!-- Barre d'état -->
@@ -1871,6 +1881,11 @@
             <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch" Background="Transparent"/>
 
             <Border Grid.Column="2" Style="{StaticResource CadrePanneau}">
+                <Grid>
+                <!-- Logo ITP Interpipe en filigrane : très transparent, sous la saisie, ne capte aucun clic. -->
+                <Image Source="/Ressources/logo-itp-interpipe.png" Opacity="0.07" Stretch="Uniform" MaxWidth="380"
+                       Margin="24" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                       RenderOptions.BitmapScalingMode="HighQuality"/>
                 <DockPanel>
                     <!-- La note de calcul s'ouvre à la demande pour laisser la place à la saisie. -->
                     <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
@@ -1889,6 +1904,7 @@
                         <ContentControl Content="{Binding Selection}" Binding.SourceUpdated="ModificationSaisie"/>
                     </ScrollViewer>
                 </DockPanel>
+                </Grid>
             </Border>
 
             <GridSplitter Grid.Column="3" Width="6" HorizontalAlignment="Stretch" Background="Transparent"

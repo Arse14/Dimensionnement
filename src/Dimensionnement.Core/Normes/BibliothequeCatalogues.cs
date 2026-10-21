@@ -151,6 +151,14 @@ public static class BibliothequeCatalogues
                     N("puissance", "Puissance absorbée", "W"), T("source", "Source des cotes"), T("note", "Remarque") }
                 .Concat(Cotes(true)).ToArray())
             { LireType = t => CatalogueVentilateurs.Lire(t), ChampPrincipal = "debit", Designation = "Ventilateur" },
+        new FamilleCatalogue("disjoncteurs", "Disjoncteurs", CatalogueDisjoncteurs.NomFichier, CatalogueDisjoncteurs.TexteEmbarque,
+            new[] { T("fabricant", "Fabricant"), T("gamme", "Gamme", true), T("reference", "Référence"), T("designation", "Désignation"),
+                    T("type", "Type (Modulaire / Boîtier moulé)"), T("courbe", "Courbe", true), N("poles", "Pôles", "", true, true),
+                    T("polesTexte", "Pôles (1P+N)"), N("calibre", "Calibre", "A", true, true),
+                    N("icn", "Icn (NF EN 60898-1)", "kA"), N("icu", "Icu 400 V (NF EN 60947-2)", "kA", true, true),
+                    N("pertes", "Pertes à In", "W"), T("fiabilite", "Fiabilité"), T("source", "Source"), T("note", "Remarque") }
+                .Concat(Cotes()).ToArray())
+            { LireType = t => CatalogueDisjoncteurs.Lire(t), ChampPrincipal = "calibre", Designation = "Disjoncteur" },
         new FamilleCatalogue("references", "Appareillage (références)", CatalogueReferences.NomFichier, CatalogueReferences.TexteEmbarque,
             new[] { T("fabricant", "Fabricant"), T("famille", "Famille d'appareil", true), T("gamme", "Gamme", true), T("reference", "Référence"),
                     N("min", "Calibre min.", "A", true, true), N("max", "Calibre max.", "A", true, true), T("courbe", "Courbe"), T("taille", "Taille"),

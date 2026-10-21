@@ -116,6 +116,16 @@ public static class CatalogueReferences
                 continue;
             }
 
+            // Disjoncteurs : la vraie référence du catalogue des disjoncteurs, avec ses cotes et son pouvoir de coupure ;
+            // le catalogue par gamme ne sert que de repli.
+            if (e.Famille == "Disjoncteur" && Disjoncteur(e, config.FabricantDe(e.Famille), iccKiloAmperes) is { } m)
+            {
+                if (iccKiloAmperes > 0 && m.Icu < iccKiloAmperes) coupure.Add($"{e.Repere} ({m.Gamme}, {m.Icu:0.#} kA)");
+                if (!m.Verifie) nonVerifiees++;
+                completees++;
+                continue;
+            }
+
             // Variateurs : la marque choisie (projet ou départ) est déjà portée par l'appareil, sans repli sur une autre marque.
             var variateur = e.Famille == "Variateur";
             var voulu = variateur && Enum.TryParse<FabricantMateriel>(e.Fabricant.Split(' ')[0], out var marque) ? marque
@@ -156,6 +166,34 @@ public static class CatalogueReferences
         if (nonVerifiees > 0)
             note.Info("Contrôle des références", $"{nonVerifiees} référence(s) issues du catalogue indicatif : à confirmer sur le configurateur du fabricant avant commande.");
         return new ResultatReferences { Note = note, Completees = completees, SansReference = sans };
+    }
+
+    /// <summary>
+    /// Choisit le disjoncteur au catalogue des disjoncteurs (marque voulue, puis les marques de repli) et reporte sur
+    /// l'appareil sa référence, sa gamme, ses cotes et ses pertes. Null si aucune marque ne l'a.
+    /// </summary>
+    static ModeleDisjoncteur? Disjoncteur(ElementMateriel e, FabricantMateriel voulu, double icc)
+    {
+        var poles = e.Poles > 0 ? e.Poles : 3;
+        var neutre = CatalogueDisjoncteurs.PolesAvecNeutre(e.Calibre);
+        var calibre = e.Courant;
+        if (calibre <= 0) return null;
+        foreach (var f in Repli.Where(f => f != voulu).Prepend(voulu))
+        {
+            if (CatalogueDisjoncteurs.Choisir(f.ToString(), e.Courbe, poles, calibre, icc, polesTexte: neutre) is not { } m) continue;
+            e.Reference = m.Reference;
+            e.Fabricant = $"{f} – {m.Gamme}";
+            e.AVerifier = !m.Verifie;
+            if (m.Largeur > 0 && m.Hauteur > 0)
+            {
+                e.LargeurMm = m.Largeur;
+                e.HauteurMm = m.Hauteur;
+                e.ProfondeurMm = m.Profondeur;
+                e.PertesW = m.Pertes > 0 ? m.Pertes : Armoire.Encombrements.Disjoncteur(calibre, poles).DissipationW;
+            }
+            return m;
+        }
+        return null;
     }
 
     /// <summary>Appareils qui se commandent (les câbles et récepteurs sont traités à part dans la liste de matériel).</summary>

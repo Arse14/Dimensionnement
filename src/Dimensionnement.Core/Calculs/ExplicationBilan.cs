@@ -50,10 +50,11 @@ public static class ExplicationBilan
             "P_{utilisée} = P × ku ; Q_{utilisée} = Q × ku",
             $"Σ (P × ku) = {N(p)} kW ; Σ (Q × ku) = {N(q)} kvar.");
         Etape("Coefficient de simultanéité ks",
-            "Tous les départs ne fonctionnent pas en même temps. Le guide UTE C 15-105 donne ks selon le nombre de circuits d'une armoire " +
-            "de distribution : 1 pour un circuit, 0,9 jusqu'à 3, 0,8 jusqu'à 5, 0,7 jusqu'à 9, 0,6 au-delà. Il peut être forcé dans la note de l'arrivée.",
-            "ks = f(nombre de départs)",
-            $"{comptees} départ(s) comptés : ks = {N(r.CoefficientSimultaneite)}.");
+            "Sur une machine, tous les départs peuvent fonctionner en même temps : ks vaut 1 par défaut. Il se règle dans « Projet et réseau » " +
+            "quand ce n'est pas le cas, sans descendre sous la valeur du guide UTE C 15-105 pour une armoire de distribution : " +
+            "1 pour un circuit, 0,9 jusqu'à 3, 0,8 jusqu'à 5, 0,7 jusqu'à 9, 0,6 au-delà.",
+            "ks_{guide} ≤ ks ≤ 1",
+            $"{comptees} départ(s) comptés : ks = {N(r.CoefficientSimultaneite)} (minimum du guide {N(CalculProjet.Simultaneite(comptees))}).");
         Etape("Puissance apparente et cos φ global",
             "Le courant dépend de la puissance apparente S, qui combine P et Q. Le cos φ global indique la part utile ; " +
             "un cos φ faible augmente le courant pour la même puissance utile.",

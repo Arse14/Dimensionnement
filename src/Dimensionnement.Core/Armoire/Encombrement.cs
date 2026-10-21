@@ -89,7 +89,8 @@ public static class Encombrements
         };
     }
 
-    static Encombrement Disjoncteur(double i, int poles) => i switch
+    /// <summary>Cotes et pertes moyennes d'un disjoncteur, quand le catalogue ne les donne pas.</summary>
+    public static Encombrement Disjoncteur(double i, int poles) => i switch
     {
         <= 63 => new(18 * poles, 90, 75, poles * (1.5 + 0.06 * i)),
         <= 125 => new(27 * poles, 90, 80, poles * (3 + 0.05 * i)),

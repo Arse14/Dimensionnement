@@ -21,7 +21,9 @@ public class CalculProjetTests
     [Fact]
     public void Bilan_applique_ku_et_ks_puis_dimensionne_l_arrivee()
     {
-        var r = CalculProjet.Calculer(ProjetExemple());
+        var projet = ProjetExemple();
+        projet.Reseau.CoefficientSimultaneite = 0.8; // minimum du guide
+        var r = CalculProjet.Calculer(projet);
 
         Assert.Equal(0.8, r.CoefficientSimultaneite); // 4 départs
         // P = 7,5/0,89 + 4/0,87 + 9 + 0,5 × 3,68 = 23,87 kW avant ks
@@ -49,12 +51,31 @@ public class CalculProjetTests
     public void Simultaneite_forcee_est_retenue_et_tracee()
     {
         var projet = ProjetExemple();
-        projet.ForcagesArrivee[CodesCalcul.Simultaneite] = new Forcage { Valeur = 1, Motif = "tout fonctionne ensemble" };
+        projet.ForcagesArrivee[CodesCalcul.Simultaneite] = new Forcage { Valeur = 0.9, Motif = "deux axes jamais ensemble" };
 
         var r = CalculProjet.Calculer(projet);
 
-        Assert.Equal(1, r.CoefficientSimultaneite);
+        Assert.Equal(0.9, r.CoefficientSimultaneite);
         Assert.Contains(r.NoteArrivee.Lignes, l => l.Identifiant == "ARR-KS" && l.Statut == StatutCalcul.Forcee);
+    }
+
+    [Fact]
+    public void Simultaneite_vaut_1_par_defaut_sur_une_armoire_de_machine()
+    {
+        var r = CalculProjet.Calculer(ProjetExemple());
+        Assert.Equal(1, r.CoefficientSimultaneite);
+    }
+
+    [Fact]
+    public void Simultaneite_ne_descend_pas_sous_le_guide_UTE()
+    {
+        var projet = ProjetExemple();
+        projet.Reseau.CoefficientSimultaneite = 0.5;
+
+        var r = CalculProjet.Calculer(projet);
+
+        Assert.Equal(0.8, r.CoefficientSimultaneite); // minimum du guide pour 4 départs
+        Assert.Contains(r.NoteArrivee.Lignes, l => l.Libelle == "Coefficient de simultanéité" && l.Statut == StatutCalcul.Alerte);
     }
 
     [Fact]

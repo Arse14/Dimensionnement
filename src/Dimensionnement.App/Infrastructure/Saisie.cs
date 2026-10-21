@@ -72,6 +72,7 @@ public class RegleVraisemblance : ValidationRule
         ["ReservePourcent"] = (0, 200, "La réserve est un pourcentage, en général entre 10 et 30 %."),
         ["PuissanceKw"] = (0, 2000, "La puissance est en kW ; au-delà de 2 MW, vérifier l'unité."),
         ["Longueur"] = (0, 2000, "La longueur est en mètres ; au-delà de 2 km, vérifier l'unité."),
+        ["CoefficientSimultaneite"] = (0.6, 1, "Le coefficient de simultanéité est compris entre 0,6 et 1, sans descendre sous la valeur du guide UTE C 15-105 pour le nombre de départs."),
         ["CoefficientExtension"] = (1, 3, "Le coefficient de sécurité électrique est en général entre 1 (aucune marge) et 1,5."),
         ["TemperatureAmbiante"] = (-40, 70, "La température ambiante est en °C, en général entre -25 et 55 °C."),
         ["IccKiloAmperes"] = (0, 150, "L'Icc est en kA ; une valeur au-delà de 150 kA est inhabituelle en BT."),

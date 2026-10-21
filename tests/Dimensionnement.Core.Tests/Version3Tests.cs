@@ -14,7 +14,8 @@ public class Version3Tests
     /// <summary>Machine type : variateur 7,5 kW, deux moteurs directs, une résistance, alimentation 24 V, automate et AU.</summary>
     internal static Projet ProjetMachine()
     {
-        var projet = new Projet();
+        // ks au minimum du guide : les cotes et calibres attendus de ces tests datent de l'ancien ks automatique.
+        var projet = new Projet { Reseau = { CoefficientSimultaneite = 0.6 } };
         projet.Ajouter(new DepartMoteur { PuissanceKw = 7.5, CourantPlaque = 15.2, Demarrage = ModeDemarrage.Variateur });
         projet.Ajouter(new DepartMoteur { PuissanceKw = 2.2, CourantPlaque = 4.9 });
         projet.Ajouter(new DepartMoteur { PuissanceKw = 1.1, CourantPlaque = 2.6, Demarrage = ModeDemarrage.Inverseur });

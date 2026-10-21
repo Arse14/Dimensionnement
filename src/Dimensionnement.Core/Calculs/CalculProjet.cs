@@ -156,10 +156,20 @@ public static class CalculProjet
             note.Info("Départs derrière un transformateur", $"{alimentesPar.Count} départ(s) 230 V comptés au primaire de leur transformateur 400/230 V.",
                 RefBilan);
 
+        // Armoire de machine : tous les départs peuvent fonctionner ensemble, ks = 1 par défaut. Le bureau d'études peut le
+        // réduire sur justification, mais jamais sous la valeur du guide UTE C 15-105 pour ce nombre de départs.
         var ksTable = Simultaneite(bilan.Count);
-        var ks = note.Valeur(CodesCalcul.Simultaneite, "Coefficient de simultanéité", ksTable,
-            ksTable, "",
-            "ks selon le nombre de départs", $"{bilan.Count} départ(s)", RefBilan);
+        var ksProjet = reseau.CoefficientSimultaneite > 0 ? reseau.CoefficientSimultaneite : 1;
+        var ksSaisi = note.Valeur(CodesCalcul.Simultaneite, "Coefficient de simultanéité", ksProjet, ksProjet, "",
+            "ks saisi dans « Projet et réseau » (1 = tous les départs en service), entre la valeur du guide et 1",
+            $"{bilan.Count} départ(s), minimum du guide UTE C 15-105 : {N(ksTable)}", RefBilan);
+        var ks = Math.Clamp(ksSaisi, ksTable, 1);
+        if (Math.Abs(ks - ksSaisi) > 1e-9)
+            note.Verifier("Coefficient de simultanéité", false,
+                ksSaisi < ksTable
+                    ? $"ks saisi {N(ksSaisi)} inférieur au minimum du guide pour {bilan.Count} départ(s) : {N(ksTable)} retenu."
+                    : $"ks saisi {N(ksSaisi)} supérieur à 1 : 1 retenu.",
+                RefBilan, StatutCalcul.Alerte);
 
         var s = ks * Math.Sqrt(p * p + q * q);
         var cosPhi = s > 0 ? ks * p / s : 1;
