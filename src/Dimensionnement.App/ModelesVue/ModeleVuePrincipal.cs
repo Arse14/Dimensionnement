@@ -535,6 +535,13 @@ public partial class ModeleVuePrincipal : Observable
 
     public string ResumeVentilation => Resume(ThermiqueVentilation);
 
+    /// <summary>Couleur des résumés thermiques : vert quand tout est conforme, orange à vérifier, rouge si insuffisant.</summary>
+    public StatutCalcul StatutVentilation => Statut(ThermiqueVentilation);
+    public StatutCalcul StatutThermique => Statut(Resultat.Thermique);
+
+    static StatutCalcul Statut(Core.Armoire.ResultatThermique? t) =>
+        t is null ? StatutCalcul.Info : t.Note.StatutGlobal == StatutCalcul.Info ? StatutCalcul.Conforme : t.Note.StatutGlobal;
+
     public string ResumeThermique => Resume(Resultat.Thermique);
 
     static string Resume(Core.Armoire.ResultatThermique? thermique) => thermique switch

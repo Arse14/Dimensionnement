@@ -160,3 +160,16 @@ public class VentilationCoffretTests
         CalculProjet.Calculer(projet);
     }
 }
+
+public class StatutVentilationTests
+{
+    [Fact]
+    public void Ventilation_suffisante_sans_alerte()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        projet.Armoire.Forcages[Armoire.CalculThermique.CodePuissance] = Version3Tests.Force(300);
+        var t = CalculProjet.Calculer(projet).Thermique!;
+        Assert.Equal(Armoire.SolutionThermique.Ventilation, t.Solution);
+        Assert.DoesNotContain(t.Note.Lignes, l => l.Statut is StatutCalcul.Alerte or StatutCalcul.NonConforme);
+    }
+}

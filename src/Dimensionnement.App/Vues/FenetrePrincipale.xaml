@@ -1217,7 +1217,8 @@
                 <TextBlock Text="BILAN THERMIQUE – IEC TR 60890" Style="{StaticResource TitrePanneau}"/>
                 <TextBlock Text="{Binding Nom, StringFormat='Réglages du {0} (choisi dans la vue d’armoire)'}" FontWeight="SemiBold"
                            Foreground="{StaticResource Accent}" Margin="0,0,0,8" Visibility="{Binding Coffret, Converter={StaticResource VraiVisible}}"/>
-                <TextBlock TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource Accent}" Margin="0,0,0,8"
+                <TextBlock TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,8"
+                           Foreground="{Binding DataContext.StatutThermique, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource StatutCouleur}}"
                            Text="{Binding DataContext.ResumeThermique, RelativeSource={RelativeSource AncestorType=Window}}"/>
                 <Button Content="Réglages de la ventilation…" HorizontalAlignment="Left" Margin="0,0,0,8" Padding="10,3"
                         ToolTip="Thermostat ou marche continue, position des ventilateurs, modèle imposé"
@@ -1273,7 +1274,8 @@
                 <TextBlock Style="{StaticResource TitrePanneau}">
                     <Run Text="VENTILATION –"/> <Run Text="{Binding Nom, Mode=OneWay}"/>
                 </TextBlock>
-                <TextBlock TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource Accent}" Margin="0,0,0,8"
+                <TextBlock TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,8"
+                           Foreground="{Binding DataContext.StatutVentilation, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource StatutCouleur}}"
                            Text="{Binding DataContext.ResumeVentilation, RelativeSource={RelativeSource AncestorType=Window}}"/>
                 <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
                            Text="Les ventilateurs à filtre sont ajoutés par le bilan thermique quand la convection ne suffit pas, ou quand les variateurs ont un dégagement réduit. Ces réglages s'appliquent à cette enveloppe."/>

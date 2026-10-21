@@ -174,9 +174,10 @@ public static class CalculThermique
                     // Débit utile une fois retirées les pertes de charge des filtres : V × ΔT / 3,1 évacués en plus des parois.
                     var utile = nombre * modele.Debit / MajorationFiltres;
                     ventilee = c.TemperatureAmbianteMax + p / (k * ae + utile / 3.1);
+                    // La ventilation retenue règle le problème : l'échauffement sans équipement est une information, pas une alerte.
                     if (ti > c.TemperatureInterieureMax)
-                        note.Verifier("Température intérieure", false,
-                            $"{N(ti, 1)} °C > {N(c.TemperatureInterieureMax, 0)} °C : ventilation forcée nécessaire.", Ref, StatutCalcul.Alerte);
+                        note.Info("Température intérieure",
+                            $"{N(ti, 1)} °C > {N(c.TemperatureInterieureMax, 0)} °C sans équipement : ventilation forcée nécessaire.", Ref);
                     note.Info("Débit d'air nécessaire",
                         $"V = 3,1 × (P − k × Ae × ΔT) / ΔT = 3,1 × ({N(p, 0)} − {N(evacuee, 0)}) / {N(ecart, 0)} = {N(debit, 0)} m³/h ; " +
                         $"avec {N((MajorationFiltres - 1) * 100, 0)} % de pertes de charge des filtres : {N(besoin, 0)} m³/h à installer.", Ref);
