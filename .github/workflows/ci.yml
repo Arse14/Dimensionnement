@@ -74,8 +74,14 @@ jobs:
         run: |
           # Version portable : l'exécutable prêt à lancer, sans installation.
           cd publication && zip -r "../Dimensionnement-${{ github.ref_name }}-portable-windows-x64.zip" . && cd ..
-          gh release create "${{ github.ref_name }}" installation/*.exe "Dimensionnement-${{ github.ref_name }}-portable-windows-x64.zip" \
-            --repo "${{ github.repository }}" --title "Dimensionnement ${{ github.ref_name }}" --generate-notes
+          fichiers=(installation/*.exe "Dimensionnement-${{ github.ref_name }}-portable-windows-x64.zip")
+          # Release déjà créée à la main sur GitHub avec cette étiquette : on y joint les fichiers.
+          if gh release view "${{ github.ref_name }}" --repo "${{ github.repository }}" > /dev/null 2>&1; then
+            gh release upload "${{ github.ref_name }}" "${fichiers[@]}" --repo "${{ github.repository }}" --clobber
+          else
+            gh release create "${{ github.ref_name }}" "${fichiers[@]}" \
+              --repo "${{ github.repository }}" --title "Dimensionnement électrique ${{ github.ref_name }}" --generate-notes
+          fi
 
   # Ne garde que les 3 derniers exécutables publiés, toutes branches confondues.
   menage:
