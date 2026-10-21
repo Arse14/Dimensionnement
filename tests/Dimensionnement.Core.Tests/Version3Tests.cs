@@ -603,3 +603,25 @@ public class VentilationAutomatiqueTests
         Assert.Equal("NSYCVF165M230PF", choix!.Value.Modele.Reference);
     }
 }
+
+public class MontageSectionneurTests
+{
+    [Theory]
+    [InlineData(MontageSectionneur.Porte)]
+    [InlineData(MontageSectionneur.CoteArmoire)]
+    public void Sectionneur_hors_plaque_ne_prend_pas_de_place_et_sort_des_zones(MontageSectionneur montage)
+    {
+        var projet = Version3Tests.ProjetMachine();
+        var surPlaque = CalculProjet.Calculer(projet);
+        Assert.Contains(surPlaque.Armoire!.Appareils, a => a.Repere == "QS0");
+
+        projet.Armoire.MontageSectionneur = montage;
+        var r = CalculProjet.Calculer(projet);
+        var qs = r.Arbre.Parcourir().Single(e => e.RepereOrigine == "QS0");
+        Assert.Equal(ZoneCem.HorsArmoire, qs.Zone);
+        Assert.DoesNotContain(r.Armoire!.Appareils, a => a.Repere == "QS0");
+        Assert.Same(qs, r.Armoire.SectionneurHorsPlaque);
+        // Sur le côté, ses pertes sortent du bilan ; en porte, elles restent dans l'armoire.
+        Assert.Equal(montage == MontageSectionneur.CoteArmoire, !r.Thermique!.Postes.Any(p => p.Repere == "QS0"));
+    }
+}

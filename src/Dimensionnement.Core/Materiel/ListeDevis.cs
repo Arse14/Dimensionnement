@@ -124,8 +124,17 @@ public static class ListeDevis
         if (etoileTriangle > 0)
             l.Add(new(Accessoires, "Temporisation étoile-triangle", "bloc additif ou relais temporisé", fabricant, "", etoileTriangle, "u"));
         if (elements.Any(e => e.RepereOrigine == "QS0"))
-            l.Add(new(Accessoires, "Commande rotative extérieure cadenassable", "poignée rouge sur fond jaune (arrêt d'urgence)", fabricant, "", 1, "u", "QS0",
-                "NF EN 60204-1, 5.3"));
+        {
+            var montage = r.Projet.Armoire.MontageSectionneur;
+            l.Add(new(Accessoires, "Commande rotative extérieure cadenassable", "poignée rouge sur fond jaune (arrêt d'urgence)" + montage switch
+                {
+                    MontageSectionneur.PlaqueCommandeFrontale => ", commande frontale par la porte",
+                    MontageSectionneur.CoteArmoire => ", commande latérale",
+                    _ => ", directe en façade",
+                }, fabricant, "", 1, "u", "QS0", "NF EN 60204-1, 5.3"));
+            if (montage == MontageSectionneur.PlaqueCommandeFrontale)
+                l.Add(new(Accessoires, "Axe prolongateur de commande", "longueur selon la profondeur de l'armoire", fabricant, "", 1, "u", "QS0"));
+        }
         var modulaires = elements.Count(e => e.Famille == "Disjoncteur" && e.Courant is > 0 and <= 63);
         if (modulaires > 1)
             l.Add(new(Accessoires, "Peigne de raccordement", "pour disjoncteurs modulaires", fabricant, "",

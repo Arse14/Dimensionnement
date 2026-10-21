@@ -74,6 +74,9 @@ public static class CalculThermique
         var note = new NoteDeCalcul("TH", c.Forcages);
         // Seuls les appareils posés dans cette enveloppe chauffent : l'armoire principale ou un coffret déporté.
         var dedans = armoire.Appareils.Select(a => a.Element).OfType<ElementMateriel>().ToHashSet();
+        // Les IHM en porte et un sectionneur en façade chauffent aussi l'armoire ; un sectionneur sur le côté est dehors.
+        dedans.UnionWith(armoire.Porte.Select(a => a.Element).OfType<ElementMateriel>());
+        if (armoire.SectionneurHorsPlaque is { ExterieurEnveloppe: false } qs) dedans.Add(qs);
         var postes = Postes(r, dedans);
         var appareils = postes.Sum(p => p.PuissanceW);
         var calcule = appareils * (1 + PartCablage);
@@ -198,7 +201,7 @@ public static class CalculThermique
         {
             if (Encombrements.Estimer(e) is not { DissipationW: > 0 } enc) continue;
             // Un appareil sans emprise propre (fusible) chauffe là où est posé son support.
-            if (dedans is not null && !dedans.Contains(enc.Largeur > 0 ? e : parents.GetValueOrDefault(e, e))) continue;
+            if (dedans is not null && !dedans.Contains(e) && !dedans.Contains(enc.Largeur > 0 ? e : parents.GetValueOrDefault(e, e))) continue;
             var service = e.DepartId is { } id && courants.TryGetValue(id, out var ib) ? ib : r.CourantEmploi;
             var charge = e.Famille switch
             {

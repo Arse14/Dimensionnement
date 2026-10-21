@@ -14,6 +14,17 @@ public enum InstallationEnveloppe
     MilieuRangeeAdossee,
 }
 
+/// <summary>Montage de l'interrupteur-sectionneur général.</summary>
+public enum MontageSectionneur
+{
+    /// <summary>Sur la plaque de montage, poignée en porte par axe prolongateur (commande frontale).</summary>
+    PlaqueCommandeFrontale,
+    /// <summary>Fixé en façade, sur la porte.</summary>
+    Porte,
+    /// <summary>Sur le côté de l'armoire, à l'extérieur (commande latérale).</summary>
+    CoteArmoire,
+}
+
 /// <summary>Fabricant retenu pour le matériel de puissance et de protection.</summary>
 public enum FabricantMateriel { Schneider, ABB, Siemens, Legrand }
 
@@ -56,6 +67,9 @@ public class ConfigurationArmoire
 {
     /// <summary>Place libre à garder sur les rails pour les évolutions, en %.</summary>
     public double ReservePourcent { get; set; } = 25;
+
+    /// <summary>Montage du sectionneur général : hors plaque (porte, côté), il ne prend pas de place et sort des zones CEM.</summary>
+    public MontageSectionneur MontageSectionneur { get; set; } = MontageSectionneur.PlaqueCommandeFrontale;
 
     public MarqueEnveloppe Marque { get; set; } = MarqueEnveloppe.Rittal;
 

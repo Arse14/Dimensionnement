@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using Dimensionnement.Core.Armoire;
 using Dimensionnement.Core.Materiel;
+using Dimensionnement.Core.Modele;
 using Dimensionnement.Core.Rapport;
 
 namespace Dimensionnement.App.Infrastructure;
@@ -309,6 +310,34 @@ public class VueArmoire : Border
             };
             Panel.SetZIndex(cadre, 40);
             Placer(cadre, x.X, x.Y);
+        }
+
+        // Sectionneur général hors plaque : sur la porte à droite à mi-hauteur, ou à cheval sur la paroi droite quand il est sur le côté.
+        if (a.SectionneurHorsPlaque is { } qs)
+        {
+            const double l = 90, h = 140;
+            var cote = a.MontageSectionneur == MontageSectionneur.CoteArmoire;
+            var bloc = new Border
+            {
+                Width = l, Height = h, CornerRadius = new CornerRadius(4), Background = Pinceau("#33F5C069"), Tag = "Porte",
+                ToolTip = $"{qs.Repere} – {qs.Designation}\n{qs.Calibre}" + (qs.Reference.Length > 0 ? $"\n{qs.Fabricant} {qs.Reference}" : "") +
+                          "\nHors plaque : hors zones CEM" + (cote ? " et hors bilan thermique" : ""),
+                Child = new Grid
+                {
+                    Children =
+                    {
+                        new System.Windows.Shapes.Rectangle { Stroke = Pinceau("#F5C069"), StrokeThickness = 3, StrokeDashArray = new DoubleCollection { 5, 3 }, RadiusX = 4, RadiusY = 4 },
+                        new Viewbox
+                        {
+                            Margin = new Thickness(6), StretchDirection = StretchDirection.DownOnly,
+                            Child = new TextBlock { Text = $"{qs.Repere}\n{(cote ? "(côté)" : "(porte)")}", TextAlignment = TextAlignment.Center,
+                                FontWeight = FontWeights.Bold, FontSize = 22, Foreground = Pinceau("#F5C069") },
+                        },
+                    },
+                },
+            };
+            Panel.SetZIndex(bloc, 40);
+            Placer(bloc, cote ? a.LargeurTotale - l / 2 : a.LargeurTotale - l - 40, (a.Hauteur - h) / 2);
         }
 
         // Ventilateurs à filtre en bas de porte, côte à côte à droite, et leurs grilles de sortie en haut, à la même verticale.

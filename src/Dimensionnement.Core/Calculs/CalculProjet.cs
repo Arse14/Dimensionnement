@@ -194,8 +194,16 @@ public static class CalculProjet
         var sectionneur = arbre
             .Ajouter(new ElementMateriel { Repere = "W0", Famille = "Câble", Designation = $"Câble d'arrivée cuivre {reseau.CableArrivee.Isolant}",
                 Calibre = $"{conducteurs}G{N(cable.Section)} mm², {N(reseau.CableArrivee.Longueur)} m" })
-            .Ajouter(new ElementMateriel { Repere = "QS0", Famille = "Interrupteur-sectionneur", Designation = "Interrupteur-sectionneur général",
-                Calibre = A(qs) }.Avec(qs, CalculDepart.NombrePoles(reseau.Alimentation, reseau.Slt)));
+            .Ajouter(new ElementMateriel { Repere = "QS0", Famille = "Interrupteur-sectionneur", Designation = "Interrupteur-sectionneur général" +
+                    projet.Armoire.MontageSectionneur switch
+                    {
+                        MontageSectionneur.Porte => ", en façade de porte",
+                        MontageSectionneur.CoteArmoire => ", sur le côté de l'armoire (extérieur)",
+                        _ => ", commande frontale",
+                    },
+                Calibre = A(qs), SurParoi = projet.Armoire.MontageSectionneur != MontageSectionneur.PlaqueCommandeFrontale,
+                ExterieurEnveloppe = projet.Armoire.MontageSectionneur == MontageSectionneur.CoteArmoire }
+                .Avec(qs, CalculDepart.NombrePoles(reseau.Alimentation, reseau.Slt)));
         AjouterProtectionsDeTete(sectionneur, reseau, note);
         var tete = sectionneur
             .Ajouter(new ElementMateriel { Repere = "QG", Famille = "Disjoncteur", Designation = "Disjoncteur général",
@@ -311,7 +319,8 @@ public static class CalculProjet
                 Designation = $"Ventilateur à filtre encastré en porte, {m.Debit:0} m³/h, avec grille de sortie" + lieu,
                 Calibre = $"{m.Debit:0} m³/h, découpe {m.Decoupe:0} × {m.Decoupe:0} mm, {m.Puissance:0.#} W 230 V",
                 Quantite = t.NombreVentilateurs, Fabricant = $"{m.Fabricant} – {m.Gamme}", Reference = m.Reference,
-                SurParoi = true, CoffretId = enveloppe.Id, AVerifier = !m.Verifie };
+                // Ses pertes partent avec l'air extrait : elles ne s'ajoutent pas au bilan.
+                SurParoi = true, ExterieurEnveloppe = true, CoffretId = enveloppe.Id, AVerifier = !m.Verifie };
             sectionneur.Ajouter(protection).Ajouter(thermostat).Ajouter(ventilateur);
             ajoutes.Add(protection);
         }

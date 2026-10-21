@@ -59,6 +59,9 @@ public class ElementMateriel
     /// <summary>Encastré dans une paroi de l'enveloppe (ventilateur à filtre) : pas de place sur la plaque.</summary>
     public bool SurParoi { get; set; }
 
+    /// <summary>Monté à l'extérieur de l'enveloppe (sectionneur sur le côté) : ses pertes ne chauffent pas l'armoire.</summary>
+    public bool ExterieurEnveloppe { get; set; }
+
     /// <summary>Coffret déporté imposé par le calcul (ventilation d'un coffret) ; null = selon l'affectation de l'utilisateur.</summary>
     public Guid? CoffretId { get; set; }
 
@@ -76,7 +79,7 @@ public class ElementMateriel
     public Guid? DepartId { get; set; }
 
     /// <summary>Zone CEM de l'armoire où l'appareil doit être implanté.</summary>
-    public ZoneCem Zone => Famille switch
+    public ZoneCem Zone => SurParoi ? ZoneCem.HorsArmoire : Famille switch
     {
         "Variateur" or "Démarreur progressif" or "Contacteur" or "Relais thermique" => ZoneCem.Sale,
         "Câble" or "Moteur" or "Récepteur" or "Prise de courant" or "Réseau" or "Capteur de sécurité" or "Périphérique machine" => ZoneCem.HorsArmoire,

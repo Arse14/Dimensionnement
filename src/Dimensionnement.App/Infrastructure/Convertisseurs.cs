@@ -101,6 +101,9 @@ public class LibelleEnum : IValueConverter
         MateriauEnveloppe.Aluminium => "Aluminium (k = 12)",
         MateriauEnveloppe.Polyester => "Polyester (k = 3,5)",
         InstallationEnveloppe i => Core.Armoire.CalculThermique.LibelleInstallation(i) is var l ? char.ToUpper(l[0]) + l[1..] : "",
+        MontageSectionneur.PlaqueCommandeFrontale => "Sur plaque, commande frontale par la porte",
+        MontageSectionneur.Porte => "En façade de porte (hors plaque)",
+        MontageSectionneur.CoteArmoire => "Sur le côté de l'armoire, à l'extérieur",
         FabricantMateriel.Schneider => "Schneider Electric",
         MarqueFamille.Projet => "Marque du projet",
         MarqueFamille.Schneider => "Schneider Electric",
@@ -192,6 +195,7 @@ public static class Listes
     public static MarqueAutomate[] MarquesAutomate { get; } = Enum.GetValues<MarqueAutomate>();
     public static MateriauEnveloppe[] Materiaux { get; } = Enum.GetValues<MateriauEnveloppe>();
     public static InstallationEnveloppe[] Installations { get; } = Enum.GetValues<InstallationEnveloppe>();
+    public static MontageSectionneur[] MontagesSectionneur { get; } = Enum.GetValues<MontageSectionneur>();
     public static FabricantMateriel[] FabricantsMateriel { get; } = Enum.GetValues<FabricantMateriel>();
     public static string[] FabricantsProjet { get; } = { Projet.FabricantParDefaut };
     public static MarqueVariateur[] MarquesVariateur { get; } = Enum.GetValues<MarqueVariateur>();

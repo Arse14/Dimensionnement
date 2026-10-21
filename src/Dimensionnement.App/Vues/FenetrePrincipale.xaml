@@ -1156,6 +1156,11 @@
                     <ComboBox ItemsSource="{x:Static inf:Listes.MarquesEnveloppe}" SelectedItem="{inf:Lien Projet.Armoire.Marque}"/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Sectionneur général" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.MontagesSectionneur}" SelectedItem="{inf:Lien Projet.Armoire.MontageSectionneur}"
+                              ToolTip="Hors plaque (porte ou côté), il ne prend pas de place sur la plaque et ne compte pas dans les zones CEM"/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Réserve de place sur les rails (%)" Style="{StaticResource Etiquette}"/>
                     <TextBox Text="{inf:Lien Projet.Armoire.ReservePourcent}"/>
                 </DockPanel>

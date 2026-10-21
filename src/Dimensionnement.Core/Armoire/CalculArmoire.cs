@@ -64,6 +64,10 @@ public class ResultatArmoire
     /// <summary>Bilan thermique de cette enveloppe.</summary>
     public ResultatThermique? Thermique { get; set; }
 
+    /// <summary>Sectionneur général monté hors plaque (en porte ou sur le côté) et son montage ; null s'il est sur la plaque.</summary>
+    public ElementMateriel? SectionneurHorsPlaque { get; set; }
+    public MontageSectionneur MontageSectionneur { get; set; }
+
     /// <summary>L'armoire principale puis ses coffrets déportés.</summary>
     public IEnumerable<ResultatArmoire> Enveloppes => Coffrets.Prepend(this);
 
@@ -183,6 +187,14 @@ public static class CalculArmoire
         var porte = r.Arbre.Parcourir().Where(e => e.EnPorte).ToList();
         var principale = Calculer(r, tous.Where(a => Coffret(a) is null).ToList(), config, enveloppes, porte);
         principale.Nom = "Armoire principale";
+        if (r.Arbre.Parcourir().FirstOrDefault(e => e.RepereOrigine == "QS0" && e.SurParoi) is { } qs)
+        {
+            principale.SectionneurHorsPlaque = qs;
+            principale.MontageSectionneur = config.MontageSectionneur;
+            principale.Note.Info("Sectionneur général", $"{qs.Repere} monté " + (config.MontageSectionneur == MontageSectionneur.Porte
+                ? "en façade de porte : pas de place sur la plaque, hors zones CEM ; ses pertes restent dans l'armoire."
+                : "sur le côté de l'armoire, à l'extérieur : pas de place sur la plaque, hors zones CEM et hors bilan thermique."), RefArmoire);
+        }
         principale.Coffrets = config.Coffrets.Select(c =>
         {
             var coffret = Calculer(r, tous.Where(a => Coffret(a) == c.Id).ToList(), c, enveloppes, Array.Empty<ElementMateriel>());

@@ -27,11 +27,18 @@ public static class Encombrements
     /// <summary>Encombrement de l'appareil, ou null s'il n'est pas monté dans l'armoire.</summary>
     public static Encombrement? Estimer(ElementMateriel e)
     {
+        if (e.HorsArmoire) return null;
+        if (e.Loge || e.EnPorte) return new(0, 0, 0, e.PertesW);
+        // En porte ou sur une paroi : aucune place sur la plaque ; ses pertes chauffent l'armoire sauf s'il est à l'extérieur.
+        if (e.SurParoi) return new(0, 0, 0, e.ExterieurEnveloppe ? 0 : SurPlaque(e)?.DissipationW ?? 0);
+        return SurPlaque(e);
+    }
+
+    static Encombrement? SurPlaque(ElementMateriel e)
+    {
         var q = Math.Max(1, e.Quantite);
         var poles = e.Poles > 0 ? e.Poles : 3;
         var i = e.Courant;
-        if (e.HorsArmoire) return null;
-        if (e.Loge || e.EnPorte || e.SurParoi) return new(0, 0, 0, e.SurParoi ? 0 : e.PertesW);
         if (e.LargeurMm > 0 && e.HauteurMm > 0)
             return new(e.LargeurMm, e.HauteurMm, e.ProfondeurMm, e.PertesW)
             {
