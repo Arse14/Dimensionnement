@@ -22,7 +22,7 @@ public static class ExportExcel
             "Section (mm²)", "ΔU départ (%)", "Statut");
         ligne = 2;
         foreach (var d in r.Departs)
-            Remplir(departs, ligne++, $"D{d.Depart.Numero:00}", d.Depart.Rubrique, d.Depart.Designation, d.Depart.TypeLibelle,
+            Remplir(departs, ligne++, $"{d.Depart.Code}", d.Depart.Rubrique, d.Depart.Designation, d.Depart.TypeLibelle,
                 Math.Round(d.CourantEmploi, 2), d.CalibreProtection, d.Section, Math.Round(d.ChuteTension, 2), d.Note.StatutGlobal.ToString());
 
         var notes = Feuille(classeur, "Notes de calcul", "Identifiant", "Libellé", "Valeur calculée", "Valeur retenue", "Unité",

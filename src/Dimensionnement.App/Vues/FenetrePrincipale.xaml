@@ -48,6 +48,11 @@
         <DataTemplate x:Key="ChampsDepart" DataType="{x:Type mod:Depart}">
             <StackPanel>
                 <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Repère du départ" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien Repere}"
+                             ToolTip="Nom libre du départ (ex. =M1, CONVOYEUR 2) ; vide = D + numéro. Les repères des appareils se renomment par clic droit."/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Désignation" Style="{StaticResource Etiquette}"/>
                     <TextBox Text="{inf:Lien Designation}"/>
                 </DockPanel>
@@ -181,7 +186,7 @@
         <DataTemplate DataType="{x:Type mod:DepartMoteur}">
             <StackPanel>
                 <TextBlock Style="{StaticResource TitrePanneau}">
-                    <Run Text="DÉPART MOTEUR D"/><Run Text="{Binding Numero, Mode=OneWay, StringFormat={}{0:00}}"/>
+                    <Run Text="DÉPART MOTEUR "/><Run Text="{Binding Code, Mode=OneWay}"/>
                 </TextBlock>
                 <TextBlock Text="Plaque signalétique" Style="{StaticResource Section}" Margin="0,0,0,6"/>
                 <DockPanel Style="{StaticResource Ligne}">
@@ -301,7 +306,7 @@
         <DataTemplate DataType="{x:Type mod:DepartResistif}">
             <StackPanel>
                 <TextBlock Style="{StaticResource TitrePanneau}">
-                    <Run Text="DÉPART RÉSISTIF D"/><Run Text="{Binding Numero, Mode=OneWay, StringFormat={}{0:00}}"/>
+                    <Run Text="DÉPART RÉSISTIF "/><Run Text="{Binding Code, Mode=OneWay}"/>
                 </TextBlock>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Puissance (kW)" Style="{StaticResource Etiquette}"/>
@@ -319,7 +324,7 @@
         <DataTemplate DataType="{x:Type mod:DepartPrise}">
             <StackPanel>
                 <TextBlock Style="{StaticResource TitrePanneau}">
-                    <Run Text="CIRCUIT PRISES D"/><Run Text="{Binding Numero, Mode=OneWay, StringFormat={}{0:00}}"/>
+                    <Run Text="CIRCUIT PRISES "/><Run Text="{Binding Code, Mode=OneWay}"/>
                 </TextBlock>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Calibre des prises (A)" Style="{StaticResource Etiquette}"/>
@@ -337,7 +342,7 @@
         <DataTemplate DataType="{x:Type mod:DepartGenerique}">
             <StackPanel>
                 <TextBlock Style="{StaticResource TitrePanneau}">
-                    <Run Text="CHARGE GÉNÉRIQUE D"/><Run Text="{Binding Numero, Mode=OneWay, StringFormat={}{0:00}}"/>
+                    <Run Text="CHARGE GÉNÉRIQUE "/><Run Text="{Binding Code, Mode=OneWay}"/>
                 </TextBlock>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Puissance absorbée (kW)" Style="{StaticResource Etiquette}"/>
@@ -359,7 +364,7 @@
         <DataTemplate DataType="{x:Type mod:DepartCoffret}">
             <StackPanel>
                 <TextBlock Style="{StaticResource TitrePanneau}">
-                    <Run Text="COFFRET DÉPORTÉ D"/><Run Text="{Binding Numero, Mode=OneWay, StringFormat={}{0:00}}"/>
+                    <Run Text="COFFRET DÉPORTÉ "/><Run Text="{Binding Code, Mode=OneWay}"/>
                 </TextBlock>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Puissance installée du coffret (kW)" Style="{StaticResource Etiquette}"/>
@@ -386,7 +391,7 @@
         <DataTemplate DataType="{x:Type mod:DepartAlimentation24V}">
             <StackPanel>
                 <TextBlock Style="{StaticResource TitrePanneau}">
-                    <Run Text="{Binding TypeLibelle, Mode=OneWay}"/><Run Text=" – D"/><Run Text="{Binding Numero, Mode=OneWay, StringFormat={}{0:00}}"/>
+                    <Run Text="{Binding TypeLibelle, Mode=OneWay}"/><Run Text=" – "/><Run Text="{Binding Code, Mode=OneWay}"/>
                 </TextBlock>
                 <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
                            Text="Dimensionnée sur les consommateurs de la commande raccordés à cette source (automate, IHM, sécurité, bobines, capteurs, consommateurs déclarés) : voir la note de calcul et la page « Bilan 24 V »."/>

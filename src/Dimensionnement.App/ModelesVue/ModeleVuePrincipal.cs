@@ -412,7 +412,7 @@ public class ModeleVuePrincipal : Observable
 
     public string TitreNote => Selection switch
     {
-        Depart d => $"NOTE DE CALCUL – D{d.Numero:00} {d.Designation}".ToUpperInvariant(),
+        Depart d => $"NOTE DE CALCUL – {d.Code} {d.Designation}".ToUpperInvariant(),
         ConfigurationSecurite => "NOTE DE CALCUL – SÉCURITÉ MACHINE",
         ConfigurationAutomate => "NOTE DE CALCUL – AUTOMATE",
         PageArmoire => "NOTE DE CALCUL – ARMOIRE ET IMPLANTATION",
@@ -448,7 +448,7 @@ public class ModeleVuePrincipal : Observable
             // Un besoin sans ajout (refusé) ou rattaché à un transformateur existant demande aussi un recalcul.
             Resultat = CalculerProjet();
             if (ajoutees.Count > 0)
-                MessageBox.Show("Ajouté automatiquement : " + string.Join(", ", ajoutees.Select(a => $"D{a.Numero:00} {a.Designation}")) +
+                MessageBox.Show("Ajouté automatiquement : " + string.Join(", ", ajoutees.Select(a => $"{a.Code} {a.Designation}")) +
                                 ".\nIl est dimensionné sur les consommateurs du projet ; vous pouvez changer sa marque, sa technologie ou le supprimer.",
                     "Sources de commande", MessageBoxButton.OK, MessageBoxImage.Information);
         }
@@ -522,7 +522,7 @@ public class ModeleVuePrincipal : Observable
     void SupprimerDepart()
     {
         if (Selection is not Depart d) return;
-        if (MessageBox.Show($"Supprimer le départ D{d.Numero:00} « {d.Designation} » ?", "Supprimer un départ",
+        if (MessageBox.Show($"Supprimer le départ {d.Code} « {d.Designation} » ?", "Supprimer un départ",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         _projet.Departs.Remove(d);
         // Une source supprimée n'est pas rajoutée aussitôt : l'alerte de la note de l'arrivée reste.

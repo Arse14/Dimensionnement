@@ -20,7 +20,7 @@ public static class ExplicationBilan
     public static IReadOnlyList<LigneBilan> Lignes(ResultatProjet r)
     {
         var alimentes = SourcesCommande.AlimentesPar(r.Projet);
-        return r.Departs.Select(d => new LigneBilan($"D{d.Depart.Numero:00} {d.Depart.Designation}".Trim(), d.Depart.TypeLibelle,
+        return r.Departs.Select(d => new LigneBilan($"{d.Depart.Code} {d.Depart.Designation}".Trim(), d.Depart.TypeLibelle,
                 d.PuissanceActive, d.PuissanceReactive, alimentes.ContainsKey(d.Depart.Id) ? 0 : d.Depart.CoefficientUtilisation,
                 alimentes.ContainsKey(d.Depart.Id) ? "derrière un transformateur 400/230 V : compté au primaire de celui-ci" : ""))
             .ToList();

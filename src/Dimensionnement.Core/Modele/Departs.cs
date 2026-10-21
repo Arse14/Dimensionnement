@@ -10,13 +10,31 @@ namespace Dimensionnement.Core.Modele;
 [JsonDerivedType(typeof(DepartGenerique), "generique")]
 [JsonDerivedType(typeof(DepartCoffret), "coffret")]
 [JsonDerivedType(typeof(DepartAlimentation24V), "alimentation24v")]
-public abstract class Depart
+public abstract class Depart : System.ComponentModel.INotifyPropertyChanged
 {
+    public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+
     public Guid Id { get; set; } = Guid.NewGuid();
 
     /// <summary>Numéro du départ, qui sert à construire les repères (Q1, KM1, M1…).</summary>
     public int Numero { get; set; }
     public string Designation { get; set; } = "";
+
+    /// <summary>Repère choisi par l'utilisateur (ex. =M1, CONVOYEUR 2) ; vide = D + numéro.</summary>
+    public string Repere
+    {
+        get => _repere;
+        set
+        {
+            _repere = value?.Trim() ?? "";
+            // L'en-tête de la page du départ suit le nouveau repère.
+            PropertyChanged?.Invoke(this, new(nameof(Code)));
+        }
+    }
+    string _repere = "";
+
+    /// <summary>Repère affiché du départ : celui de l'utilisateur, sinon D01, D02…</summary>
+    [JsonIgnore] public string Code => _repere.Length > 0 ? _repere : $"D{Numero:00}";
 
     /// <summary>Rubrique de l'armoire où le départ est rangé (Puissance, Commande, Auxiliaires…).</summary>
     public string Rubrique { get; set; } = "Puissance";

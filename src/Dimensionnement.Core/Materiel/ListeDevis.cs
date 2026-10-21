@@ -140,7 +140,7 @@ public static class ListeDevis
                     string.Join(", ", servos.Select(d => $"U{d.Depart.Numero}")), "Si la résistance interne du servovariateur ne suffit pas"));
             // Au-delà de cette longueur, les capacités du câble blindé imposent en général une self de sortie ou un filtre dv/dt.
             foreach (var d in r.Departs.Where(d => d.Depart is DepartMoteur { SurVariateur: true } m && m.Cable.Longueur > LongueurSelfSortie))
-                l.Add(new(Accessoires, "Self de sortie moteur / filtre dv/dt", $"{N(d.CourantEmploi)} A, 400 V", fabricant, "", 1, "u", $"D{d.Depart.Numero:00}",
+                l.Add(new(Accessoires, "Self de sortie moteur / filtre dv/dt", $"{N(d.CourantEmploi)} A, 400 V", fabricant, "", 1, "u", $"{d.Depart.Code}",
                     $"Câble blindé de {N(d.Depart.Cable.Longueur)} m > {N(LongueurSelfSortie)} m : à confirmer selon la notice du variateur"));
         }
     }

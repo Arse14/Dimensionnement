@@ -51,7 +51,7 @@ public static class CalculSelectivite
         foreach (var d in r.Departs)
         {
             var protection = d.Materiel;
-            var nom = $"D{d.Depart.Numero:00}";
+            var nom = $"{d.Depart.Code}";
             var rapport = d.CalibreProtection > 0 ? qg / d.CalibreProtection : double.MaxValue;
             var (imAval, type) = SeuilAval(protection);
             NiveauSelectivite niveau;

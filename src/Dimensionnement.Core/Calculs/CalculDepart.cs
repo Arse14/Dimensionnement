@@ -66,7 +66,7 @@ public static class CalculDepart
     static string FormuleCourant(TypeAlimentation a, string suffixe) =>
         a is TypeAlimentation.Mono230 or TypeAlimentation.Bi400 ? $"I = P / (U{suffixe})" : $"I = P / (√3 × U{suffixe})";
 
-    static NoteDeCalcul NouvelleNote(Depart d) => new($"D{d.Numero:00}", d.Forcages);
+    static NoteDeCalcul NouvelleNote(Depart d) => new($"{d.Code}", d.Forcages);
 
     static ResultatDepart Moteur(DepartMoteur m, Reseau reseau, double chuteAmont, FabricantMateriel fabricant, IReadOnlyList<ModeleVariateur> variateurs)
     {

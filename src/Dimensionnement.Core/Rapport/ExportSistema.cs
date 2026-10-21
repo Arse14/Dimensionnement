@@ -36,9 +36,9 @@ public static class ExportSistema
     static string Actionneurs(ResultatDepart d)
     {
         if (d.Depart is DepartMoteur { SurVariateur: true })
-            return $"D{d.Depart.Numero:00} STO variateur U{d.Depart.Numero}";
+            return $"{d.Depart.Code} STO variateur U{d.Depart.Numero}";
         var contacteurs = d.Materiel.Parcourir().Where(e => e.Famille == "Contacteur").Select(e => e.Repere);
-        return $"D{d.Depart.Numero:00} {string.Join(" + ", contacteurs)}";
+        return $"{d.Depart.Code} {string.Join(" + ", contacteurs)}";
     }
 
     static string Champ(string texte) =>

@@ -198,4 +198,18 @@ public class Version6Tests
         Assert.Equal("NSYSF20840", a.Reference);
         Assert.Equal((696.0, 1897.0), (a.PlaqueLargeur, a.PlaqueHauteur));
     }
+
+    [Fact]
+    public void Repere_libre_du_depart_remplace_D01_et_se_conserve()
+    {
+        var projet = new Projet();
+        projet.Ajouter(new DepartMoteur { PuissanceKw = 4, CourantPlaque = 8.5 });
+        projet.Departs[0].Repere = " =M1 CONVOYEUR ";
+        var r = CalculProjet.Calculer(projet);
+
+        Assert.Equal("=M1 CONVOYEUR", projet.Departs[0].Code);
+        Assert.Contains(ExplicationBilan.Lignes(r), l => l.Depart.StartsWith("=M1 CONVOYEUR"));
+        var relu = Dimensionnement.Core.Persistance.FichierProjet.Deserialiser(Dimensionnement.Core.Persistance.FichierProjet.Serialiser(projet));
+        Assert.Equal("=M1 CONVOYEUR", relu.Departs[0].Code);
+    }
 }

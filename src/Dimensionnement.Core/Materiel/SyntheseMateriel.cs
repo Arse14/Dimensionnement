@@ -34,7 +34,7 @@ public static class SyntheseMateriel
         foreach (var rubrique in r.Departs.GroupBy(d => d.Depart.Rubrique is { Length: > 0 } x ? x : "Puissance"))
         {
             var cartes = rubrique.Select(d => new CarteMateriel(
-                $"D{d.Depart.Numero:00}  {d.Depart.Designation}".TrimEnd(),
+                $"{d.Depart.Code}  {d.Depart.Designation}".TrimEnd(),
                 d.Depart.TypeLibelle,
                 d.Note.StatutGlobal,
                 Chaine(d.Materiel),

@@ -387,7 +387,7 @@ public static class CalculProjet
                 contacteurs * CourantBobine(t), ConsommationCommande.Actionneurs, t);
         }
         foreach (var m in projet.Departs.OfType<DepartMoteur>().Where(m => m.Frein && m.AlimentationFrein == AlimentationFrein.Continu24))
-            yield return new($"Frein du moteur D{m.Numero:00} ({m.PuissanceFreinW:0} W)", m.PuissanceFreinW / 24, ConsommationCommande.Actionneurs);
+            yield return new($"Frein du moteur {m.Code} ({m.PuissanceFreinW:0} W)", m.PuissanceFreinW / 24, ConsommationCommande.Actionneurs);
         var a = projet.Automate;
         if (!a.Actif) yield break;
         var stations = a.Stations.Where(s => s.DansArmoire).ToList();

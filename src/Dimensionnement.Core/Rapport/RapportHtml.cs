@@ -68,7 +68,7 @@ public static class RapportHtml
         sb.Append("<h2>3. Liste des départs</h2><table><tr><th>N°</th><th>Rubrique</th><th>Désignation</th><th>Type</th>" +
                   "<th>Ib</th><th>Protection</th><th>Section</th><th>ΔU départ</th><th>Statut</th></tr>");
         foreach (var d in r.Departs)
-            sb.Append($"<tr><td>D{d.Depart.Numero:00}</td><td>{E(d.Depart.Rubrique)}</td><td>{E(d.Depart.Designation)}</td>" +
+            sb.Append($"<tr><td>{d.Depart.Code}</td><td>{E(d.Depart.Rubrique)}</td><td>{E(d.Depart.Designation)}</td>" +
                       $"<td>{E(d.Depart.TypeLibelle)}</td><td>{A(d.CourantEmploi)}</td><td>{A(d.CalibreProtection)}</td>" +
                       $"<td>{Mm2(d.Section)}</td><td>{Pct(d.ChuteTension)}</td>" +
                       $"<td class=\"{d.Note.StatutGlobal}\">{Statut(d.Note.StatutGlobal)}</td></tr>");
@@ -81,7 +81,7 @@ public static class RapportHtml
         sb.Append("<h2>5. Notes de calcul des départs</h2>");
         foreach (var d in r.Departs)
         {
-            sb.Append($"<div class=\"depart\"><h3>D{d.Depart.Numero:00} – {E(d.Depart.Designation)} ({E(d.Depart.TypeLibelle)})</h3>");
+            sb.Append($"<div class=\"depart\"><h3>{d.Depart.Code} – {E(d.Depart.Designation)} ({E(d.Depart.TypeLibelle)})</h3>");
             Note(sb, d.Note);
             sb.Append("</div>");
         }
