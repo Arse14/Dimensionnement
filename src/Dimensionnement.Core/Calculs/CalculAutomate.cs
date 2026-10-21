@@ -455,7 +455,7 @@ public static class CalculAutomate
                     Calibre = $"{N(modele.Diagonale)}\", {modele.Interface}" + (p.EnPorte ? ", en porte" : ", pupitre machine"),
                     Fabricant = modele.Fabricant, Reference = modele.Reference,
                     LargeurMm = modele.Largeur, HauteurMm = modele.Hauteur, ProfondeurMm = modele.Profondeur,
-                    PertesW = 24 * modele.Consommation, HorsArmoire = true,
+                    PertesW = 24 * modele.Consommation, EnPorte = p.EnPorte, HorsArmoire = !p.EnPorte,
                 });
             }
         }

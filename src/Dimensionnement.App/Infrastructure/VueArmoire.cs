@@ -233,6 +233,34 @@ public class VueArmoire : Border
             }
             Placer(bloc, x.X, x.Y);
         }
+
+        // IHM encastrées dans la porte : en pointillés par-dessus la plaque, vues à travers la porte fermée.
+        foreach (var x in a.Porte)
+        {
+            var cadre = new Border
+            {
+                Width = x.Largeur, Height = x.Hauteur, CornerRadius = new CornerRadius(6),
+                Background = Pinceau("#331F6FEB"), Tag = "Porte",
+                ToolTip = $"{x.Repere} – {x.Designation}\nEn porte : façade {x.Largeur:0} × {x.Hauteur:0} mm, {x.Profondeur:0} mm à l'intérieur, {x.DissipationW:0.#} W",
+                Child = new Grid
+                {
+                    Children =
+                    {
+                        new System.Windows.Shapes.Rectangle
+                        {
+                            Stroke = Pinceau("#58A6FF"), StrokeThickness = 3, StrokeDashArray = new DoubleCollection { 5, 3 }, RadiusX = 6, RadiusY = 6,
+                        },
+                        new Viewbox
+                        {
+                            Margin = new Thickness(6), StretchDirection = StretchDirection.DownOnly,
+                            Child = new TextBlock { Text = $"{x.Repere} (porte)", FontWeight = FontWeights.Bold, FontSize = 22, Foreground = Pinceau("#58A6FF") },
+                        },
+                    },
+                },
+            };
+            Panel.SetZIndex(cadre, 40);
+            Placer(cadre, x.X, x.Y);
+        }
     }
 
     /// <summary>Rend un rail ou une goulotte ajouté déplaçable, avec un menu pour sa longueur, son modèle et sa suppression.</summary>

@@ -89,6 +89,15 @@ public static class SchemaArmoire
             s.Append($"<text x=\"{F(e.CentreX)}\" y=\"{F(e.CentreY)}\" font-size=\"{F(taille)}\" text-anchor=\"middle\" dominant-baseline=\"middle\" " +
                      $"font-weight=\"bold\" fill=\"#1d232a\">{SecurityElement.Escape(e.Repere)}</text>");
         }
+        // IHM encastrées dans la porte : en pointillés, vues à travers la porte fermée.
+        foreach (var e in a.Porte)
+        {
+            s.Append($"<rect x=\"{F(e.X)}\" y=\"{F(e.Y)}\" width=\"{F(e.Largeur)}\" height=\"{F(e.Hauteur)}\" rx=\"6\" fill=\"#1f6feb22\" " +
+                     $"stroke=\"#1f6feb\" stroke-width=\"3\" stroke-dasharray=\"10 6\"><title>{SecurityElement.Escape(e.Repere)} – " +
+                     $"{SecurityElement.Escape(e.Designation)}, en porte</title></rect>");
+            s.Append($"<text x=\"{F(e.CentreX)}\" y=\"{F(e.CentreY)}\" font-size=\"{F(Math.Clamp(e.Largeur / 8, 10, 24))}\" text-anchor=\"middle\" " +
+                     $"dominant-baseline=\"middle\" font-weight=\"bold\" fill=\"#1f6feb\">{SecurityElement.Escape(e.Repere)} (porte)</text>");
+        }
 
         s.Append(etiquettes);
         var y = a.Hauteur + 36;

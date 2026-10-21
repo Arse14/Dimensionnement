@@ -83,6 +83,9 @@ public class ResultatArmoire
     public IReadOnlyList<BandeZone> Bandes { get; init; } = Array.Empty<BandeZone>();
     public IReadOnlyList<SourceChamp> Sources { get; init; } = Array.Empty<SourceChamp>();
 
+    /// <summary>IHM encastrées dans la porte, en coordonnées de l'armoire vue de face.</summary>
+    public IReadOnlyList<AppareilImplante> Porte { get; init; } = Array.Empty<AppareilImplante>();
+
     /// <summary>Champ magnétique reçu par chaque appareil sensible de la zone propre, en A/m.</summary>
     public IReadOnlyDictionary<string, double> Expositions { get; init; } = new Dictionary<string, double>();
 
@@ -158,11 +161,13 @@ public static class CalculArmoire
         var tous = AppareilsArmoire(r, projet);
         Guid? Coffret(AppareilImplante a) =>
             config.Affectations.TryGetValue(CleAffectation(a), out var id) && config.Coffrets.Any(c => c.Id == id) ? id : null;
-        var principale = Calculer(r, tous.Where(a => Coffret(a) is null).ToList(), config, enveloppes);
+        // Les IHM en porte sont sur la porte de l'armoire principale.
+        var porte = r.Arbre.Parcourir().Where(e => e.EnPorte).ToList();
+        var principale = Calculer(r, tous.Where(a => Coffret(a) is null).ToList(), config, enveloppes, porte);
         principale.Nom = "Armoire principale";
         principale.Coffrets = config.Coffrets.Select(c =>
         {
-            var coffret = Calculer(r, tous.Where(a => Coffret(a) == c.Id).ToList(), c, enveloppes);
+            var coffret = Calculer(r, tous.Where(a => Coffret(a) == c.Id).ToList(), c, enveloppes, Array.Empty<ElementMateriel>());
             coffret.Id = c.Id;
             coffret.Nom = c.Nom;
             return coffret;
@@ -174,7 +179,7 @@ public static class CalculArmoire
     public static string CleAffectation(AppareilImplante a) => a.Element is null && a.Famille == "Bornier" ? a.Repere.Split('.')[0] : a.Cle;
 
     static ResultatArmoire Calculer(ResultatProjet r, List<AppareilImplante> elements, ConfigurationArmoire config,
-        IReadOnlyList<ModeleEnveloppe>? enveloppes)
+        IReadOnlyList<ModeleEnveloppe>? enveloppes, IReadOnlyList<ElementMateriel> porte)
     {
         var note = new NoteDeCalcul("ARM", config.Forcages);
         var reserve = Math.Clamp(config.ReservePourcent, 0, 80) / 100;
@@ -186,6 +191,7 @@ public static class CalculArmoire
         var formats = modeles.GroupBy(m => (m.Largeur, m.Hauteur, m.Type)).Select(g => g.First()).ToList();
         var candidats = formats.Where(f => !f.EstArmoire).Select(f => (M: f, N: 1))
             .Concat(formats.Where(f => f.EstArmoire).SelectMany(f => Enumerable.Range(1, CellulesMax).Select(n => (M: f, N: n))))
+            .Where(c => PorteRecoit(porte, c.M.Largeur, c.M.Hauteur))
             .OrderBy(c => c.M.Largeur * c.N * c.M.Hauteur).ThenBy(c => c.M.Hauteur).ToList();
         // Premier passage avec les goulottes par défaut : estimation des fils, puis largeur de goulotte à réserver.
         var gabarit = Gabarit.Defaut;
@@ -227,7 +233,9 @@ public static class CalculArmoire
         var armoire = hauteur >= 1600;
 
         var profondeurAppareils = elements.Count == 0 ? 0 : elements.Max(e => e.Profondeur);
-        var profondeurMini = profondeurAppareils + 100;
+        var profondeurIhm = porte.Count == 0 ? 0 : porte.Max(e => e.ProfondeurMm);
+        // Derrière une IHM en porte, il faut au moins la place d'un appareil modulaire sur rail.
+        var profondeurMini = Math.Max(profondeurAppareils + 100, porte.Count == 0 ? 0 : profondeurIhm + ProfondeurModulaire + JeuIhm);
         var profondeurs = modeles.Where(m => Math.Abs(m.Largeur - largeur) < 1 && Math.Abs(m.Hauteur - hauteur) < 1)
             .Select(m => m.Profondeur).Distinct().OrderBy(p => p).ToArray();
         if (profondeurs.Length == 0) profondeurs = armoire ? new double[] { 400, 500, 600, 800 } : new double[] { 200, 250, 300, 400 };
@@ -235,8 +243,9 @@ public static class CalculArmoire
         var profondeur = imposee
             ? config.ProfondeurImposee
             : note.Valeur(CodeProfondeur, "Profondeur", profondeurMini, profondeurAuto, "mm",
-                "P ≥ profondeur du plus gros appareil + 100 mm (plaque, porte, câblage)",
-                $"appareil le plus profond : {N(profondeurAppareils)} mm", RefArmoire);
+                porte.Count == 0 ? "P ≥ profondeur du plus gros appareil + 100 mm (plaque, porte, câblage)"
+                    : $"P ≥ max(appareil le plus profond + 100 ; IHM en porte + {N(ProfondeurModulaire, 0)} mm d'appareil modulaire + {N(JeuIhm, 0)} mm de jeu)",
+                $"appareil le plus profond : {N(profondeurAppareils)} mm" + (porte.Count == 0 ? "" : $" ; IHM en porte : {N(profondeurIhm)} mm"), RefArmoire);
         note.Verifier("Profondeur", profondeur >= profondeurMini,
             $"Profondeur {N(profondeur)} mm pour {N(profondeurMini)} mm nécessaires.", RefArmoire,
             imposee ? StatutCalcul.NonConforme : StatutCalcul.Alerte);
@@ -324,6 +333,8 @@ public static class CalculArmoire
         };
         CalculCablage.Noter(note, cablage, appareils.Count(a => a.Element is not null));
 
+        var ihm = PlacerPorte(note, porte, appareils, largeur, hauteur, profondeur);
+
         var sources = ChampMagnetique.Sources(appareils);
         var expositions = ControlerChamps(note, appareils, sources);
         ControlerSeparation(note, bandes);
@@ -332,7 +343,7 @@ public static class CalculArmoire
         {
             Note = note, Largeur = largeur, Hauteur = hauteur, Profondeur = profondeur, Cellules = cellules,
             Type = armoire ? "Armoire au sol" : "Coffret mural",
-            Appareils = appareils, Bandes = bandes, Sources = sources, Expositions = expositions,
+            Appareils = appareils, Bandes = bandes, Sources = sources, Expositions = expositions, Porte = ihm,
             LongueurRail = (bandesPosees.Where(b => b.Rail).Sum(b => b.Largeur - 2 * gabarit.Laterale) + config.Rails.Sum(x => x.Longueur)) / 1000,
             LongueurGoulotte = cablage.Goulottes.Sum(x => x.Verticale ? x.Hauteur : x.Largeur) / 1000,
             Cablage = cablage, Laterale = gabarit.Laterale,
@@ -343,6 +354,60 @@ public static class CalculArmoire
             LargeurAttente = attente,
             Tient = tient && !(imposee && profondeur < profondeurMini), Alerte = alerte,
         };
+    }
+
+    /// <summary>Profondeur d'un appareil modulaire sur rail derrière une IHM en porte, et jeu de sécurité, en mm.</summary>
+    public const double ProfondeurModulaire = 75, JeuIhm = 25;
+
+    /// <summary>Cadre de porte (renforts, joint) autour des IHM et écart entre deux IHM, en mm.</summary>
+    public const double CadrePorte = 80, EcartIhm = 50;
+
+    static bool PorteRecoit(IReadOnlyList<ElementMateriel> porte, double largeur, double hauteur) =>
+        porte.Count == 0 || (porte.Sum(e => e.LargeurMm) + EcartIhm * (porte.Count - 1) <= largeur - 2 * CadrePorte
+                             && porte.Max(e => e.HauteurMm) <= hauteur - 2 * CadrePorte);
+
+    /// <summary>
+    /// IHM en porte : côte à côte, centrées, l'écran dans le tiers haut de la porte. Vérifie la façade et ce qui se trouve
+    /// derrière sur la plaque (l'IHM dépasse à l'intérieur de toute sa profondeur).
+    /// </summary>
+    static List<AppareilImplante> PlacerPorte(NoteDeCalcul note, IReadOnlyList<ElementMateriel> porte, List<AppareilImplante> appareils,
+        double largeur, double hauteur, double profondeur)
+    {
+        var liste = new List<AppareilImplante>();
+        if (porte.Count == 0) return liste;
+        var total = porte.Sum(e => e.LargeurMm) + EcartIhm * (porte.Count - 1);
+        var x = (largeur - total) / 2;
+        var haut = porte.Max(e => e.HauteurMm);
+        var y = Math.Max(CadrePorte, hauteur / 3 - haut / 2);
+        foreach (var e in porte)
+        {
+            liste.Add(new AppareilImplante
+            {
+                Repere = e.Repere, Designation = e.Designation, Famille = e.Famille, Zone = ZoneCem.Propre, Element = e,
+                X = x, Y = y + (haut - e.HauteurMm) / 2, Largeur = e.LargeurMm, Hauteur = e.HauteurMm, Profondeur = e.ProfondeurMm,
+                DissipationW = e.PertesW,
+            });
+            x += e.LargeurMm + EcartIhm;
+        }
+        note.Verifier("IHM en porte", PorteRecoit(porte, largeur, hauteur),
+            $"{string.Join(", ", liste.Select(a => $"{a.Repere} façade {N(a.Largeur)} × {N(a.Hauteur)} mm"))} ; " +
+            $"porte {N(largeur)} × {N(hauteur)} mm, {N(CadrePorte, 0)} mm de cadre réservés tout autour.", RefArmoire, StatutCalcul.NonConforme);
+        // Les appareils sont repérés dans l'armoire vue de face, comme la porte fermée.
+        foreach (var ihm in liste)
+        {
+            var derriere = appareils.Where(a => a.X < ihm.X + ihm.Largeur && ihm.X < a.X + a.Largeur
+                                                && a.Y < ihm.Y + ihm.Hauteur && ihm.Y < a.Y + a.Hauteur).ToList();
+            var plusProfond = derriere.Count == 0 ? 0 : derriere.Max(a => a.Profondeur);
+            var besoin = ihm.Profondeur + plusProfond + JeuIhm;
+            note.Verifier($"Derrière {ihm.Repere}", besoin <= profondeur,
+                derriere.Count == 0
+                    ? $"Rien sur la plaque derrière {ihm.Repere} ({N(ihm.Profondeur)} mm de profondeur)."
+                    : $"{N(ihm.Profondeur)} mm d'IHM + {N(plusProfond)} mm du plus profond derrière ({derriere.MaxBy(a => a.Profondeur)!.Repere}) + " +
+                      $"{N(JeuIhm, 0)} mm de jeu = {N(besoin)} mm pour {N(profondeur)} mm d'armoire" +
+                      (besoin <= profondeur ? "." : " : déplacer l'IHM ou ces appareils, ou prendre une armoire plus profonde."),
+                RefArmoire, StatutCalcul.Alerte);
+        }
+        return liste;
     }
 
     /// <summary>Appareils montés dans l'armoire, dans l'ordre de l'arbre, plus les borniers estimés.</summary>

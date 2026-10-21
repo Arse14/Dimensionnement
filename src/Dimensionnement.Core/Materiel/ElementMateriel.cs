@@ -53,6 +53,9 @@ public class ElementMateriel
     /// <summary>Monté hors de l'armoire (station déportée en coffret machine) : repris au devis, absent de la plaque.</summary>
     public bool HorsArmoire { get; set; }
 
+    /// <summary>Encastré dans la porte de l'armoire (IHM) : pas de place sur la plaque, mais ses pertes chauffent l'armoire.</summary>
+    public bool EnPorte { get; set; }
+
     /// <summary>Variateur livré avec son filtre CEM réseau : le devis n'en ajoute pas.</summary>
     public bool FiltreCemIntegre { get; set; }
 
@@ -71,7 +74,7 @@ public class ElementMateriel
     {
         "Variateur" or "Démarreur progressif" or "Contacteur" or "Relais thermique" => ZoneCem.Sale,
         "Câble" or "Moteur" or "Récepteur" or "Prise de courant" or "Réseau" or "Capteur de sécurité" or "Périphérique machine" => ZoneCem.HorsArmoire,
-        "Automate" or "Entrées/sorties" or "Accessoire automate" or "Sécurité" => ZoneCem.Propre,
+        "Automate" or "Entrées/sorties" or "Accessoire automate" or "Sécurité" or "IHM" => ZoneCem.Propre,
         _ => ZoneCem.Intermediaire,
     };
 

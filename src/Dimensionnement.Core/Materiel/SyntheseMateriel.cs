@@ -13,7 +13,7 @@ public record GroupeMateriel(string Titre, IReadOnlyList<CarteMateriel> Cartes);
 
 /// <summary>
 /// Présentation du matériel en cartes groupées par rubrique : l'arrivée, les départs par rubrique de l'armoire,
-/// puis la commande (automate, sécurité). Chaque carte donne la chaîne de l'amont vers l'aval.
+/// puis la commande (automate, IHM, sécurité). Chaque carte donne la chaîne de l'amont vers l'aval.
 /// </summary>
 public static class SyntheseMateriel
 {
@@ -59,7 +59,7 @@ public static class SyntheseMateriel
         }
 
         var commande = new List<CarteMateriel>();
-        foreach (var racine in r.Arbre.Parcourir().Where(e => e.Famille is "Automate" || (e.Famille == "Sécurité" && !e.RepereOrigine.StartsWith("KM"))))
+        foreach (var racine in r.Arbre.Parcourir().Where(e => e.Famille is "Automate" or "IHM" || (e.Famille == "Sécurité" && !e.RepereOrigine.StartsWith("KM"))))
         {
             var maillons = racine.Parcourir().Where(e => e.Famille != "Accessoire automate").Select(e => new MaillonMateriel(e, false)).ToList();
             // L'alimentation 24 V DC qui alimente l'automate ou la sécurité ouvre la chaîne.

@@ -137,3 +137,53 @@ public class CommandeAlimenteeTests
         Assert.All(r.Arbre.Parcourir().Where(e => !e.AVerifier && e.Statut != StatutCalcul.NonConforme), e => Assert.Equal(StatutCalcul.Conforme, e.Statut));
     }
 }
+
+public class IhmEnPorteTests
+{
+    static Projet AvecIhm(bool enPorte)
+    {
+        var projet = new Projet();
+        projet.Ajouter(new DepartMoteur { PuissanceKw = 2.2 });
+        projet.Ajouter(new DepartAlimentation24V());
+        projet.Automate.Actif = true;
+        projet.Automate.EntreesTor = 16;
+        projet.Automate.Ihm = 0;
+        projet.Automate.Pupitres.Add(new PupitreIhm { Nom = "IHM positionneur", Diagonale = 7, Gamme = GammeIhm.Confort, EnPorte = enPorte });
+        return projet;
+    }
+
+    [Fact]
+    public void L_ihm_a_sa_carte_dans_l_arborescence()
+    {
+        var cartes = Dimensionnement.Core.Materiel.SyntheseMateriel.Grouper(CalculProjet.Calculer(AvecIhm(true)))
+            .Single(g => g.Titre == Dimensionnement.Core.Materiel.SyntheseMateriel.TitreCommande).Cartes;
+        var ihm = cartes.Single(c => c.Chaine.Any(m => m.Element.Famille == "IHM"));
+        Assert.Equal("Alimentation", ihm.Chaine[0].Element.Famille);
+    }
+
+    [Fact]
+    public void L_ihm_en_porte_est_implantee_et_chauffe_l_armoire()
+    {
+        var projet = AvecIhm(true);
+        var r = CalculProjet.Calculer(projet);
+        var hmi = r.Arbre.Parcourir().Single(e => e.Famille == "IHM");
+        var a = Dimensionnement.Core.Armoire.CalculArmoire.Calculer(r, projet);
+
+        var porte = Assert.Single(a.Porte);
+        Assert.Equal(hmi.LargeurMm, porte.Largeur);
+        Assert.InRange(porte.X, Dimensionnement.Core.Armoire.CalculArmoire.CadrePorte, a.Largeur - porte.Largeur - Dimensionnement.Core.Armoire.CalculArmoire.CadrePorte);
+        Assert.DoesNotContain(a.Appareils, x => x.Famille == "IHM");
+        Assert.True(a.Profondeur >= hmi.ProfondeurMm + Dimensionnement.Core.Armoire.CalculArmoire.ProfondeurModulaire);
+        Assert.Contains(Dimensionnement.Core.Armoire.CalculThermique.Postes(r), p => p.Repere == hmi.Repere);
+        Assert.Contains(a.Note.Lignes, l => l.Libelle.StartsWith("Derrière HMI"));
+    }
+
+    [Fact]
+    public void L_ihm_sur_pupitre_machine_reste_hors_armoire()
+    {
+        var projet = AvecIhm(false);
+        var r = CalculProjet.Calculer(projet);
+        Assert.Empty(Dimensionnement.Core.Armoire.CalculArmoire.Calculer(r, projet).Porte);
+        Assert.DoesNotContain(Dimensionnement.Core.Armoire.CalculThermique.Postes(r), p => p.Repere.StartsWith("HMI"));
+    }
+}
