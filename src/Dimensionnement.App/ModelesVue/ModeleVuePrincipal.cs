@@ -289,6 +289,8 @@ public partial class ModeleVuePrincipal : Observable
             {
                 case "Deplacer": rail.X = action.X; rail.Y = action.Y; break;
                 case "Longueur": rail.Longueur = Math.Max(50, rail.Longueur + action.X); break;
+                // Début et longueur au millimètre près (poignées d'extrémité, longueur exacte, ajustement à la plaque).
+                case "Etendre": rail.X = action.X; rail.Longueur = Math.Max(20, action.Y); break;
                 case "Supprimer": config.Rails.Remove(rail); break;
             }
         if (config.Goulottes.FirstOrDefault(g => g.Id == action.Id) is { } goulotte)
@@ -296,6 +298,10 @@ public partial class ModeleVuePrincipal : Observable
             {
                 case "Deplacer": goulotte.X = action.X; goulotte.Y = action.Y; break;
                 case "Longueur": goulotte.Longueur = Math.Max(50, goulotte.Longueur + action.X); break;
+                case "Etendre":
+                    if (goulotte.Verticale) goulotte.Y = action.X; else goulotte.X = action.X;
+                    goulotte.Longueur = Math.Max(20, action.Y);
+                    break;
                 case "Modele": goulotte.Largeur = action.X; goulotte.Hauteur = action.Y; break;
                 case "Supprimer": config.Goulottes.Remove(goulotte); break;
             }

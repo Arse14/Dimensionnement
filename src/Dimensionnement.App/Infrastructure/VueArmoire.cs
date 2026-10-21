@@ -24,6 +24,12 @@ public record DeportAppareil(string Cle, Guid? DepartId, Guid? Cible, bool ToutL
 /// </summary>
 public record ActionArmoire(Guid Id, string Action, double X = 0, double Y = 0);
 
+/// <summary>Rail ou goulotte ajouté : coin haut gauche dessiné, début et longueur le long de son axe, épaisseur dessinée.</summary>
+public record Troncon(Guid Id, bool Verticale, double X, double Y, double Debut, double Longueur, double Epaisseur);
+
+/// <summary>Poignée d'une extrémité de rail ou de goulotte : la glisser allonge ou raccourcit du côté saisi.</summary>
+public record PoigneeExtremite(Troncon Troncon, bool Debut);
+
 /// <summary>
 /// Vue de face de l'armoire, à l'échelle du millimètre dans une Viewbox : zones CEM, rails, appareils et champs.
 /// En mode interactif, les appareils se déplacent à la souris (pas de 5 mm) et chaque dépôt est envoyé à
@@ -163,7 +169,12 @@ public class VueArmoire : Border
                                       : $"\n{g.Fils} fils estimés, remplissage {g.Remplissage:0} % (≤ {CalculCablage.RemplissageMax:0} %)"),
                 IsHitTestVisible = g.Manuelle || (Interactif && LibreCommande is not null),
             };
-            if (Interactif && g.Id is { } id) Manipulable(goulotte, id, true);
+            if (Interactif && g.Id is { } id)
+            {
+                var t = new Troncon(id, g.Verticale, g.X, g.Y, g.Verticale ? g.Y : g.X, g.Longueur, g.Verticale ? g.Largeur : g.Hauteur);
+                Manipulable(goulotte, id, true, t);
+                Poignees(t);
+            }
             else if (Interactif && LibreCommande is { } libre)
             {
                 // Goulotte calculée : on la modifie en reprenant la main sur toute l'implantation.
@@ -184,8 +195,13 @@ public class VueArmoire : Border
                 BorderThickness = new Thickness(2), CornerRadius = new CornerRadius(2), Tag = b,
                 ToolTip = $"Rail DIN ajouté, {b.Largeur:0} mm, {LibelleEnum.Libelle(b.Zone)}\nGlisser pour déplacer, clic droit pour le modifier",
             };
-            if (Interactif) Manipulable(rail, b.Id!.Value, false);
             Placer(rail, b.X, b.Y + b.Hauteur / 2 - PoigneeRail / 2);
+            if (Interactif)
+            {
+                var t = new Troncon(b.Id!.Value, false, b.X, b.Y + b.Hauteur / 2 - PoigneeRail / 2, b.X, b.Largeur, PoigneeRail);
+                Manipulable(rail, b.Id!.Value, false, t);
+                Poignees(t);
+            }
         }
 
         if (AfficherChamps && a.Sources.Count > 0)
@@ -294,7 +310,7 @@ public class VueArmoire : Border
     }
 
     /// <summary>Rend un rail ou une goulotte ajouté déplaçable, avec un menu pour sa longueur, son modèle et sa suppression.</summary>
-    void Manipulable(FrameworkElement element, Guid id, bool goulotte)
+    void Manipulable(FrameworkElement element, Guid id, bool goulotte, Troncon? troncon = null)
     {
         element.Cursor = Cursors.SizeAll;
         element.MouseLeftButtonDown += Saisir;
@@ -304,6 +320,26 @@ public class VueArmoire : Border
             var item = new MenuItem { Header = titre };
             item.Click += (_, _) => Executer(action);
             parent.Items.Add(item);
+        }
+        if (troncon is { } t)
+        {
+            var exacte = new MenuItem { Header = "Longueur exacte…" };
+            exacte.Click += (_, _) =>
+            {
+                var fenetre = new Vues.FenetreLongueur(goulotte ? "de la goulotte" : "du rail DIN", t.Longueur) { Owner = Window.GetWindow(this) };
+                if (fenetre.ShowDialog() == true && fenetre.Longueur is { } l) Executer(new ActionArmoire(id, "Etendre", t.Debut, l));
+            };
+            menu.Items.Add(exacte);
+            // Ajuster sur la plaque : d'un bord utile à l'autre (entre les goulottes verticales pour un rail ou une goulotte horizontale).
+            if (Armoire is { } a)
+            {
+                var cellule = Math.Floor(t.X / a.Largeur);
+                var (debut, longueur) = t.Verticale
+                    ? (a.PlaqueY, a.PlaqueHauteur)
+                    : (cellule * a.Largeur + a.PlaqueX + (goulotte ? a.Laterale : a.Laterale), a.PlaqueLargeur - 2 * a.Laterale);
+                Item(menu, t.Verticale ? "Ajuster à la hauteur de la plaque" : "Ajuster à la largeur utile de la plaque",
+                    new ActionArmoire(id, "Etendre", debut, longueur));
+            }
         }
         Item(menu, "Allonger de 100 mm", new ActionArmoire(id, "Longueur", 100));
         Item(menu, "Raccourcir de 100 mm", new ActionArmoire(id, "Longueur", -100));
@@ -408,6 +444,28 @@ public class VueArmoire : Border
         _plan.Children.Add(element);
     }
 
+    const double TaillePoignee = 14;
+
+    /// <summary>Deux poignées orange aux extrémités, à glisser pour donner au rail ou à la goulotte la longueur voulue.</summary>
+    void Poignees(Troncon t)
+    {
+        foreach (var debut in new[] { true, false })
+        {
+            var poignee = new Border
+            {
+                Width = t.Verticale ? t.Epaisseur + 8 : TaillePoignee, Height = t.Verticale ? TaillePoignee : t.Epaisseur + 8,
+                Background = Pinceau("#F5A623"), BorderBrush = Pinceau("#1D232A"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(2),
+                Cursor = t.Verticale ? Cursors.SizeNS : Cursors.SizeWE, Tag = new PoigneeExtremite(t, debut),
+                ToolTip = $"Glisser pour régler la longueur ({t.Longueur:0} mm), clic droit sur le rail ou la goulotte pour une longueur exacte",
+            };
+            poignee.MouseLeftButtonDown += Saisir;
+            Panel.SetZIndex(poignee, 60);
+            var fin = t.Debut + t.Longueur;
+            if (t.Verticale) Placer(poignee, t.X - 4, (debut ? t.Debut : fin) - TaillePoignee / 2);
+            else Placer(poignee, (debut ? t.Debut : fin) - TaillePoignee / 2, t.Y - 4);
+        }
+    }
+
     void Saisir(object sender, MouseButtonEventArgs e)
     {
         _glisse = (FrameworkElement)sender;
@@ -423,8 +481,10 @@ public class VueArmoire : Border
     {
         if (_glisse is null) return;
         var p = e.GetPosition(_plan);
-        Canvas.SetLeft(_glisse, Arrondir(_origine.X + p.X - _depart.X));
-        Canvas.SetTop(_glisse, Arrondir(_origine.Y + p.Y - _depart.Y));
+        // Une poignée d'extrémité ne glisse que le long de son rail ou de sa goulotte.
+        var axe = (_glisse.Tag as PoigneeExtremite)?.Troncon.Verticale;
+        if (axe != true) Canvas.SetLeft(_glisse, Arrondir(_origine.X + p.X - _depart.X));
+        if (axe != false) Canvas.SetTop(_glisse, Arrondir(_origine.Y + p.Y - _depart.Y));
     }
 
     void Deposer(object sender, MouseButtonEventArgs e)
@@ -437,6 +497,17 @@ public class VueArmoire : Border
         var y = Canvas.GetTop(bloc) - Marge;
         switch (bloc.Tag)
         {
+            case PoigneeExtremite { Troncon: var t } poignee:
+            {
+                var position = t.Verticale ? y + TaillePoignee / 2 : x + TaillePoignee / 2;
+                var fin = t.Debut + t.Longueur;
+                var (debut, longueur) = poignee.Debut ? (Math.Min(position, fin - 20), fin - Math.Min(position, fin - 20))
+                                                      : (t.Debut, Math.Max(20, position - t.Debut));
+                if (Math.Abs(debut - t.Debut) >= 1 || Math.Abs(longueur - t.Longueur) >= 1)
+                    Executer(new ActionArmoire(t.Id, "Etendre", debut, longueur));
+                else Dessiner();
+                return;
+            }
             case GoulottePlacee { Id: { } goulotte } g when Math.Abs(x - g.X) >= 1 || Math.Abs(y - g.Y) >= 1:
                 Executer(new ActionArmoire(goulotte, "Deplacer", x, y));
                 return;
