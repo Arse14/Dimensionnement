@@ -26,6 +26,10 @@ public record ModeleSecurite
     public int Sorties { get; init; }
     public int SortiesInfo { get; init; }
     public double Largeur { get; init; }
+
+    /// <summary>Hauteur et profondeur relevées sur la fiche, en mm ; 0 = valeurs moyennes des modules (100 × 115 mm).</summary>
+    public double Hauteur { get; init; }
+    public double Profondeur { get; init; }
     /// <summary>Consommation sur le 24 V, en A.</summary>
     public double Consommation { get; init; }
     /// <summary>Nombre maximal de modules d'extension d'un automate.</summary>

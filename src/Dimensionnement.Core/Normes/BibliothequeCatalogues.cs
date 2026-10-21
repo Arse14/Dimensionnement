@@ -111,7 +111,8 @@ public static class BibliothequeCatalogues
                     L("fonctions", "Fonctions"), N("capteurs", "Capteurs", "", true, true), N("entrees", "Entrées", "", false, true),
                     N("sorties", "Sorties de sécurité", "", true, true), N("sortiesInfo", "Sorties d'information", ""),
                     N("consommation", "Consommation 24 V DC", "A", false, true), N("extensionsMax", "Extensions max.", ""),
-                    N("largeur", "Largeur", "mm", true, false, true) })
+                    N("largeur", "Largeur", "mm", true, false, true),
+                    N("hauteur", "Hauteur (vide = 100 mm)", "mm", false, false, true), N("profondeur", "Profondeur (vide = 115 mm)", "mm", false, false, true) })
             { LireType = t => CatalogueSecurite.Lire(t), ChampPrincipal = "sorties", Designation = "Module" },
         new FamilleCatalogue("capteurs", "Barrières et scrutateurs", CatalogueCapteursSecurite.NomFichier, CatalogueCapteursSecurite.TexteEmbarque,
             new[] { T("fabricant", "Fabricant"), T("gamme", "Gamme", true), T("type", "Type (Barrière immatérielle / Scrutateur laser)", true),

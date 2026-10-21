@@ -272,7 +272,10 @@ public static class CalculSecurite
         {
             Repere = repere, Famille = "Sécurité", Designation = designation, Calibre = calibre,
             Fabricant = $"{m.Fabricant} – {m.Gamme}", Reference = m.Reference,
-            LargeurMm = cote?.Largeur ?? m.Largeur, HauteurMm = cote?.Hauteur ?? 100, ProfondeurMm = cote?.Profondeur ?? 115,
+            // Cotes saisies sur la fiche du module d'abord, puis celles relevées pour sa gamme, sinon les valeurs moyennes.
+            LargeurMm = m.Largeur > 0 ? m.Largeur : cote?.Largeur ?? 22.5,
+            HauteurMm = m.Hauteur > 0 ? m.Hauteur : cote?.Hauteur ?? 100,
+            ProfondeurMm = m.Profondeur > 0 ? m.Profondeur : cote?.Profondeur ?? 115,
             PertesW = cote is { Pertes: > 0 } ? cote.Pertes : Math.Max(1, 24 * m.Consommation),
         };
     }
