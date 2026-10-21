@@ -128,8 +128,20 @@ public class DepartMoteur : Depart
     public TypeDeuxVitesses TypeDeuxVitesses { get; set; } = TypeDeuxVitesses.Dahlander;
     public double PuissancePetiteVitesseKw { get; set; }
 
-    /// <summary>Moteur-frein : alimentation et puissance du frein.</summary>
-    public bool Frein { get; set; }
+    /// <summary>Moteur-frein : alimentation et puissance du frein. Retirer le frein oublie la source choisie pour sa bobine.</summary>
+    public bool Frein
+    {
+        get => _frein;
+        set
+        {
+            _frein = value;
+            if (!value) SourceFrein = SourceFrein.Automatique;
+        }
+    }
+    bool _frein;
+
+    /// <summary>Source de la bobine retenue dans l'armoire (redresseur, alimentation à découpage, transformateur et pont).</summary>
+    public SourceFrein SourceFrein { get; set; }
     public AlimentationFrein AlimentationFrein { get; set; } = AlimentationFrein.Separee230;
     public double PuissanceFreinW { get; set; } = 25;
 

@@ -484,7 +484,46 @@ public partial class ModeleVuePrincipal : Observable
                                 ".\nIl est dimensionné sur les consommateurs du projet ; vous pouvez changer sa marque, sa technologie ou le supprimer.",
                     "Sources de commande", MessageBoxButton.OK, MessageBoxImage.Information);
         }
+        NettoyerSources();
+        DemanderSourcesFrein();
         SignalerTout();
+    }
+
+    /// <summary>Freins dont la source de bobine a déjà été demandée (on ne repose pas la question à chaque recalcul).</summary>
+    readonly HashSet<Guid> _freinsDemandes = new();
+
+    /// <summary>
+    /// Retire les sources ajoutées automatiquement qui ne servent plus (frein retiré, consommateurs supprimés) et oublie les refus
+    /// devenus sans objet, pour que la question revienne si le besoin réapparaît.
+    /// </summary>
+    void NettoyerSources()
+    {
+        var besoins = Resultat.Consommateurs24V.Where(c => c.Courant > 0).Select(c => c.Tension).ToHashSet();
+        var inutiles = _projet.Departs.OfType<DepartAlimentation24V>()
+            .Where(s => s.AjoutAutomatique && s.DepartsAlimentes.Count == 0 && !besoins.Contains(s.Sortie)).ToList();
+        _sourcesIgnorees.RemoveWhere(t => !besoins.Contains(t));
+        _freinsDemandes.RemoveWhere(id => !_projet.Departs.OfType<DepartMoteur>().Any(m => m.Id == id && CalculDepart.SourceFreinDansArmoire(m)));
+        if (inutiles.Count == 0) return;
+        foreach (var source in inutiles) _projet.Departs.Remove(source);
+        if (_selection is DepartAlimentation24V d && inutiles.Contains(d)) _selection = _projet;
+        Resultat = CalculerProjet();
+    }
+
+    /// <summary>Frein sans redresseur dans le moteur : demande la source de sa bobine, selon les tensions saisies.</summary>
+    void DemanderSourcesFrein()
+    {
+        var aDemander = _projet.Departs.OfType<DepartMoteur>()
+            .Where(m => CalculDepart.SourceFreinDansArmoire(m) && m.SourceFrein == SourceFrein.Automatique && _freinsDemandes.Add(m.Id)).ToList();
+        foreach (var m in aDemander)
+        {
+            var options = CalculDepart.SourcesFreinPossibles(m);
+            var question = new FenetreChoixFrein(
+                $"Le frein du départ {m.Code} a une bobine de {m.TensionBobineFreinV:0} V DC alimentée en {m.TensionFreinV:0} V AC, sans redresseur " +
+                "dans le moteur : quelle source mettre dans l'armoire ?", options) { Owner = Application.Current.MainWindow };
+            question.ShowDialog();
+            m.SourceFrein = question.Choix ?? options[0].Source;
+        }
+        if (aDemander.Count > 0) Resultat = CalculerProjet();
     }
 
     (TypeAlimentation Primaire, bool Reglable)? _choixAlimentation;

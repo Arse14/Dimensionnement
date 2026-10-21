@@ -356,6 +356,25 @@ public static class CalculDepart
     /// juste ; sinon un transformateur d'adaptation suivi d'un redresseur en pont (les alimentations à découpage du catalogue
     /// ne sortent pas de 100 à 200 V DC).
     /// </summary>
+    /// <summary>Vrai quand la bobine du frein attend une source dans l'armoire : alimentation séparée alternative, sans redresseur dans le moteur.</summary>
+    public static bool SourceFreinDansArmoire(DepartMoteur m) =>
+        m.Frein && m.AlimentationFrein == AlimentationFrein.Separee230 && !m.FreinEnContinu && !m.RedresseurDansMoteur && m.TensionBobineFreinV > 0;
+
+    /// <summary>Sources possibles pour la bobine du frein, la recommandée en premier, avec la raison de chacune.</summary>
+    public static IReadOnlyList<(SourceFrein Source, string Libelle)> SourcesFreinPossibles(DepartMoteur m)
+    {
+        var u = m.TensionFreinV > 0 ? m.TensionFreinV : 230;
+        var bobine = m.TensionBobineFreinV;
+        var (type, rapport) = Redresseurs.MinBy(r => Math.Abs(bobine / u - r.Rapport));
+        var liste = new List<(SourceFrein, string)>();
+        if (Math.Abs(bobine - 24) <= 2.4 || Math.Abs(bobine - 48) <= 4.8)
+            liste.Add((SourceFrein.Decoupage, $"Alimentation à découpage {(bobine < 36 ? 24 : 48)} V DC dédiée au frein"));
+        if (Math.Abs(rapport * u / bobine - 1) <= 0.1)
+            liste.Add((SourceFrein.Redresseur, $"Redresseur de frein {type} : {N(rapport)} × {N(u, 0)} V AC = {N(rapport * u, 0)} V DC"));
+        liste.Add((SourceFrein.Transformateur, $"Transformateur {N(u, 0)} / {N(Math.Round(bobine / 0.9 / 5) * 5, 0)} V AC puis redresseur en pont"));
+        return liste;
+    }
+
     static void Redresseur(DepartMoteur m, NoteDeCalcul note, ElementMateriel amont, double u, string reference)
     {
         if (m.FreinEnContinu || m.TensionBobineFreinV <= 0) return;
@@ -377,8 +396,10 @@ public static class CalculDepart
             return;
         }
 
+        var possibles = SourcesFreinPossibles(m);
+        var choix = possibles.Any(p => p.Source == m.SourceFrein) ? m.SourceFrein : possibles[0].Source;
         ElementMateriel source;
-        if (Math.Abs(bobine - 24) <= 2.4 || Math.Abs(bobine - 48) <= 4.8)
+        if (choix == SourceFrein.Decoupage)
         {
             var sortie = bobine < 36 ? 24 : 48;
             source = new ElementMateriel
@@ -389,7 +410,7 @@ public static class CalculDepart
             note.Info("Alimentation du frein", $"Bobine {N(bobine, 0)} V DC : alimentation à découpage {sortie} V DC dédiée, calibrée à 1,5 × {A(courant)} " +
                 "pour l'appel de la bobine.", reference);
         }
-        else if (accord)
+        else if (choix == SourceFrein.Redresseur)
         {
             source = new ElementMateriel
             {
@@ -418,10 +439,14 @@ public static class CalculDepart
                 Calibre = $"{N(secondaire, 0)} V AC → {N(bobine, 0)} V DC, ≥ {A(courant)}",
                 LargeurMm = 22.5, HauteurMm = 90, ProfondeurMm = 100, PertesW = 1,
             };
-            note.Verifier("Alimentation du frein", false,
-                $"Bobine {N(bobine, 0)} V DC : ni demi-onde ({N(0.45 * u, 0)} V) ni pont ({N(0.9 * u, 0)} V) sous {N(u, 0)} V AC. " +
-                $"Transformateur {N(u, 0)} / {N(secondaire, 0)} V ({N(va, 0)} VA) puis redresseur en pont ; à confirmer avec le fabricant du frein.",
-                reference, StatutCalcul.Alerte);
+            if (accord || possibles[0].Source != SourceFrein.Transformateur)
+                note.Info("Alimentation du frein", $"Bobine {N(bobine, 0)} V DC : transformateur {N(u, 0)} / {N(secondaire, 0)} V ({N(va, 0)} VA) " +
+                    "puis redresseur en pont, choisi à la place de la solution directe.", reference);
+            else
+                note.Verifier("Alimentation du frein", false,
+                    $"Bobine {N(bobine, 0)} V DC : ni demi-onde ({N(0.45 * u, 0)} V) ni pont ({N(0.9 * u, 0)} V) sous {N(u, 0)} V AC. " +
+                    $"Transformateur {N(u, 0)} / {N(secondaire, 0)} V ({N(va, 0)} VA) puis redresseur en pont ; à confirmer avec le fabricant du frein.",
+                    reference, StatutCalcul.Alerte);
         }
         amont.Ajouter(source);
     }

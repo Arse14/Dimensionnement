@@ -233,6 +233,29 @@ public class FreinTests
     }
 
     [Fact]
+    public void Source_du_frein_choisie_est_respectee_et_oubliee_sans_frein()
+    {
+        var m = MoteurFrein();
+        m.RedresseurDansMoteur = false;
+        Assert.True(CalculDepart.SourceFreinDansArmoire(m));
+        Assert.Equal(SourceFrein.Redresseur, CalculDepart.SourcesFreinPossibles(m)[0].Source);
+
+        m.SourceFrein = SourceFrein.Transformateur;
+        var arbre = Calculer(m).R.Arbre.Parcourir().ToList();
+        Assert.Contains(arbre, e => e.Repere == "T1.F");
+        Assert.Contains(arbre, e => e.Repere == "V1.F" && e.Designation.Contains("pont"));
+
+        // Choix impossible pour cette bobine (découpage en 180 V) : la recommandation reprend la main.
+        m.SourceFrein = SourceFrein.Decoupage;
+        Assert.DoesNotContain(Calculer(m).R.Arbre.Parcourir(), e => e.Repere == "G1.F");
+
+        m.Frein = false;
+        Assert.Equal(SourceFrein.Automatique, m.SourceFrein);
+        Assert.False(CalculDepart.SourceFreinDansArmoire(m));
+        Assert.DoesNotContain(Calculer(m).R.Arbre.Parcourir(), e => e.Repere.EndsWith(".F"));
+    }
+
+    [Fact]
     public void Frein_pilote_par_le_variateur()
     {
         var m = MoteurFrein();

@@ -41,6 +41,9 @@ public enum AlimentationFrein
     Continu24,
 }
 
+/// <summary>Source de la bobine du frein placée dans l'armoire quand le moteur n'a pas de redresseur ; Automatique = à demander.</summary>
+public enum SourceFrein { Automatique, Redresseur, Decoupage, Transformateur }
+
 /// <summary>Qui commande le frein : l'automate (contacteur ou relais) ou la logique de frein du variateur.</summary>
 public enum CommandeFrein { Automate, Variateur }
 
