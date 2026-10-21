@@ -239,7 +239,12 @@
                                         <TextBlock FontSize="11"/>
                                     </Border>
                                 </StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                <WrapPanel Margin="0,10,0,0">
+                                    <WrapPanel.Resources>
+                                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                            <Setter Property="Margin" Value="0,0,8,6"/>
+                                        </Style>
+                                    </WrapPanel.Resources>
                                     <Button Command="{Binding BasculerEdition}" ToolTip="Compléter ou corriger les valeurs de l'article">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock FontFamily="{StaticResource Icones}" Text="&#xE70F;" Margin="0,0,6,0" VerticalAlignment="Center"/>
@@ -259,14 +264,14 @@
                                         </StackPanel>
                                     </Button>
                                     <Button Command="{Binding Dupliquer}" Content="Dupliquer" ToolTip="Créer une variante à partir de cet article"/>
-                                    <Button Command="{Binding ChercherEnLigne}" Margin="16,0,0,0" ToolTip="{Binding LienVerification}">
+                                    <Button Command="{Binding ChercherEnLigne}" ToolTip="{Binding LienVerification}">
                                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE774;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="{Binding LibelleVerification}"/></StackPanel>
                                     </Button>
                                     <Button Command="{Binding ValiderProduit}" ToolTip="Après contrôle sur la fiche du fabricant : passe l'article de « indicatif » à « vérifié »">
                                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE73E;" Margin="0,0,6,0" VerticalAlignment="Center" Foreground="#6EE7A0"/><TextBlock Text="Valider le produit"/></StackPanel>
                                     </Button>
                                     <Button Command="{Binding Supprimer}" Content="Supprimer"/>
-                                </StackPanel>
+                                </WrapPanel>
                             </StackPanel>
                         </DockPanel>
 

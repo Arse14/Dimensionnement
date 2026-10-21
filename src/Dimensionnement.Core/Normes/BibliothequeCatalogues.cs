@@ -24,6 +24,9 @@ public record ChampCatalogue(string Cle, string Libelle, string Unite = "", Type
 /// <summary>Une famille de catalogue : son fichier, son texte livré et la description de ses champs.</summary>
 public record FamilleCatalogue(string Id, string Nom, string NomFichier, Func<string> TexteEmbarque, IReadOnlyList<ChampCatalogue> Champs)
 {
+    /// <summary>Nom affiché dans les listes, y compris quand le modèle de la liste ignore le membre d'affichage.</summary>
+    public override string ToString() => Nom;
+
     /// <summary>Lecture typée utilisée par les calculs : un catalogue qu'elle refuse n'est pas enregistré.</summary>
     public Func<string, object> LireType { get; init; } = t => t;
 
