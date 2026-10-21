@@ -42,6 +42,9 @@
                 <ComboBox ItemsSource="{Binding ChoixEnveloppes}" SelectedItem="{Binding EnveloppeChoisie}" DisplayMemberPath="Libelle"
                           Width="420" MaxDropDownHeight="420" IsTextSearchEnabled="True" TextSearch.TextPath="Libelle" Margin="0,0,16,0"
                           ToolTip="Choisir une enveloppe du catalogue l'impose (marque et cotes reprises) ; « Automatique » prend la plus petite qui reçoit le matériel ; les cotes libres se saisissent dans le panneau Armoire et implantation."/>
+                <TextBlock Text="Place libre (%)" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBox Text="{Binding PlaceLibre, UpdateSourceTrigger=LostFocus}" Width="50" VerticalAlignment="Center" Margin="0,0,16,0"
+                         ToolTip="Place à laisser libre sur les rails pour les évolutions. Dans une enveloppe imposée trop juste, elle est gardée en priorité : les goulottes sont d'abord réduites, puis la place libre si besoin."/>
                 <TextBlock Text="{Binding ResumeArmoire}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,0"/>
             </WrapPanel>
         </Border>
@@ -87,7 +90,7 @@
             </DockPanel>
         </Border>
 
-        <Border Style="{StaticResource CadrePanneau}">
+        <Border Style="{StaticResource CadrePanneau}" ClipToBounds="True">
             <inf:VueArmoire Interactif="True" Background="{StaticResource Champ}"
                             Armoire="{Binding Resultat.Armoire}"
                             AfficherZones="{Binding IsChecked, ElementName=CaseZones}"

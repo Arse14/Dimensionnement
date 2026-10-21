@@ -48,8 +48,11 @@ public static class ExplicationsArmoire
             "Toutes les enveloppes de la marque choisie sont essayées de la plus petite surface à la plus grande (coffrets, puis armoires de " +
             "1 à 8 cellules) ; la première où tout tient avec la réserve est retenue. La profondeur est la plus petite du catalogue qui dépasse " +
             "l'appareil le plus profond + 100 mm (plaque, porte, câblage). La liste « Enveloppe » permet d'imposer une enveloppe précise " +
-            "du catalogue (marque, cotes, référence et plaque repris) ou des cotes libres. Avec une taille imposée, la réserve est réduite par pas de 5 % " +
-            "jusqu'à 0 pour essayer de tout faire entrer, et une alerte le signale."),
+            "du catalogue (marque, cotes, référence et plaque repris) ou des cotes libres. Avec une taille imposée trop juste, la place libre " +
+            "demandée est gardée en priorité et l'implantation est allégée par paliers : dégagement bas des variateurs pris sur la marge des " +
+            "presse-étoupes, goulottes de 25 mm, goulottes verticales seules, puis plus de goulotte. Ensuite seulement la place libre est réduite " +
+            "par pas de 5 %. Ce qui n'entre toujours pas attend dans la zone « À placer » à droite : on peut le glisser dans l'armoire, " +
+            "et si tout tient sans chevauchement, l'implantation manuelle est retenue."),
         new("Fils et goulottes",
             "Les fils sont estimés par appareil d'après la section de son départ (puissance) et ses voies câblées (commande 0,75 mm²). " +
             "Les fils d'une rangée passent dans la goulotte horizontale qui la longe, puis descendent par les goulottes verticales jusqu'aux " +

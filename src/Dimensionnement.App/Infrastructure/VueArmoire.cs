@@ -79,8 +79,18 @@ public class VueArmoire : Border
         _plan.Children.Clear();
         _glisse = null;
         if (Armoire is not { } a) return;
-        _plan.Width = a.LargeurTotale + 2 * Marge;
+        _plan.Width = a.LargeurTotale + a.LargeurAttente + 2 * Marge;
         _plan.Height = a.Hauteur + 2 * Marge;
+        if (a.LargeurAttente > 0)
+        {
+            // Appareils qui n'entrent pas : à glisser dans l'armoire ou à déporter dans un autre coffret.
+            var x0 = a.LargeurTotale + CalculArmoire.EcartAttente / 2;
+            Placer(new Rectangle { Width = a.LargeurAttente - CalculArmoire.EcartAttente / 2, Height = a.Hauteur, RadiusX = 8, RadiusY = 8,
+                Stroke = Pinceau("#F85149"), StrokeThickness = 3, StrokeDashArray = new DoubleCollection { 6, 3 }, Fill = Pinceau("#22F85149"),
+                IsHitTestVisible = false }, x0, 0);
+            Placer(new TextBlock { Text = "À PLACER", FontSize = 18, FontWeight = FontWeights.Bold, Foreground = Pinceau("#F85149"), IsHitTestVisible = false },
+                x0 + 10, 8);
+        }
 
         for (var c = 0; c < a.Cellules; c++)
         {

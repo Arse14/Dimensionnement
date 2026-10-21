@@ -347,6 +347,54 @@ public class ChampMagnetiqueTests
         Assert.Contains(a.Note.Lignes, l => l.Libelle == "Implantation" && l.Statut == StatutCalcul.NonConforme);
     }
 
+    static Projet QuatreVariateurs(double kw)
+    {
+        var projet = new Projet();
+        for (var i = 0; i < 4; i++) projet.Ajouter(new DepartMoteur { PuissanceKw = kw, Demarrage = ModeDemarrage.Variateur });
+        projet.Armoire.Marque = MarqueEnveloppe.Schneider;
+        projet.Armoire.TailleImposee = true;
+        (projet.Armoire.LargeurImposee, projet.Armoire.HauteurImposee, projet.Armoire.ProfondeurImposee) = (600, 800, 300);
+        return projet;
+    }
+
+    [Fact]
+    public void Taille_imposee_trop_juste_allege_les_goulottes_en_gardant_la_place_libre()
+    {
+        var a = CalculProjet.Calculer(QuatreVariateurs(1.5)).Armoire!;
+
+        Assert.True(a.Tient);
+        Assert.Contains("goulottes", a.Alerte);
+        Assert.Equal(25, a.ReserveEffective, 3);
+        Assert.DoesNotContain(a.Note.Lignes, l => l.Libelle == "Implantation" && l.Statut == StatutCalcul.NonConforme);
+    }
+
+    [Fact]
+    public void Ce_qui_n_entre_pas_attend_a_droite_et_se_place_a_la_main()
+    {
+        var projet = QuatreVariateurs(4);
+        var a = CalculProjet.Calculer(projet).Armoire!;
+
+        Assert.False(a.Tient);
+        Assert.True(a.LargeurAttente > 0);
+        var dehors = a.Appareils.Where(x => x.X >= a.LargeurTotale).ToList();
+        Assert.NotEmpty(dehors);
+        Assert.All(dehors, x => Assert.True(x.Y >= 0 && x.Y + x.Hauteur <= a.Hauteur));
+
+        // L'utilisateur les pose lui-même sur la plaque, sans chevauchement (trois en bas, le quatrième au-dessus à droite) :
+        // l'implantation manuelle est retenue.
+        var variateurs = a.Appareils.Where(v => v.Famille == "Variateur").ToList();
+        var bas = a.PlaqueY + a.PlaqueHauteur - variateurs[0].Hauteur;
+        for (var i = 0; i < 3; i++)
+            projet.Armoire.Positions[variateurs[i].Cle] = new PositionManuelle { X = a.PlaqueX + i * variateurs[i].Largeur, Y = bas };
+        projet.Armoire.Positions[variateurs[3].Cle] = new PositionManuelle
+            { X = a.PlaqueX + a.PlaqueLargeur - variateurs[3].Largeur, Y = bas - variateurs[3].Hauteur };
+        var manuel = CalculProjet.Calculer(projet).Armoire!;
+
+        Assert.True(manuel.Tient, manuel.Alerte);
+        Assert.Contains("à la main", manuel.Alerte);
+        Assert.Equal(0, manuel.LargeurAttente);
+    }
+
     [Fact]
     public void Taille_imposee_juste_reduit_la_reserve()
     {
@@ -359,8 +407,9 @@ public class ChampMagnetiqueTests
         var a = CalculProjet.Calculer(projet).Armoire!;
 
         Assert.True(a.Tient);
-        Assert.True(a.ReserveEffective < 60);
-        Assert.Contains("réserve", a.Alerte);
+        // La place libre est gardée en priorité : les goulottes ou le dégagement sont allégés d'abord.
+        Assert.True(a.ReserveEffective < 60 || a.Alerte.Contains("goulottes") || a.Alerte.Contains("dégagement"));
+        Assert.NotEmpty(a.Alerte);
         Assert.Equal((auto.Largeur, auto.Hauteur), (a.Largeur, a.Hauteur));
     }
 

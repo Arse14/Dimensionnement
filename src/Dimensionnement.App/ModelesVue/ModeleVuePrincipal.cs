@@ -393,6 +393,19 @@ public class ModeleVuePrincipal : Observable
         }
     }
 
+    /// <summary>Place libre à garder dans l'armoire, en %, réglable depuis la vue d'armoire.</summary>
+    public double PlaceLibre
+    {
+        get => _projet.Armoire.ReservePourcent;
+        set
+        {
+            var v = Math.Clamp(value, 0, 80);
+            if (Math.Abs(v - _projet.Armoire.ReservePourcent) < 1e-9) return;
+            _projet.Armoire.ReservePourcent = v;
+            Recalculer();
+        }
+    }
+
     public string ResumeThermique => Resultat.Thermique switch
     {
         null => "",

@@ -27,6 +27,19 @@ public record GoulottePlacee(double X, double Y, double Largeur, double Hauteur,
 public record Gabarit(double Laterale, double EntreRangees)
 {
     public static readonly Gabarit Defaut = new(CalculArmoire.MargeLaterale, CalculArmoire.EntreRangees);
+
+    /// <summary>Dernier recours dans une armoire imposée trop petite : pas de goulotte, fils posés en direct.</summary>
+    public static readonly Gabarit SansGoulotte = new(5, 30) { SansGoulottes = true, Allege = true, DegagementPartage = true };
+    /// <summary>Paliers intermédiaires : goulottes de 25 mm, puis goulottes verticales seules.</summary>
+    public static readonly Gabarit Fines = new(35, 45) { GoulotteMax = 25, Allege = true, DegagementPartage = true };
+    public static readonly Gabarit Verticales = new(35, 30) { GoulotteMax = 25, SansHorizontales = true, Allege = true, DegagementPartage = true };
+    public bool SansGoulottes { get; init; }
+    public bool SansHorizontales { get; init; }
+    /// <summary>Le dégagement sous les variateurs empiète sur la marge basse, libre de matériel (arrivée des câbles).</summary>
+    public bool DegagementPartage { get; init; }
+    public double GoulotteMax { get; init; } = double.MaxValue;
+    /// <summary>Gabarit réduit pour faire entrer le matériel : il n'est pas recalculé d'après le remplissage.</summary>
+    public bool Allege { get; init; }
 }
 
 public class ResultatCablage
@@ -198,18 +211,24 @@ public static class CalculCablage
         // Charge des goulottes horizontales : la rangée la plus chargée ; verticales : la moitié des fils de la cellule la plus chargée.
         var rails = bandes.Where(b => b.Rail).ToList();
         var chargeRangees = rails.Select(b => Encombrement(CalculArmoire.Dans(b, appareils).SelectMany(a => parAppareil[a]))).ToList();
-        var horizontale = Choisir(chargeRangees.DefaultIfEmpty(0).Max());
+        var horizontale = Choisir(chargeRangees.DefaultIfEmpty(0).Max(), gabarit.GoulotteMax);
         var dx = (largeurCellule - plaqueLargeur) / 2;
         var chargeCellules = Enumerable.Range(0, Math.Max(1, cellules))
             .Select(c => Encombrement(appareils.Where(a => (int)(a.CentreX / largeurCellule) == c).SelectMany(a => parAppareil[a])) / 2).ToList();
-        var verticale = Choisir(chargeCellules.DefaultIfEmpty(0).Max());
-        var nouveau = new Gabarit(Math.Max(CalculArmoire.MargeLaterale, verticale.Largeur + 10),
+        var verticale = Choisir(chargeCellules.DefaultIfEmpty(0).Max(), gabarit.GoulotteMax);
+        var nouveau = gabarit.Allege ? gabarit : new Gabarit(Math.Max(CalculArmoire.MargeLaterale, verticale.Largeur + 10),
             Math.Max(CalculArmoire.EntreRangees, horizontale.Largeur + 20));
+        if (gabarit.SansGoulottes)
+            return new ResultatCablage
+            {
+                Fils = fils, Horizontale = horizontale, Verticale = verticale, Gabarit = nouveau,
+                LongueurMoyenne = (plaqueLargeur / 2 + plaqueHauteur / 2) / 1000 + 0.3,
+            };
 
         // Implantation : sous chaque rangée de rail, au-dessus de la première rangée de chaque cellule, et sur les côtés.
         var goulottes = new List<GoulottePlacee>();
         var haut = (enveloppeHauteur - plaqueHauteur) / 2;
-        for (var i = 0; i < rails.Count; i++)
+        for (var i = 0; i < (gabarit.SansHorizontales ? 0 : rails.Count); i++)
         {
             var b = rails[i];
             var x = b.X + gabarit.Laterale;
