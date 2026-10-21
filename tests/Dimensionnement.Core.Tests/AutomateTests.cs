@@ -139,7 +139,7 @@ public class AutomateTests
 
         Assert.True(r.Plan!.Station);
         var station = r.Appareils.Single().Enfants.Single(e => e.Repere == "API1-ET");
-        Assert.Equal("6ES7155-6AU01-0BN0", station.Reference);
+        Assert.Equal("6ES7155-6AU02-0BN0", station.Reference);
         Assert.Contains(station.Enfants, e => e.Repere == "API1-ET.1");
         Assert.DoesNotContain(r.Note.Lignes, l => l.Statut == StatutCalcul.NonConforme);
     }
@@ -172,7 +172,7 @@ public class AutomateTests
         Assert.Equal("S7-1500", r.Cpu!.Gamme);
         var cpu = r.Appareils.Single();
         var station = cpu.Enfants.Single(e => e.Repere == "API1-S1");
-        Assert.Equal("6ES7155-6AU01-0BN0", station.Reference);
+        Assert.Equal("6ES7155-6AU02-0BN0", station.Reference);
         // DI : 16 × 1,2 = 20 → 16 + 8 ; DQ : 10 → 16.
         Assert.Equal(3, station.Enfants.Count(e => e.Famille == "Entrées/sorties"));
         Assert.True(station.HorsArmoire);
