@@ -42,7 +42,8 @@ public static class Encombrements
         if (e.LargeurMm > 0 && e.HauteurMm > 0)
             return new(e.LargeurMm, e.HauteurMm, e.ProfondeurMm, e.PertesW)
             {
-                Origine = e.AVerifier ? "catalogue du modèle, valeurs indicatives" : "catalogue du modèle",
+                Origine = e.CotesIncompletes ? "cotes par défaut, à compléter sur la fiche du catalogue"
+                    : e.AVerifier ? "catalogue du modèle, valeurs indicatives" : "catalogue du modèle",
                 CotesVerifiees = !e.AVerifier,
             };
         var moyen = Moyen(e, q, poles, i);

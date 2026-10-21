@@ -625,3 +625,22 @@ public class MontageSectionneurTests
         Assert.Equal(montage == MontageSectionneur.CoteArmoire, !r.Thermique!.Postes.Any(p => p.Repere == "QS0"));
     }
 }
+
+public class CotesModulesSecuriteTests
+{
+    static ModeleSecurite Module(double l, double h, double p) =>
+        new() { Fabricant = "Pilz", Gamme = "Essai", Reference = "ESSAI-1", Type = "Relais", Capteurs = 1, Sorties = 2, Largeur = l, Hauteur = h, Profondeur = p };
+
+    [Fact]
+    public void Cotes_completes_de_la_fiche_retenues_sinon_defaut_en_orange()
+    {
+        var complet = CalculSecurite.Element("KA1", "", Module(22.5, 99, 121), "");
+        Assert.Equal((22.5, 99.0, 121.0), (complet.LargeurMm, complet.HauteurMm, complet.ProfondeurMm));
+        Assert.False(complet.CotesIncompletes);
+
+        var incomplet = CalculSecurite.Element("KA1", "", Module(22.5, 0, 0), "");
+        Assert.Equal((100.0, 115.0), (incomplet.HauteurMm, incomplet.ProfondeurMm));
+        Assert.True(incomplet.CotesIncompletes);
+        Assert.True(incomplet.AVerifier);
+    }
+}

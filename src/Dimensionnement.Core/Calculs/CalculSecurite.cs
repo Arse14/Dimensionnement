@@ -264,18 +264,21 @@ public static class CalculSecurite
         return dernier ?? (bases[^1], new List<ModeleSecurite>());
     }
 
-    static ElementMateriel Element(string repere, string designation, ModeleSecurite m, string calibre)
+    public static ElementMateriel Element(string repere, string designation, ModeleSecurite m, string calibre)
     {
-        // Hauteur et profondeur relevées sur la fiche quand la gamme est au catalogue des cotes.
+        // Cotes de la fiche du module si elles sont complètes, sinon celles relevées pour sa gamme au catalogue des cotes.
         var cote = CatalogueEncombrements.Trouver("Sécurité", m.Reference, 0);
+        var complete = m.Largeur > 0 && m.Hauteur > 0 && m.Profondeur > 0;
         return new()
         {
             Repere = repere, Famille = "Sécurité", Designation = designation, Calibre = calibre,
             Fabricant = $"{m.Fabricant} – {m.Gamme}", Reference = m.Reference,
-            // Cotes saisies sur la fiche du module d'abord, puis celles relevées pour sa gamme, sinon les valeurs moyennes.
-            LargeurMm = m.Largeur > 0 ? m.Largeur : cote?.Largeur ?? 22.5,
-            HauteurMm = m.Hauteur > 0 ? m.Hauteur : cote?.Hauteur ?? 100,
-            ProfondeurMm = m.Profondeur > 0 ? m.Profondeur : cote?.Profondeur ?? 115,
+            // Cotes complètes de la fiche du module (L × H × P), sinon celles relevées pour sa gamme, sinon des valeurs par
+            // défaut : le module passe alors en orange tant que ses cotes ne sont pas identifiées.
+            LargeurMm = complete ? m.Largeur : cote?.Largeur ?? (m.Largeur > 0 ? m.Largeur : 22.5),
+            HauteurMm = complete ? m.Hauteur : cote?.Hauteur ?? 100,
+            ProfondeurMm = complete ? m.Profondeur : cote?.Profondeur ?? 115,
+            CotesIncompletes = !complete && cote is not { Verifie: true }, AVerifier = !complete && cote is not { Verifie: true },
             PertesW = cote is { Pertes: > 0 } ? cote.Pertes : Math.Max(1, 24 * m.Consommation),
         };
     }

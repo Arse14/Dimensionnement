@@ -72,6 +72,9 @@ public class ElementMateriel
     public bool BlindageFourni { get; set; }
     public StatutCalcul Statut { get; set; } = StatutCalcul.Info;
 
+    /// <summary>Cotes pas encore identifiées en largeur, hauteur et profondeur : valeurs par défaut, à compléter.</summary>
+    public bool CotesIncompletes { get; set; }
+
     /// <summary>Sa référence vient d'un catalogue dont les valeurs sont encore indicatives (à vérifier sur la fiche du fabricant).</summary>
     public bool AVerifier { get; set; }
 

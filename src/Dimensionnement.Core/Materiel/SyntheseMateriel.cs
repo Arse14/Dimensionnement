@@ -30,7 +30,7 @@ public static class SyntheseMateriel
     {
         foreach (var e in r.Arbre.Parcourir())
         {
-            e.AVerifier = e.Reference.Length > 0 && referencesIndicatives.Contains(e.Reference);
+            e.AVerifier = e.Reference.Length > 0 && referencesIndicatives.Contains(e.Reference) || e.CotesIncompletes;
             if (e.Statut == StatutCalcul.NonConforme) continue;
             e.Statut = e.AVerifier ? StatutCalcul.Alerte : StatutCalcul.Conforme;
         }
