@@ -114,7 +114,7 @@ public static class Glossaire
             "Fusible gG 20 A : le câble doit admettre 1,21 × 20 = 24,2 A.",
             "NF C 15-100, 533.3", new[] { "k3" }),
 
-        new("extension", Cables, "Coefficient d'extension du câble d'arrivée",
+        new("extension", Cables, "Coefficient de sécurité électrique (extensions futures) du câble d'arrivée",
             "Coefficient de sécurité choisi par le bureau d'études pour pouvoir ajouter des départs plus tard sans changer le câble d'arrivée.",
             "Ib futur = Ib × k ; le câble est choisi pour le calibre qui protégerait Ib futur ; marge = Iz − Ib",
             new[] { T("k", "coefficient saisi dans le réseau d'arrivée (1 = aucune extension ; 1,2 à 1,5 courant)"), T("Ib", "courant d'emploi actuel de l'armoire"),

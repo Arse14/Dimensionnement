@@ -166,7 +166,7 @@ public static class CalculProjet
         {
             var ibFutur = ib * k;
             protectionCable = Math.Max(qg, Calibres.Superieur(Calibres.Disjoncteurs, ibFutur) ?? ibFutur);
-            note.Info("Coefficient d'extension", $"Ib × k = {A(ib)} × {N(k)} = {A(ibFutur)} : câble choisi pour une protection de {A(protectionCable)} " +
+            note.Info("Coefficient de sécurité électrique", $"Ib × k = {A(ib)} × {N(k)} = {A(ibFutur)} : câble choisi pour une protection de {A(protectionCable)} " +
                 $"(disjoncteur général actuel {A(qg)}).", "Choix du bureau d'études");
         }
         var cable = CalculCable.Dimensionner(note, reseau.CableArrivee, reseau.Alimentation, protectionCable, ib, cosPhi, reseau, 0);

@@ -154,7 +154,7 @@
                 <TextBlock Text="Câble d'arrivée" Style="{StaticResource Section}"/>
                 <ContentControl Content="{Binding Reseau.CableArrivee}" ContentTemplate="{StaticResource ChampsCable}"/>
                 <DockPanel Style="{StaticResource Ligne}">
-                    <TextBlock Text="Coefficient d'extension du câble" Style="{StaticResource Etiquette}"/>
+                    <TextBlock Text="Coefficient de sécurité électrique (extensions futures)" Style="{StaticResource Etiquette}" ToolTip="Le câble d'arrivée est choisi pour le courant d'emploi multiplié par ce coefficient, pour accepter des ajouts futurs (1 = aucune marge)"/>
                     <TextBox Text="{inf:Lien Reseau.CoefficientExtension}"
                              ToolTip="1 = aucun. Ex. 1,3 : la section du câble d'arrivée est choisie pour 30 % de courant en plus, pour ajouter des départs plus tard. La marge en ampères est donnée dans la note de calcul de l'arrivée."/>
                 </DockPanel>
