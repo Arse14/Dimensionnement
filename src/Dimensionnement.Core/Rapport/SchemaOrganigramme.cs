@@ -34,17 +34,21 @@ public static class SchemaOrganigramme
     {
         var groupes = SyntheseMateriel.Grouper(r);
         var arrivee = groupes[0].Cartes[0];
-        var puissance = groupes.Skip(1).Where(g => g.Titre != SyntheseMateriel.TitreCommande).ToList();
-        var commande = groupes.Skip(1).FirstOrDefault(g => g.Titre == SyntheseMateriel.TitreCommande);
+        var rubriques = groupes.Skip(1).Where(g => !g.Domaine).ToList();
+        var domaines = groupes.Skip(1).Where(g => g.Domaine).ToList();
+
+        // Les rubriques de puissance sous le jeu de barres, puis les domaines de tension à droite, hors du jeu de barres :
+        // chacun est relié par un lien à l'alimentation qui le nourrit.
+        var ordre = rubriques.Concat(domaines).ToList();
 
         // Position horizontale de chaque groupe, puis de chaque colonne.
         var x = Marge;
         var placements = new List<(GroupeMateriel Groupe, double X, double Largeur, List<(CarteMateriel Carte, double X)> Colonnes)>();
-        foreach (var g in puissance.Concat(commande is null ? Array.Empty<GroupeMateriel>() : new[] { commande }))
+        foreach (var g in ordre)
         {
-            if (g == commande) x += 2 * Colonne;
+            if (g.Domaine) x += 2 * Colonne;
             var debut = x;
-            var colonnes = new List<(CarteMateriel, double)>();
+            var colonnes = new List<(CarteMateriel Carte, double X)>();
             foreach (var c in g.Cartes)
             {
                 colonnes.Add((c, x));
@@ -66,21 +70,22 @@ public static class SchemaOrganigramme
         s.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{F(largeurTotale)}\" height=\"{F(hauteurTotale)}\" " +
                  $"viewBox=\"0 0 {F(largeurTotale)} {F(hauteurTotale)}\" font-family=\"Segoe UI, Arial, sans-serif\">");
         s.Append($"<rect width=\"{F(largeurTotale)}\" height=\"{F(hauteurTotale)}\" fill=\"#ffffff\"/>");
+        var positions = new Dictionary<ElementMateriel, (double X, double Y)>();
 
         // Arrivée : centrée au-dessus du jeu de barres de puissance.
-        var finPuissance = placements.Where(p => p.Groupe != commande).Select(p => p.X + p.Largeur).DefaultIfEmpty(Marge + Boite).Max();
+        var finPuissance = placements.Where(p => !p.Groupe.Domaine).Select(p => p.X + p.Largeur).DefaultIfEmpty(Marge + Boite).Max();
         var xArrivee = Math.Max(Marge, (Marge + finPuissance) / 2 - Boite / 2);
         Texte(s, xArrivee + Boite / 2, Marge + 14, "ARRIVÉE", 13, "#1f6feb", "middle", true);
         var y = Marge + 30;
         foreach (var m in arrivee.Chaine)
         {
-            Appareil(s, m.Element, xArrivee, y);
+            Appareil(s, m.Element, xArrivee, y, positions);
             Trait(s, xArrivee + Boite / 2, y + Hauteur, xArrivee + Boite / 2, y + Hauteur + Ecart);
             y += Hauteur + Ecart;
         }
 
         // Jeu de barres puis une descente par départ.
-        var colonnesPuissance = placements.Where(p => p.Groupe != commande).SelectMany(p => p.Colonnes).ToList();
+        var colonnesPuissance = placements.Where(p => !p.Groupe.Domaine).SelectMany(p => p.Colonnes).ToList();
         if (colonnesPuissance.Count > 0)
         {
             var gauche = Math.Min(colonnesPuissance[0].X + Boite / 2, xArrivee + Boite / 2);
@@ -92,11 +97,37 @@ public static class SchemaOrganigramme
 
         foreach (var (groupe, gx, gl, colonnes) in placements)
         {
-            var estCommande = groupe == commande;
+            var domaine = groupe.Domaine;
             s.Append($"<rect x=\"{F(gx - 8)}\" y=\"{F(yGroupe)}\" width=\"{F(gl + 16)}\" height=\"{F(hauteurTotale - yGroupe - Marge + 10)}\" rx=\"8\" " +
-                     $"fill=\"{(estCommande ? "#f3f0fa" : "#f2f5f8")}\" stroke=\"#d5dbe1\"/>");
-            Texte(s, gx, yGroupe + 18, groupe.Titre, 12, estCommande ? "#6f42c1" : "#1f6feb", "start", true);
-            foreach (var (carte, cx) in colonnes) Carte(s, carte, cx, yCarte);
+                     $"fill=\"{(domaine ? "#f3f0fa" : "#f2f5f8")}\" stroke=\"#d5dbe1\"/>");
+            Texte(s, gx, yGroupe + 18, groupe.Titre, 12, domaine ? "#6f42c1" : "#1f6feb", "start", true);
+            foreach (var (carte, cx) in colonnes) Carte(s, carte, cx, yCarte, positions);
+        }
+
+        // Domaines de tension : un jeu de barres secondaire en tête du groupe, relié à l'alimentation qui le nourrit.
+        var rang = 0;
+        foreach (var (groupe, gx, _, colonnes) in placements.Where(p => p.Groupe.Domaine))
+        {
+            var yBus = yCarte - 12;
+            var gauche = colonnes[0].X + Boite / 2;
+            var droite = colonnes[^1].X + Boite / 2;
+            s.Append($"<line x1=\"{F(gauche)}\" y1=\"{F(yBus)}\" x2=\"{F(droite)}\" y2=\"{F(yBus)}\" stroke=\"#6f42c1\" stroke-width=\"4\" stroke-linecap=\"round\"/>");
+            foreach (var (_, cx) in colonnes)
+                s.Append($"<line x1=\"{F(cx + Boite / 2)}\" y1=\"{F(yBus)}\" x2=\"{F(cx + Boite / 2)}\" y2=\"{F(yCarte)}\" stroke=\"#6f42c1\" stroke-width=\"2\"/>");
+            // Liaison depuis l'alimentation dessinée dans une autre rubrique (l'alimentation « à ajouter » ouvre le groupe elle-même).
+            // Le lien part sous l'alimentation, passe sous les colonnes (plancher du cadre) et remonte dans l'écart
+            // qui précède le domaine, pour ne traverser aucun appareil.
+            if (groupe.Source is { } source && positions.TryGetValue(source, out var ps)
+                && !colonnes.Any(c => c.Carte.Chaine.Any(m => m.Element == source)))
+            {
+                var xSource = ps.X + Boite / 2;
+                var xLien = gx - 8 - Colonne / 2 - 4 * rang;
+                var yBas = hauteurTotale - Marge + 4 - 5 * rang;
+                s.Append($"<polyline points=\"{F(xSource)},{F(ps.Y + Hauteur)} {F(xSource)},{F(yBas)} {F(xLien)},{F(yBas)} {F(xLien)},{F(yBus)} {F(gauche)},{F(yBus)}\" " +
+                         "fill=\"none\" stroke=\"#6f42c1\" stroke-width=\"2\"/>");
+                s.Append($"<circle cx=\"{F(xSource)}\" cy=\"{F(ps.Y + Hauteur)}\" r=\"3.5\" fill=\"#6f42c1\"/>");
+                rang++;
+            }
         }
 
         s.Append("</svg>");
@@ -106,7 +137,7 @@ public static class SchemaOrganigramme
     /// <summary>Nombre de lignes d'appareils sous l'en-tête d'une carte (les appareils en parallèle partagent la ligne de leur homologue).</summary>
     static int Lignes(CarteMateriel c) => c.Chaine.Count(m => !m.EnParallele);
 
-    static void Carte(StringBuilder s, CarteMateriel carte, double x, double y)
+    static void Carte(StringBuilder s, CarteMateriel carte, double x, double y, Dictionary<ElementMateriel, (double X, double Y)> positions)
     {
         // En-tête : repère et désignation du départ, type, liseré de statut.
         var titre = carte.Titre;
@@ -125,19 +156,20 @@ public static class SchemaOrganigramme
             {
                 var xp = x + Boite + Parallele;
                 s.Append($"<line x1=\"{F(x + Boite)}\" y1=\"{F(yp + Hauteur / 2)}\" x2=\"{F(xp)}\" y2=\"{F(yp + Hauteur / 2)}\" stroke=\"#6e7681\" stroke-width=\"1.5\" stroke-dasharray=\"4 3\"/>");
-                Appareil(s, m.Element, xp, yp);
+                Appareil(s, m.Element, xp, yp, positions);
                 continue;
             }
             Trait(s, x + Boite / 2, yl, x + Boite / 2, yl + Ecart);
             yl += Ecart;
-            Appareil(s, m.Element, x, yl);
+            Appareil(s, m.Element, x, yl, positions);
             yPrecedent = yl;
             yl += Hauteur;
         }
     }
 
-    static void Appareil(StringBuilder s, ElementMateriel e, double x, double y)
+    static void Appareil(StringBuilder s, ElementMateriel e, double x, double y, Dictionary<ElementMateriel, (double X, double Y)> positions)
     {
+        positions.TryAdd(e, (x, y));
         // La référence portée par le groupe permet à l'application d'ouvrir la fiche catalogue au clic.
         s.Append($"<g{(e.Reference.Length > 0 ? $" data-reference=\"{E(e.Reference)}\"" : "")}><title>{E(e.Repere)} – {E(e.Designation)}{(e.Calibre.Length > 0 ? " – " + E(e.Calibre) : "")}" +
                  $"{(e.Reference.Length > 0 ? "\n" + E(e.Fabricant) + " " + E(e.Reference) : "")}</title>");

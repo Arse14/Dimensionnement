@@ -195,6 +195,7 @@ public static class CalculArmoire
         {
             principale.SectionneurHorsPlaque = qs;
             principale.MontageSectionneur = config.MontageSectionneur;
+            principale.Note.Groupe = "Protection générale";
             principale.Note.Info("Sectionneur général", $"{qs.Repere} monté " + (config.MontageSectionneur == MontageSectionneur.Porte
                 ? "en façade de porte : pas de place sur la plaque, hors zones CEM ; ses pertes restent dans l'armoire."
                 : "sur le côté de l'armoire, à l'extérieur : pas de place sur la plaque, hors zones CEM et hors bilan thermique."), RefArmoire);
@@ -215,7 +216,7 @@ public static class CalculArmoire
     static ResultatArmoire Calculer(ResultatProjet r, List<AppareilImplante> elements, ConfigurationArmoire config,
         IReadOnlyList<ModeleEnveloppe>? enveloppes, IReadOnlyList<ElementMateriel> porte)
     {
-        var note = new NoteDeCalcul("ARM", config.Forcages);
+        var note = new NoteDeCalcul("ARM", config.Forcages) { Groupe = "Enveloppe" };
         var reserve = Math.Clamp(config.ReservePourcent, 0, 80) / 100;
         var catalogue = enveloppes ?? CatalogueEnveloppes.Charger();
         var marque = config.Marque;
@@ -376,6 +377,7 @@ public static class CalculArmoire
             (enveloppe.Verifie ? "." : " (références indicatives, à vérifier)."), "Catalogues Rittal, Legrand, Schneider ; " + RefArmoire);
         var bandesLibres = libre ? RecalculerZones(bandesPosees, appareils, config.Rails, largeur * cellules, hauteur) : null;
         var placeRails = libre ? PlaceLibreRails(bandesLibres!, appareils) : null;
+        note.Groupe = "Implantation";
         if (libre)
         {
             var goulottesPosees = config.Goulottes.Select(g => (g.Verticale ? g.Largeur : g.Longueur) * (g.Verticale ? g.Longueur : g.Largeur)).Sum();
@@ -480,6 +482,7 @@ public static class CalculArmoire
             });
             x += e.LargeurMm + EcartIhm;
         }
+        note.Groupe = "Implantation";
         note.Verifier("IHM en porte", PorteRecoit(porte, largeur, hauteur),
             $"{string.Join(", ", liste.Select(a => $"{a.Repere} façade {N(a.Largeur)} × {N(a.Hauteur)} mm"))} ; " +
             $"porte {N(largeur)} × {N(hauteur)} mm, {N(CadrePorte, 0)} mm de cadre réservés tout autour.", RefArmoire, StatutCalcul.NonConforme);
@@ -897,6 +900,7 @@ public static class CalculArmoire
                 manques.Add($"{v.Repere} : {N(Math.Max(0, dessus))} mm au-dessus et {N(Math.Max(0, dessous))} mm au-dessous");
             if (dessus < reduit - 1e-6 || dessous < reduit - 1e-6) sousMinimum = true;
         }
+        note.Groupe = "Implantation";
         if (manques.Count == 0)
             note.Verifier("Dégagement des variateurs", true,
                 $"Chaque variateur garde au moins {N(DegagementVariateur)} mm libres au-dessus et au-dessous pour sa ventilation.", RefCem);
@@ -1073,6 +1077,7 @@ public static class CalculArmoire
 
     static void ControlerManuel(NoteDeCalcul note, List<AppareilImplante> appareils, List<BandeZone> bandes, double largeur, double hauteur)
     {
+        note.Groupe = "Implantation";
         var manuels = appareils.Where(a => a.Manuel).ToList();
         if (manuels.Count > 0)
             note.Info("Ajustement manuel", $"{manuels.Count} appareil(s) déplacé(s) à la main : {string.Join(", ", manuels.Select(a => a.Repere))}. " +
@@ -1111,6 +1116,7 @@ public static class CalculArmoire
     /// </summary>
     static Dictionary<string, double> ControlerChamps(NoteDeCalcul note, List<AppareilImplante> appareils, List<SourceChamp> sources)
     {
+        note.Groupe = "Compatibilité électromagnétique";
         var expositions = new Dictionary<string, double>();
         if (sources.Count == 0) return expositions;
         note.Info("Champ magnétique", "Chaque source est assimilée à un faisceau de conducteurs d'écart e : H = k × I × e / (2π × d²), contributions sommées (majorant). " +
@@ -1148,6 +1154,7 @@ public static class CalculArmoire
 
     static void ControlerSeparation(NoteDeCalcul note, List<BandeZone> bandes)
     {
+        note.Groupe = "Compatibilité électromagnétique";
         // La zone des borniers mêle commande et puissance par nature : ses deux borniers sont séparés sur le rail.
         var propres = bandes.Where(b => b.Zone == ZoneCem.Propre && !b.Bornier).ToList();
         var sales = bandes.Where(b => b.Zone == ZoneCem.Sale && !b.Bornier).ToList();

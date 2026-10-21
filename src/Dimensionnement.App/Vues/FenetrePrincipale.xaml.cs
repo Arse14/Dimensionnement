@@ -71,6 +71,9 @@ public partial class FenetrePrincipale : Window
         bouton.ContextMenu.IsOpen = true;
     }
 
+    void DeplierNote(object sender, RoutedEventArgs e) => (DataContext as ModeleVuePrincipal)?.DeplierNote(true);
+    void ReplierNote(object sender, RoutedEventArgs e) => (DataContext as ModeleVuePrincipal)?.DeplierNote(false);
+
     void AfficherRecents(object sender, RoutedEventArgs e)
     {
         var menu = new ContextMenu { PlacementTarget = (UIElement)sender };

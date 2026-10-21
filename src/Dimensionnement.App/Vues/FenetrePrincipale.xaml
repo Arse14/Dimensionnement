@@ -174,6 +174,16 @@
                     <TextBlock Text="Source 24 V DC préférée" Style="{StaticResource Etiquette}"/>
                     <ComboBox ItemsSource="{x:Static inf:Listes.PreferencesSource}" SelectedItem="{inf:Lien PreferenceSource}"/>
                 </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Alimentations 24 V DC séparées" Style="{StaticResource Etiquette}"
+                               ToolTip="Chaque partie cochée reçoit sa propre alimentation 24 V DC, dimensionnée sur ses seuls consommateurs et ajoutée automatiquement si elle manque. Sans coche, toute la commande partage la même alimentation."/>
+                    <WrapPanel>
+                        <CheckBox Content="Automate et IHM" IsChecked="{inf:Lien AlimentationAutomateDediee}" Margin="0,0,14,0"/>
+                        <CheckBox Content="Sécurité" IsChecked="{inf:Lien AlimentationSecuriteDediee}" Margin="0,0,14,0"/>
+                        <CheckBox Content="Actionneurs" IsChecked="{inf:Lien AlimentationActionneursDediee}"
+                                  ToolTip="Îlots d'électrovannes, colonnes lumineuses, éclairage machine."/>
+                    </WrapPanel>
+                </DockPanel>
 
                 <TextBlock Text="Marques du matériel" Style="{StaticResource Section}"/>
                 <DockPanel Style="{StaticResource Ligne}">
@@ -1567,6 +1577,90 @@
             </DataTemplate.Triggers>
         </DataTemplate>
 
+        <!-- En-tête d'une carte de la note : point d'état, titre, résumé, valeur clé, chevron ; se plie d'un clic. -->
+        <ControlTemplate x:Key="EnTeteCarte" TargetType="ToggleButton">
+            <Border x:Name="Fond" Background="{StaticResource PanneauClair}" BorderThickness="3,0,0,0" CornerRadius="4,0,0,4"
+                    BorderBrush="{Binding Statut, Converter={StaticResource StatutCouleur}}" Padding="8,7,8,7" Cursor="Hand">
+                <ContentPresenter/>
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Fond" Property="Background" Value="{StaticResource Survol}"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <!-- Pli discret « Note de calcul (n lignes) » sous les points de contrôle d'une carte -->
+        <ControlTemplate x:Key="PliCalculs" TargetType="ToggleButton">
+            <Border x:Name="Fond" Background="Transparent" Padding="0,6" Cursor="Hand">
+                <ContentPresenter/>
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Fond" Property="Background" Value="{StaticResource Survol}"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <!-- Une carte de la note de calcul : l'objet contrôlé, ses vérifications, ses calculs pliés dessous. -->
+        <DataTemplate x:Key="CarteNote" DataType="{x:Type mv:GroupeNoteVue}">
+            <Border BorderBrush="{StaticResource Bordure}" BorderThickness="1" CornerRadius="4" Margin="0,0,0,8"
+                    Background="{StaticResource Champ}">
+                <StackPanel>
+                    <ToggleButton IsChecked="{Binding Ouvert, Mode=TwoWay}" Template="{StaticResource EnTeteCarte}" Focusable="False"
+                                  ToolTip="Afficher ou masquer cette carte">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="18"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="18"/>
+                            </Grid.ColumnDefinitions>
+                            <Ellipse Width="10" Height="10" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                     Fill="{Binding Statut, Converter={StaticResource StatutCouleur}}"/>
+                            <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                                <TextBlock Text="{Binding Nom}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding Resume}" Foreground="{StaticResource TexteSecondaire}" FontSize="11" TextWrapping="Wrap"
+                                           Visibility="{Binding Resume, Converter={StaticResource VideMasque}}"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="2" Text="{Binding ValeurCle}" FontWeight="SemiBold" VerticalAlignment="Center"
+                                       FontFamily="Consolas, Segoe UI" Foreground="{StaticResource Accent}" Margin="0,0,8,0"/>
+                            <TextBlock x:Name="Chevron" Grid.Column="3" FontFamily="{StaticResource Icones}" Text="&#xE76C;" FontSize="10"
+                                       Foreground="{StaticResource TexteSecondaire}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                        </Grid>
+                    </ToggleButton>
+                    <StackPanel Margin="10,0,10,2" Visibility="{Binding Ouvert, Converter={StaticResource VraiVisible}}">
+                        <ItemsControl ItemsSource="{Binding Controles}" ItemTemplate="{StaticResource LigneNote}"/>
+                        <ItemsControl ItemsSource="{Binding Calculs}" ItemTemplate="{StaticResource LigneNote}"
+                                      Visibility="{Binding CalculsDirects, Converter={StaticResource VraiVisible}}"/>
+                        <StackPanel Visibility="{Binding CalculsPliables, Converter={StaticResource VraiVisible}}">
+                            <ToggleButton IsChecked="{Binding CalculsOuverts, Mode=TwoWay}" Template="{StaticResource PliCalculs}" Focusable="False"
+                                          HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                          ToolTip="Les valeurs calculées et les informations qui préparent ces vérifications">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock x:Name="ChevronCalculs" FontFamily="{StaticResource Icones}" Text="&#xE76C;" FontSize="9"
+                                               Foreground="{StaticResource TexteSecondaire}" VerticalAlignment="Center" Width="18"/>
+                                    <TextBlock Text="{Binding TitreCalculs}" Foreground="{StaticResource TexteSecondaire}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </ToggleButton>
+                            <Border BorderBrush="{StaticResource Bordure}" BorderThickness="0,1,0,0" Margin="18,0,0,0"
+                                    Visibility="{Binding CalculsOuverts, Converter={StaticResource VraiVisible}}">
+                                <ItemsControl ItemsSource="{Binding Calculs}" ItemTemplate="{StaticResource LigneNote}"/>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Ouvert}" Value="True">
+                    <Setter TargetName="Chevron" Property="Text" Value="&#xE70D;"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding CalculsOuverts}" Value="True">
+                    <Setter TargetName="ChevronCalculs" Property="Text" Value="&#xE70D;"/>
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
         <!-- Bouton de la barre d'outils : icône et libellé -->
         <Style x:Key="BoutonOutil" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Padding" Value="10,4"/>
@@ -1808,10 +1902,20 @@
                                 VerticalAlignment="Top">
                             <TextBlock FontFamily="{StaticResource Icones}" Text="&#xE711;"/>
                         </Button>
+                        <Button DockPanel.Dock="Right" Style="{StaticResource BoutonPetit}" Click="ReplierNote" Margin="0,0,4,0"
+                                VerticalAlignment="Top" ToolTip="Replier toutes les cartes">
+                            <TextBlock FontFamily="{StaticResource Icones}" Text="&#xE8E6;"/>
+                        </Button>
+                        <Button DockPanel.Dock="Right" Style="{StaticResource BoutonPetit}" Click="DeplierNote" Margin="0,0,4,0"
+                                VerticalAlignment="Top" ToolTip="Déplier toutes les cartes, calculs compris">
+                            <TextBlock FontFamily="{StaticResource Icones}" Text="&#xE8E4;"/>
+                        </Button>
                         <TextBlock Text="{Binding TitreNote}" Style="{StaticResource TitrePanneau}" TextWrapping="Wrap"/>
                     </DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Foreground="{StaticResource TexteSecondaire}" FontSize="11" Margin="0,0,0,8" TextWrapping="Wrap"
+                               Text="Une carte par objet contrôlé : ses vérifications restent visibles, les calculs qui les préparent se déplient sous « Note de calcul »."/>
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding Note.Lignes}" ItemTemplate="{StaticResource LigneNote}"/>
+                        <ItemsControl ItemsSource="{Binding GroupesNote}" ItemTemplate="{StaticResource CarteNote}"/>
                     </ScrollViewer>
                 </DockPanel>
             </Border>

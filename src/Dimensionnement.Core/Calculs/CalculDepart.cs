@@ -78,11 +78,11 @@ public static class CalculDepart
                $" = {N(puissanceW, 0)} / {(denominateur.Contains('×') ? $"({denominateur})" : denominateur)} = {N(courant)} A";
     }
 
-    static NoteDeCalcul NouvelleNote(Depart d) => new($"{d.Code}", d.Forcages);
+    static NoteDeCalcul NouvelleNote(Depart d, string groupe) => new($"{d.Code}", d.Forcages) { Groupe = groupe };
 
     static ResultatDepart Moteur(DepartMoteur m, Reseau reseau, double chuteAmont, FabricantMateriel fabricant, IReadOnlyList<ModeleVariateur> variateurs)
     {
-        var note = NouvelleNote(m);
+        var note = NouvelleNote(m, "Moteur");
         var u = Tension(m.Alimentation);
         var inCalcule = m.PuissanceKw * 1000 / (Racine(m.Alimentation) * u * m.CosPhi * m.Rendement);
         var entrees = $"Pn = {N(m.PuissanceKw)} kW, U = {N(u)} V, cos φ = {N(m.CosPhi)}, η = {N(m.Rendement)}";
@@ -110,6 +110,7 @@ public static class CalculDepart
 
         double courantCable;
         var servo = m.Demarrage == ModeDemarrage.Servomoteur;
+        note.Groupe = "Protection";
         if (m.SurVariateur)
         {
             if (m.Protection == TypeProtection.Fusibles)
@@ -127,6 +128,7 @@ public static class CalculDepart
                     .Avec(calibreProtection, NombrePoles(m.Alimentation, reseau.Slt), courbe: "C");
                 courantCable = calibreProtection;
             }
+            note.Groupe = "Variateur";
             note.Info("Coordination variateur",
                 "Valider la protection amont (disjoncteur ou fusibles gR/aR) dans le tableau de coordination du fabricant du variateur.");
             note.Info("Variateur", $"Courant de sortie assigné ≥ {A(ib)} en service normal ; vérifier la surcharge nécessaire au process.");
@@ -171,6 +173,7 @@ public static class CalculDepart
             var progressif = m.Demarrage == ModeDemarrage.DemarreurProgressif;
             (calibreProtection, protection, avalProtection) =
                 Fusibles(m, note, reseau, ib, progressif ? ClasseFusible.gR : ClasseFusible.aM);
+            note.Groupe = "Protection";
             var reglage = note.Valeur(CodesCalcul.ReglageThermique, "Réglage du relais thermique", ib, ib, "A", "Ir = Ib",
                 $"Ib = {A(ib)}", "NF EN 60947-4-1");
             courantCable = reglage;
@@ -231,6 +234,7 @@ public static class CalculDepart
                 ? DemarreurProgressif(m, note, courantAppareillage, avalProtection)
                 : Contacteurs(m, note, courantAppareillage, avalProtection);
         }
+        note.Groupe = "Protection";
         Differentiel(m, note, reseau.Slt, m.SurVariateur
             ? (m.Alimentation is TypeAlimentation.Mono230 or TypeAlimentation.Bi400 ? "F" : "B")
             : "A", articleSepare: true);
@@ -239,6 +243,7 @@ public static class CalculDepart
         // En étoile-triangle, deux câbles alimentent les enroulements, chacun parcouru par I / √3.
         // En deux vitesses, un câble par vitesse (deux enroulements, ou les deux couplages Dahlander).
         var et = m.Demarrage == ModeDemarrage.EtoileTriangle;
+        note.Groupe = "Câble";
         var cable = CalculCable.Dimensionner(note, m.Cable, m.Alimentation,
             et ? courantCable / Math.Sqrt(3) : courantCable, et ? ib / Math.Sqrt(3) : ib,
             m.CosPhi, reseau, chuteAmont);
@@ -252,6 +257,7 @@ public static class CalculDepart
 
     static ElementMateriel DemarreurProgressif(DepartMoteur m, NoteDeCalcul note, double ib, ElementMateriel amont)
     {
+        note.Groupe = "Démarreur progressif";
         note.Info("Démarreur progressif", $"Courant assigné ≥ {A(ib)} pour le service de démarrage du process (nombre de démarrages par heure).",
             "NF EN 60947-4-2");
         note.Info("Contacteur de ligne", "Prévoir un contacteur de ligne si l'arrêt d'urgence ou la sécurité machine l'exige.",
@@ -264,6 +270,7 @@ public static class CalculDepart
     static (double Calibre, ElementMateriel Sectionneur, ElementMateriel Cartouches) Fusibles(Depart d, NoteDeCalcul note,
         Reseau reseau, double ib, ClasseFusible classe)
     {
+        note.Groupe = "Protection";
         var usage = classe switch
         {
             ClasseFusible.aM => "accompagnement moteur, surcharge assurée par le relais thermique",
@@ -303,6 +310,7 @@ public static class CalculDepart
     static void Frein(DepartMoteur m, NoteDeCalcul note, ElementMateriel protection)
     {
         if (!m.Frein) return;
+        note.Groupe = "Frein";
         var n = m.Numero;
         var alimentation = m.AlimentationFrein;
         var direct = m.Demarrage is ModeDemarrage.Direct or ModeDemarrage.Inverseur;
@@ -487,6 +495,7 @@ public static class CalculDepart
 
     static ElementMateriel Contacteurs(DepartMoteur m, NoteDeCalcul note, double ib, ElementMateriel protection)
     {
+        note.Groupe = "Contacteurs";
         var n = m.Numero;
         if (m.Demarrage == ModeDemarrage.DeuxVitesses)
         {
@@ -536,7 +545,7 @@ public static class CalculDepart
 
     static ResultatDepart Resistif(DepartResistif r, Reseau reseau, double chuteAmont)
     {
-        var note = NouvelleNote(r);
+        var note = NouvelleNote(r, "Récepteur");
         var u = Tension(r.Alimentation);
         var calcule = r.PuissanceKw * 1000 / (Racine(r.Alimentation) * u);
         var ib = note.Valeur(CodesCalcul.CourantEmploi, "Courant d'emploi", calcule, calcule, "A",
@@ -544,10 +553,12 @@ public static class CalculDepart
         var (courantCable, calibre, protection, aval) = Protection(r, note, reseau, ib, CourbeDisjoncteur.B, "charge résistive");
         if (r.AvecContacteur)
         {
+            note.Groupe = "Contacteur";
             var km = note.Valeur(CodesCalcul.CalibreContacteur, "Contacteur de puissance (AC-1)", ib,
                 Calibres.Superieur(Calibres.ContacteursAc1, ib) ?? ib, "A", "Ie (AC-1) ≥ Ib", $"Ib = {A(ib)}", RefContacteur);
             aval = aval.Ajouter(Element($"KM{r.Numero}", "Contacteur", "Contacteur de puissance", $"AC-1 {A(km)}").Avec(km, 3));
         }
+        note.Groupe = "Câble";
         var cable = CalculCable.Dimensionner(note, r.Cable, r.Alimentation, courantCable, ib, 1, reseau, chuteAmont);
         aval.Ajouter(ElementCable(r.Numero, r, cable, reseau.Slt, 1))
             .Ajouter(Element($"R{r.Numero}", "Récepteur", r.Designation is { Length: > 0 } d ? d : "Résistance",
@@ -557,12 +568,13 @@ public static class CalculDepart
 
     static ResultatDepart Prise(DepartPrise p, Reseau reseau, double chuteAmont)
     {
-        var note = NouvelleNote(p);
+        var note = NouvelleNote(p, "Prises");
         var ib = note.Valeur(CodesCalcul.CourantEmploi, "Courant d'emploi", p.CalibrePrise, p.CalibrePrise, "A",
             "Ib = calibre du circuit prises", $"{p.NombrePrises} prise(s) {A(p.CalibrePrise)}");
         note.Verifier("Protection différentielle", p.Differentiel == SensibiliteDifferentiel.Ma30,
             "Les prises de courant jusqu'à 32 A sont protégées par un différentiel 30 mA.", "NF C 15-100, 411.3.3");
         var (courantCable, calibre, protection, aval) = Protection(p, note, reseau, ib, CourbeDisjoncteur.C, "circuit prises");
+        note.Groupe = "Câble";
         var cable = CalculCable.Dimensionner(note, p.Cable, p.Alimentation, courantCable, ib, 1, reseau, chuteAmont);
         var u = Tension(p.Alimentation);
         var puissance = Racine(p.Alimentation) * u * ib / 1000;
@@ -578,9 +590,9 @@ public static class CalculDepart
 
     static ResultatDepart Generique(DepartGenerique g, Reseau reseau, double chuteAmont)
     {
-        var note = NouvelleNote(g);
-        var u = Tension(g.Alimentation);
         var coffret = g as DepartCoffret;
+        var note = NouvelleNote(g, coffret is null ? "Récepteur" : "Coffret déporté");
+        var u = Tension(g.Alimentation);
         var ks = coffret is null ? 1 : Math.Clamp(coffret.Simultaneite, 0.1, 1);
         var puissance = g.PuissanceKw * ks;
         if (coffret is not null)
@@ -590,7 +602,9 @@ public static class CalculDepart
         var ib = note.Valeur(CodesCalcul.CourantEmploi, "Courant d'emploi", calcule, calcule, "A",
             FormuleCourant(g.Alimentation, " × cos φ", puissance * 1000, u, g.CosPhi), $"P = {N(puissance)} kW, U = {N(u)} V, cos φ = {N(g.CosPhi)}");
         var (courantCable, calibre, protection, aval) = Protection(g, note, reseau, ib, g.Courbe, "choix utilisateur");
+        note.Groupe = "Câble";
         var cable = CalculCable.Dimensionner(note, g.Cable, g.Alimentation, courantCable, ib, g.CosPhi, reseau, chuteAmont);
+        note.Groupe = "Coffret déporté";
         if (coffret is not null)
             note.Info("Coffret déporté", "Le coffret porte son propre organe de sectionnement (NF EN 60204-1, 5.3) ; " +
                 "sa sélectivité avec la protection de ce départ et la chute de tension jusqu'à ses récepteurs restent à vérifier.",
@@ -609,7 +623,7 @@ public static class CalculDepart
     static ResultatDepart Alimentation24V(DepartAlimentation24V a, Reseau reseau, double chuteAmont, double consommation,
         IReadOnlyList<ConsommationCommande>? postes, FabricantMateriel fabricant, IReadOnlyList<ModeleAlimentation> catalogue)
     {
-        var note = NouvelleNote(a);
+        var note = NouvelleNote(a, "Alimentation 24 V");
         if (postes is { Count: > 0 })
             foreach (var g in postes.GroupBy(p => p.Poste))
                 note.Info($"Raccordés : {g.Key}", string.Join(" ; ", g.Select(p => $"{p.Designation} {A(p.Courant)}")) + $" ; total {A(g.Sum(p => p.Courant))}.",
@@ -665,6 +679,7 @@ public static class CalculDepart
         note.Info("Appel de courant", "Les alimentations à découpage ont un fort courant d'appel : disjoncteur courbe C au minimum, D si plusieurs alimentations.",
             "Documentation fabricant");
         var (courantCable, calibre, protection, aval) = Protection(a, note, reseau, ib, CourbeDisjoncteur.C, "appel des alimentations à découpage");
+        note.Groupe = "Câble";
         var cable = CalculCable.Dimensionner(note, a.Cable, a.Alimentation, courantCable, ib, CosPhiAlimentation, reseau, chuteAmont);
         var alimentation = Element($"G{a.Numero}", "Alimentation", DepartAlimentation24V.Libelle(TensionCommande.Continu24, false, a.Alimentation), $"{N(assigne)} A, {N(24 * assigne)} W")
             .Avec(assigne, puissanceKw: 24 * assigne / 1000);
@@ -693,7 +708,7 @@ public static class CalculDepart
         ChargeAval? aval)
     {
         const string Ref = "NF EN 61558-2-2 ; NF EN 60204-1, 7.2.7 et 9.1.1";
-        var note = NouvelleNote(t);
+        var note = NouvelleNote(t, "Transformateur");
         var sortie = t.Sortie;
         var usec = sortie == TensionCommande.Alternatif230 ? 230.0 : 24.0;
         if (postes is { Count: > 0 })
@@ -769,6 +784,7 @@ public static class CalculDepart
             "NF C 15-100, 533 ; documentation fabricant");
         var (courantCable, calibre, protection, avalElement) = Protection(t, note, reseau, ib, CourbeDisjoncteur.D, "appel du transformateur");
         var cosPhi = 0.9;
+        note.Groupe = "Câble";
         var cable = CalculCable.Dimensionner(note, t.Cable, t.Alimentation, courantCable, ib, cosPhi, reseau, chuteAmont);
         var transfo = Element($"T{t.Numero}", "Alimentation", DepartAlimentation24V.Libelle(sortie, true, t.Alimentation),
                 $"{N(va, 0)} VA, {CatalogueAlimentations.LibellePrimaire(primaire)} / {secondaire}")
@@ -801,6 +817,7 @@ public static class CalculDepart
     static (double CourantCable, double Calibre, ElementMateriel Element, ElementMateriel Aval) Protection(Depart d,
         NoteDeCalcul note, Reseau reseau, double ib, CourbeDisjoncteur courbe, string raisonCourbe)
     {
+        note.Groupe = "Protection";
         if (d.Protection == TypeProtection.Fusibles)
         {
             var (calibreFusible, sectionneur, cartouches) = Fusibles(d, note, reseau, ib, ClasseFusible.gG);
@@ -835,6 +852,7 @@ public static class CalculDepart
     static string Differentiel(Depart d, NoteDeCalcul note, SchemaLiaisonTerre slt, string type, bool articleSepare)
     {
         if (d.Differentiel == SensibiliteDifferentiel.Aucun) return "";
+        note.Groupe = "Protection";
         var sensibilite = d.Differentiel == SensibiliteDifferentiel.Ma30 ? "30 mA" : "300 mA";
         var raison = type switch
         {

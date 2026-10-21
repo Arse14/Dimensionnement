@@ -27,6 +27,9 @@ public class LigneCalcul
     /// <summary>Code forçable (voir <see cref="CodesCalcul"/>), vide pour une simple vérification.</summary>
     public string Code { get; init; } = "";
     public string Libelle { get; init; } = "";
+
+    /// <summary>Carte de la note qui regroupe la ligne avec les calculs qui la préparent (« Câble », « Protection »…).</summary>
+    public string Groupe { get; init; } = "";
     public string Formule { get; init; } = "";
     public string Entrees { get; init; } = "";
     public string Reference { get; init; } = "";
@@ -61,6 +64,37 @@ public class NoteDeCalcul
 
     public List<LigneCalcul> Lignes { get; } = new();
 
+    /// <summary>Préfixe des identifiants de lignes (« ARR », « D01 », « TH »…).</summary>
+    public string Prefixe => _prefixe;
+
+    /// <summary>Nom de la carte qui reçoit les lignes ajoutées à partir de maintenant.</summary>
+    public string Groupe { get; set; } = "";
+
+    /// <summary>Carte des lignes sans point de contrôle ni groupe explicite.</summary>
+    public const string GroupeInformations = "Informations";
+
+    /// <summary>
+    /// La note en cartes : une par groupe, dans l'ordre d'apparition, les lignes sans groupe à la fin sous « Informations ».
+    /// Chaque carte sépare ses points de contrôle (vérifications et valeurs forcées) des calculs qui les préparent.
+    /// </summary>
+    public IReadOnlyList<GroupeCalcul> Groupes
+    {
+        get
+        {
+            var groupes = new List<GroupeCalcul>();
+            foreach (var l in Lignes)
+            {
+                var nom = l.Groupe.Length > 0 ? l.Groupe : GroupeInformations;
+                var g = groupes.FirstOrDefault(x => x.Nom == nom);
+                if (g is null) groupes.Add(g = new GroupeCalcul(nom, $"{_prefixe}|{nom}"));
+                g.Lignes.Add(l);
+            }
+            var infos = groupes.FirstOrDefault(g => g.Nom == GroupeInformations);
+            if (infos is not null) { groupes.Remove(infos); groupes.Add(infos); }
+            return groupes;
+        }
+    }
+
     public StatutCalcul StatutGlobal => Lignes.Count == 0
         ? StatutCalcul.Info
         : Lignes.Max(l => l.Statut);
@@ -77,6 +111,7 @@ public class NoteDeCalcul
             Identifiant = $"{_prefixe}-{code}",
             Code = code,
             Libelle = libelle,
+            Groupe = Groupe,
             Formule = formule,
             Entrees = entrees,
             Reference = reference,
@@ -98,6 +133,7 @@ public class NoteDeCalcul
         {
             Identifiant = $"{_prefixe}-V{Lignes.Count + 1}",
             Libelle = libelle,
+            Groupe = Groupe,
             Reference = reference,
             Statut = conforme ? StatutCalcul.Conforme : siEchec,
             Message = message,
@@ -111,7 +147,77 @@ public class NoteDeCalcul
         {
             Identifiant = $"{_prefixe}-I{Lignes.Count + 1}",
             Libelle = libelle,
+            Groupe = Groupe,
             Reference = reference,
             Message = message,
         });
+}
+
+/// <summary>Une carte de la note de calcul : un objet contrôlé, ses vérifications et les calculs qui les préparent.</summary>
+public class GroupeCalcul
+{
+    public GroupeCalcul(string nom, string cle) { Nom = nom; Cle = cle; }
+
+    public string Nom { get; }
+
+    /// <summary>Clé stable d'une note à l'autre (préfixe et nom), pour mémoriser l'état plié ou déplié.</summary>
+    public string Cle { get; }
+
+    public List<LigneCalcul> Lignes { get; } = new();
+
+    /// <summary>Vérifications et valeurs forcées : toujours visibles.</summary>
+    public IReadOnlyList<LigneCalcul> Controles => Lignes.Where(l => l.Statut != StatutCalcul.Info).ToList();
+
+    /// <summary>Lignes grises : valeurs calculées et informations, pliées sous « Note de calcul ».</summary>
+    public IReadOnlyList<LigneCalcul> Calculs => Lignes.Where(l => l.Statut == StatutCalcul.Info).ToList();
+
+    public StatutCalcul Statut => Lignes.Count == 0 ? StatutCalcul.Info : Lignes.Max(l => l.Statut);
+
+    public bool SansControle => Lignes.All(l => l.Statut == StatutCalcul.Info);
+
+    /// <summary>Valeur mise en avant dans l'en-tête : la dernière valeur dimensionnante du groupe.</summary>
+    public string ValeurCle => Lignes.LastOrDefault(l => l.Forcable && l.ValeurTexte.Length > 0)?.ValeurTexte ?? "";
+
+    /// <summary>« 2 vérifications conformes · 5 calculs », « 1 à vérifier, 1 forcée · 3 calculs »…</summary>
+    public string Resume
+    {
+        get
+        {
+            var controles = Controles;
+            var calculs = Lignes.Count - controles.Count;
+            var parties = new List<string>();
+            if (controles.Count > 0)
+            {
+                var conformes = controles.Count(l => l.Statut == StatutCalcul.Conforme);
+                var forcees = controles.Count(l => l.Statut == StatutCalcul.Forcee);
+                var alertes = controles.Count(l => l.Statut == StatutCalcul.Alerte);
+                var nonConformes = controles.Count(l => l.Statut == StatutCalcul.NonConforme);
+                if (conformes == controles.Count)
+                    parties.Add(conformes == 1 ? "1 vérification conforme" : $"{conformes} vérifications conformes");
+                else
+                {
+                    if (nonConformes > 0) parties.Add(nonConformes == 1 ? "1 non conforme" : $"{nonConformes} non conformes");
+                    if (alertes > 0) parties.Add($"{alertes} à vérifier");
+                    if (forcees > 0) parties.Add(forcees == 1 ? "1 forcée" : $"{forcees} forcées");
+                    if (conformes > 0) parties.Add(conformes == 1 ? "1 conforme" : $"{conformes} conformes");
+                }
+            }
+            var texte = string.Join(", ", parties);
+            if (calculs > 0)
+                texte += (texte.Length > 0 ? " · " : "") + (calculs == 1 ? "1 calcul" : $"{calculs} calculs");
+            return texte;
+        }
+    }
+
+    /// <summary>Libellé du pli des calculs : « Note de calcul (5 lignes) ».</summary>
+    public string TitreCalculs
+    {
+        get { var n = Lignes.Count(l => l.Statut == StatutCalcul.Info); return n == 1 ? "Note de calcul (1 ligne)" : $"Note de calcul ({n} lignes)"; }
+    }
+
+    /// <summary>Une carte s'ouvre d'elle-même quand elle porte un point de contrôle.</summary>
+    public bool OuvertParDefaut => !SansControle;
+
+    /// <summary>Les calculs se déplient d'eux-mêmes quand une vérification n'est pas bonne.</summary>
+    public bool CalculsOuvertsParDefaut => Statut >= StatutCalcul.Alerte;
 }

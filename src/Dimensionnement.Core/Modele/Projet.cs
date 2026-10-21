@@ -50,6 +50,26 @@ public class Projet
     /// <summary>Ajoute automatiquement l'alimentation ou le transformateur qui manque.</summary>
     public bool AjoutAutomatiqueSources { get; set; } = true;
 
+    /// <summary>
+    /// Alimentations 24 V DC séparées : chaque partie cochée reçoit sa propre alimentation, dimensionnée sur ses seuls
+    /// consommateurs (ajoutée automatiquement si elle manque). Sinon toute la commande partage la même alimentation.
+    /// </summary>
+    public bool AlimentationAutomateDediee { get; set; }
+    public bool AlimentationSecuriteDediee { get; set; }
+    public bool AlimentationActionneursDediee { get; set; }
+
+    /// <summary>Parties de la commande qui demandent leur propre alimentation 24 V DC.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public IEnumerable<UsageAlimentation24V> UsagesDedies
+    {
+        get
+        {
+            if (AlimentationAutomateDediee) yield return UsageAlimentation24V.Automate;
+            if (AlimentationSecuriteDediee) yield return UsageAlimentation24V.Securite;
+            if (AlimentationActionneursDediee) yield return UsageAlimentation24V.Actionneurs;
+        }
+    }
+
     /// <summary>Valeurs forcées de l'arrivée (simultanéité, calibres de tête, section d'arrivée).</summary>
     public Dictionary<string, Forcage> ForcagesArrivee { get; set; } = new();
 

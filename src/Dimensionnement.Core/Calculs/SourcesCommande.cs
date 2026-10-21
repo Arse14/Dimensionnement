@@ -7,6 +7,9 @@ public record BesoinSource(TensionCommande Tension, string Raison)
 {
     /// <summary>Départs 230 V à alimenter par un transformateur 400/230 V (réseau sans neutre).</summary>
     public IReadOnlyList<int> Departs { get; init; } = Array.Empty<int>();
+
+    /// <summary>Partie de la commande qui demande sa propre alimentation ; « Commande » pour la source commune.</summary>
+    public UsageAlimentation24V Usage { get; init; } = UsageAlimentation24V.Commande;
 }
 
 /// <summary>
@@ -20,6 +23,23 @@ public static class SourcesCommande
         TensionCommande.Continu24 => "24 V DC",
         TensionCommande.Alternatif24 => "24 V AC",
         _ => "230 V AC",
+    };
+
+    /// <summary>Partie de la commande (poste d'un consommateur) → usage d'alimentation qui lui est réservé.</summary>
+    public static UsageAlimentation24V UsagePoste(string poste) => poste switch
+    {
+        ConsommationCommande.Automate => UsageAlimentation24V.Automate,
+        ConsommationCommande.Securite => UsageAlimentation24V.Securite,
+        ConsommationCommande.Actionneurs => UsageAlimentation24V.Actionneurs,
+        _ => UsageAlimentation24V.Commande,
+    };
+
+    public static string LibelleUsage(UsageAlimentation24V usage) => usage switch
+    {
+        UsageAlimentation24V.Automate => "automate et IHM",
+        UsageAlimentation24V.Securite => "sécurité",
+        UsageAlimentation24V.Actionneurs => "actionneurs",
+        _ => "commande",
     };
 
     /// <summary>Le réseau d'arrivée n'a pas de neutre : les départs 230 V passent par un transformateur 400/230 V.</summary>
@@ -49,15 +69,20 @@ public static class SourcesCommande
     public static IReadOnlyList<BesoinSource> Manquantes(Projet projet, IReadOnlyList<ConsommationCommande> consommateurs)
     {
         var sources = projet.Departs.OfType<DepartAlimentation24V>().ToList();
+        var dedies = projet.UsagesDedies.ToList();
+        // Une alimentation réservée à une partie ne couvre pas le reste de la commande.
+        bool Commune(DepartAlimentation24V s, TensionCommande t) => s.Sortie == t && (t != TensionCommande.Continu24 || !dedies.Contains(s.Usage));
         var besoins = new List<BesoinSource>();
         foreach (var tension in Enum.GetValues<TensionCommande>())
         {
-            var postes = consommateurs.Where(c => c.Tension == tension && c.Courant > 0).Select(c => c.Poste).Distinct().ToList();
+            var postes = consommateurs.Where(c => c.Tension == tension && c.Courant > 0
+                    && !(tension == TensionCommande.Continu24 && dedies.Contains(UsagePoste(c.Poste))))
+                .Select(c => c.Poste).Distinct().ToList();
             var departs = tension == TensionCommande.Alternatif230 ? DepartsSansSource(projet) : Array.Empty<Depart>();
             if (postes.Count == 0 && departs.Count == 0) continue;
-            if (postes.Count > 0 && sources.Any(s => s.Sortie == tension) && departs.Count == 0) continue;
+            if (postes.Count > 0 && sources.Any(s => Commune(s, tension)) && departs.Count == 0) continue;
             var raisons = new List<string>();
-            if (postes.Count > 0 && !sources.Any(s => s.Sortie == tension))
+            if (postes.Count > 0 && !sources.Any(s => Commune(s, tension)))
                 raisons.Add($"{string.Join(", ", postes)} en {Libelle(tension)}");
             if (departs.Count > 0)
                 raisons.Add($"départ(s) {string.Join(", ", departs.Select(d => d.Numero))} en 230 V sur un réseau sans neutre");
@@ -68,6 +93,15 @@ public static class SourcesCommande
                     : tension == TensionCommande.Alternatif24 ? "ajouter un transformateur 400/24 V AC ou 230/24 V AC."
                     : "ajouter un transformateur 400/230 V."))
             { Departs = departs.Select(d => d.Numero).ToList() });
+        }
+        // Parties qui demandent leur propre alimentation 24 V DC, dimensionnée sur leurs seuls consommateurs.
+        foreach (var usage in dedies)
+        {
+            var courant = consommateurs.Where(c => c.Tension == TensionCommande.Continu24 && UsagePoste(c.Poste) == usage).Sum(c => c.Courant);
+            if (courant <= 0 || sources.Any(s => s.Sortie == TensionCommande.Continu24 && s.Usage == usage)) continue;
+            besoins.Add(new BesoinSource(TensionCommande.Continu24,
+                $"Alimentation 24 V DC séparée demandée pour {LibelleUsage(usage)} ({Format.A(courant)}) : " +
+                "ajouter une alimentation 24 V DC réservée à cette partie.") { Usage = usage });
         }
         return besoins;
     }
@@ -85,8 +119,10 @@ public static class SourcesCommande
             AjoutAutomatique = true,
             DepartsAlimentes = besoin.Departs.ToList(),
             Differentiel = SensibiliteDifferentiel.Aucun,
+            Usage = besoin.Usage,
         };
-        depart.Designation = DepartAlimentation24V.Libelle(depart.Sortie, transformateur, primaire);
+        depart.Designation = DepartAlimentation24V.Libelle(depart.Sortie, transformateur, primaire)
+            + (besoin.Usage == UsageAlimentation24V.Commande ? "" : $" – {LibelleUsage(besoin.Usage)}");
         return depart;
     }
 
@@ -102,7 +138,9 @@ public static class SourcesCommande
         foreach (var besoin in Manquantes(projet, consommateurs))
         {
             if (ignorees?.Contains(besoin.Tension) == true) continue;
-            var existant = projet.Departs.OfType<DepartAlimentation24V>().FirstOrDefault(t => t.Sortie == besoin.Tension);
+            var existant = besoin.Usage == UsageAlimentation24V.Commande
+                ? projet.Departs.OfType<DepartAlimentation24V>().FirstOrDefault(t => t.Sortie == besoin.Tension && !projet.UsagesDedies.Contains(t.Usage))
+                : projet.Departs.OfType<DepartAlimentation24V>().FirstOrDefault(t => t.Sortie == besoin.Tension && t.Usage == besoin.Usage);
             if (existant is not null)
             {
                 existant.DepartsAlimentes = existant.DepartsAlimentes.Concat(besoin.Departs).Distinct().ToList();

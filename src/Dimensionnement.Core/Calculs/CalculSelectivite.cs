@@ -40,7 +40,7 @@ public static class CalculSelectivite
 
     public static ResultatSelectivite Calculer(ResultatProjet r)
     {
-        var note = new NoteDeCalcul("SEL");
+        var note = new NoteDeCalcul("SEL") { Groupe = "Sélectivité" };
         var icc = r.Projet.Reseau.IccKiloAmperes * 1000;
         var qg = r.CalibreGeneral;
         // Disjoncteur de tête : courbe C jusqu'à 63 A (magnétique 5 à 10 In), au-delà boîtier moulé (≈ 10 In ± 20 %).

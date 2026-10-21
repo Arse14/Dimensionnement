@@ -185,7 +185,7 @@ public static class CalculAutomate
     public static ResultatAutomate Calculer(ConfigurationAutomate c, IReadOnlyList<CpuAutomate> catalogue, IReadOnlyList<CarteEs>? cartes = null,
         IReadOnlyList<ModeleIhm>? ihm = null, int ilotsReseau = 0)
     {
-        var note = new NoteDeCalcul("API");
+        var note = new NoteDeCalcul("API") { Groupe = "CPU" };
         if (!c.Actif) return new ResultatAutomate { Note = note, Appareils = Array.Empty<ElementMateriel>() };
         cartes ??= CatalogueCartesEs.Charger();
 
@@ -293,6 +293,7 @@ public static class CalculAutomate
             Ref, StatutCalcul.Alerte);
 
         // Bilan des voies par type et cartes ajoutées.
+        note.Groupe = "Cartes d'E/S";
         foreach (var b in plan.Besoins.Where(b => b.Saisies > 0))
         {
             var detail = $"{b.Saisies} × {N(reserve)} = {b.Requises} voie(s)";
@@ -415,6 +416,7 @@ public static class CalculAutomate
                 consommations.Add(new($"{st.Station.Nom} : tête et {st.Cartes.Count} carte(s)",
                     (coupleur?.Consommation ?? 0) + st.Cartes.Sum(x => x.Consommation > 0 ? x.Consommation : ConsommationCarte)));
         }
+        note.Groupe = "Alimentation 24 V";
         if (stations.Any(x => !x.Station.DansArmoire))
             note.Info("Stations en coffret", "Les stations hors armoire sont reprises au devis mais pas sur la plaque ni au bilan 24 V de l'armoire : " +
                 "prévoir leur coffret, leur alimentation et le câble réseau.");
@@ -430,6 +432,7 @@ public static class CalculAutomate
     static void Pupitres(ConfigurationAutomate c, string marque, IReadOnlyList<ModeleIhm> catalogue, NoteDeCalcul note,
         List<ElementMateriel> appareils, List<ConsommationCommande> consommations)
     {
+        note.Groupe = "IHM";
         const string RefIhm = "Fiches techniques des pupitres Siemens / Schneider";
         if (c.Ihm > 0)
             consommations.Add(new($"IHM sans modèle choisi × {c.Ihm} (estimation)", ConsommationIhm * c.Ihm));

@@ -81,7 +81,7 @@ public static class CatalogueReferences
     public static ResultatReferences Appliquer(ElementMateriel arbre, ConfigurationReferences config, IReadOnlyList<ReferenceCatalogue> catalogue,
         double iccKiloAmperes = 0)
     {
-        var note = new NoteDeCalcul("REF");
+        var note = new NoteDeCalcul("REF") { Groupe = "Références" };
         note.Info("Fabricant retenu", $"{config.Fabricant} pour la puissance et les protections" +
             (config.MarqueDisjoncteurs != MarqueFamille.Projet ? $", {config.MarqueDisjoncteurs} pour les disjoncteurs" : "") +
             (config.MarqueContacteurs != MarqueFamille.Projet ? $", {config.MarqueContacteurs} pour les contacteurs" : "") + ".");

@@ -45,6 +45,8 @@ public static class RapportHtml
             .bandeau b { margin-right: 6px; }
             .renvoi { color: #6a737b; font-style: italic; }
             .notes { color: #6a737b; font-size: 11px; margin: -6px 0 14px; }
+            tr.grp td { background: #f3f5f6; font-weight: 600; padding-top: 8px; border-bottom: 1px solid #c9d1d9; }
+            tr.grp .s { display: inline; font-weight: 400; margin-left: 10px; }
             .schema svg { max-width: 100%; height: auto; border: 1px solid #c9d1d9; }
             .schema.armoire svg { max-height: 900px; width: auto; }
             .avert { background: #fff6e5; border-left: 4px solid #f0a020; padding: 8px 10px; }
@@ -282,16 +284,15 @@ public static class RapportHtml
     static void AnnexeAutomatisme(StringBuilder sb, ResultatProjet r)
     {
         sb.Append("<h2 id=\"annexe-a\">Annexe A. Automatisme et sécurité</h2>");
-        var commande = SyntheseMateriel.Grouper(r).FirstOrDefault(g => g.Titre == SyntheseMateriel.TitreCommande);
-        if (commande is not null)
+        var domaines = SyntheseMateriel.Grouper(r).Where(g => g.Domaine).ToList();
+        if (domaines.Count > 0)
         {
             sb.Append("<table><tr><th>Repère</th><th>Appareil</th><th>Calibre / voies</th><th>Référence</th></tr>");
-            foreach (var carte in commande.Cartes)
+            foreach (var domaine in domaines)
             {
-                var source = carte.Chaine.FirstOrDefault(m => m.Element.Famille is "Alimentation" or CalculProjet.SourceManquante)?.Element;
-                if (source is not null)
-                    sb.Append($"<tr><td colspan=\"4\" class=\"s\">Alimenté par {E(source.Repere)} {E(source.Designation)}</td></tr>");
-                foreach (var e in carte.Chaine.Select(m => m.Element).Where(e => e != source))
+                var source = domaine.Source!;
+                sb.Append($"<tr><td colspan=\"4\" class=\"s\">{E(domaine.Titre)} : alimenté par {E(source.Repere)} {E(source.Designation)}</td></tr>");
+                foreach (var e in domaine.Cartes.SelectMany(c => c.Chaine.Select(m => m.Element)).Where(e => e != source))
                 {
                     var accessoires = e.Enfants.Where(x => x.Famille == "Accessoire automate").ToList();
                     sb.Append($"<tr class=\"l-{e.Statut}\"><td class=\"rep\">{E(e.Repere)}</td><td>{E(e.Designation)}" +
@@ -334,7 +335,13 @@ public static class RapportHtml
         if (note.Lignes.Count == 0) return;
         var normes = new List<string>();
         sb.Append("<table><tr><th style=\"width:24%\">Étape</th><th class=\"nb\" style=\"width:13%\">Résultat</th><th>Calcul</th><th style=\"width:6%\">État</th></tr>");
-        foreach (var l in note.Lignes)
+        // Les étapes sont rangées par carte, comme dans l'application : un titre par objet contrôlé quand il y en a plusieurs.
+        var groupes = note.Groupes;
+        foreach (var g in groupes)
+        {
+        if (groupes.Count > 1)
+            sb.Append($"<tr class=\"grp\"><td colspan=\"4\">{E(g.Nom)}<span class=\"s\">{E(g.Resume)}</span></td></tr>");
+        foreach (var l in g.Lignes)
         {
             var valeur = l.ValeurRetenue is { } v ? $"<b>{N(v)} {E(l.Unite)}</b>" : "";
             if (l.ValeurCalculee is { } c && l.ValeurRetenue is { } rv && Math.Abs(c - rv) > 1e-9)
@@ -354,6 +361,7 @@ public static class RapportHtml
             if (renvois.Count > 0) calcul += $"<span class=\"s\">{string.Join(" · ", renvois)}</span>";
             sb.Append($"<tr class=\"l-{l.Statut}\"><td class=\"rep\" style=\"white-space:normal\">{E(l.Libelle)}</td><td class=\"nb\">{valeur}</td>" +
                       $"<td>{calcul}</td><td class=\"{l.Statut} etat\">{Symbole(l.Statut)}</td></tr>");
+        }
         }
         sb.Append("</table>");
         if (normes.Count > 0)

@@ -14,9 +14,10 @@ public class SyntheseMaterielTests
 
         Assert.Equal("ARRIVÉE", groupes[0].Titre);
         Assert.Equal(new[] { "W0", "QS0", "QG" }, groupes[0].Cartes.Single().Chaine.Select(m => m.Element.Repere));
-        Assert.Equal(SyntheseMateriel.TitreCommande, groupes[^1].Titre);
+        Assert.True(groupes[^1].Domaine);
+        Assert.StartsWith("24 V DC – ", groupes[^1].Titre);
         Assert.Contains(groupes[^1].Cartes, c => c.Chaine.Any(m => m.Element.Repere == "API1.1"));
-        Assert.Equal(r.Departs.Count, groupes.Skip(1).Take(groupes.Count - 2).Where(g => !g.Titre.StartsWith("VENTILATION")).Sum(g => g.Cartes.Count));
+        Assert.Equal(r.Departs.Count, groupes.Skip(1).Where(g => !g.Domaine && !g.Titre.StartsWith("VENTILATION")).Sum(g => g.Cartes.Count));
     }
 
     [Fact]
@@ -45,6 +46,8 @@ public class SchemaOrganigrammeTests
         Assert.Equal("svg", xml.Root!.Name.LocalName);
         foreach (var d in r.Departs) Assert.Contains($"D{d.Depart.Numero:00}", svg);
         Assert.Contains(">QG<", svg);
-        Assert.Contains(SyntheseMateriel.TitreCommande, svg);
+        Assert.Contains("24 V DC – ", svg);
+        // Le domaine 24 V DC est relié par un bus secondaire à l'alimentation qui le nourrit.
+        Assert.Contains("<polyline", svg);
     }
 }

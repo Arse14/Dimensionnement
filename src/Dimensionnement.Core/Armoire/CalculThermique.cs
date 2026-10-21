@@ -76,7 +76,7 @@ public static class CalculThermique
 
     public static ResultatThermique Calculer(ResultatProjet r, ResultatArmoire armoire, ConfigurationArmoire c)
     {
-        var note = new NoteDeCalcul("TH", c.Forcages);
+        var note = new NoteDeCalcul("TH", c.Forcages) { Groupe = "Bilan thermique" };
         // Seuls les appareils posés dans cette enveloppe chauffent : l'armoire principale ou un coffret déporté.
         var dedans = armoire.Appareils.Select(a => a.Element).OfType<ElementMateriel>().ToHashSet();
         // Les IHM en porte et un sectionneur en façade chauffent aussi l'armoire ; un sectionneur sur le côté est dehors.
@@ -114,6 +114,7 @@ public static class CalculThermique
         }
         else
         {
+            note.Groupe = "Ventilation";
             var ecart = c.TemperatureInterieureMax - c.TemperatureAmbianteMax;
             // Puissance que l'enveloppe évacue seule à la température intérieure maximale (négative si l'ambiance est plus chaude).
             var evacuee = k * ae * ecart;
@@ -213,6 +214,7 @@ public static class CalculThermique
                     "Relever l'intérieur admis, revoir l'ambiance, ou climatiser.", Ref, StatutCalcul.Alerte);
             if (solution == SolutionThermique.Aucune && !(forcee && ti <= c.TemperatureInterieureMax))
             {
+                note.Groupe = "Climatisation";
                 solution = SolutionThermique.Climatisation;
                 froid = p - evacuee;
                 climatiseur = Calibres.Superieur(Climatiseurs, froid) ?? Climatiseurs[^1];
@@ -222,6 +224,7 @@ public static class CalculThermique
                 if (froid > Climatiseurs[^1])
                     note.Verifier("Climatiseur", false, "Besoin supérieur au plus gros climatiseur : répartir sur plusieurs cellules.", Ref, StatutCalcul.Alerte);
             }
+            note.Groupe = "Environnement";
             note.Info("Environnement", "En atmosphère poussiéreuse ou chargée en huile, préférer un climatiseur ou un échangeur air/air à la ventilation.", Ref);
         }
 
@@ -231,6 +234,7 @@ public static class CalculThermique
             // Les pertes des appareils ne sont pas comptées : l'armoire peut être hors tension.
             chauffage = k * ae * (c.TemperatureInterieureMin - c.TemperatureAmbianteMin);
             resistance = Calibres.Superieur(Resistances, chauffage) ?? Resistances[^1];
+            note.Groupe = "Environnement";
             note.Info("Chauffage anticondensation",
                 $"Ph = k × Ae × (T_{{i,min}} − T_{{a,min}}) = {N(chauffage, 0)} W : résistance de {N(resistance, 0)} W avec thermostat et hygrostat.", Ref);
         }

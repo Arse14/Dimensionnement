@@ -148,7 +148,7 @@ public static class CalculProjet
         // Les départs derrière un transformateur 400/230 V sont comptés au primaire de celui-ci.
         var bilan = premierPassage.Where(r => !alimentesPar.ContainsKey(r.Depart.Id)).ToList();
 
-        var note = new NoteDeCalcul("ARR", projet.ForcagesArrivee);
+        var note = new NoteDeCalcul("ARR", projet.ForcagesArrivee) { Groupe = "Protection générale" };
         var p = bilan.Sum(r => r.PuissanceActive * r.Depart.CoefficientUtilisation);
         var q = bilan.Sum(r => r.PuissanceReactive * r.Depart.CoefficientUtilisation);
         note.Info("Puissances utilisées", $"Σ (P × ku) = {N(p)} kW ; Σ (Q × ku) = {N(q)} kvar", RefBilan);
@@ -184,6 +184,7 @@ public static class CalculProjet
             $"Interrupteur-sectionneur {A(qs)}, disjoncteur général {A(qg)}", siEchec: StatutCalcul.Alerte);
 
         // Extension prévue : le câble est choisi pour la protection qu'il faudrait avec Ib × k ; le disjoncteur reste sur le besoin actuel.
+        note.Groupe = "Câble d'arrivée";
         var k = Math.Max(1, reseau.CoefficientExtension);
         var protectionCable = qg;
         if (k > 1)
@@ -203,6 +204,7 @@ public static class CalculProjet
         }
 
         var departs = Passe(cable.ChuteTension);
+        note.Groupe = "Circuits de commande";
         if (consommation24V > 0)
             note.Info("Bilan 24 V DC", $"Consommation des circuits de commande : {A(consommation24V)}.", "Bilan 24 V DC du projet");
         var manquantes = SourcesCommande.Manquantes(projet, consommateurs24V);
@@ -411,6 +413,7 @@ public static class CalculProjet
     static void AjouterRepartiteur(ElementMateriel tete, IReadOnlyList<ResultatDepart> directs, Reseau reseau, double qg,
         ConfigurationReferences references, NoteDeCalcul note)
     {
+        note.Groupe = "Répartiteur";
         if (!reseau.Repartiteur || directs.Count < 2) return;
         var poles = CalculDepart.NombrePoles(reseau.Alimentation, reseau.Slt);
         var sorties = (int)Math.Ceiling(directs.Count * (1 + ReserveRepartiteur));
@@ -451,6 +454,7 @@ public static class CalculProjet
 
     static void AjouterProtectionsDeTete(ElementMateriel sectionneur, Reseau reseau, NoteDeCalcul note)
     {
+        note.Groupe = "Protection générale";
         var poles = CalculDepart.NombrePoles(reseau.Alimentation, reseau.Slt);
         if (reseau.Parafoudre)
         {
@@ -609,21 +613,17 @@ public static class CalculProjet
         var toutes = projet.Departs.OfType<DepartAlimentation24V>().ToList();
         var repartition = toutes.ToDictionary(a => a.Id, _ => new List<ConsommationCommande>());
         if (toutes.Count == 0) return repartition;
-        static UsageAlimentation24V Usage(string poste) => poste switch
-        {
-            ConsommationCommande.Automate => UsageAlimentation24V.Automate,
-            ConsommationCommande.Securite => UsageAlimentation24V.Securite,
-            ConsommationCommande.Actionneurs => UsageAlimentation24V.Actionneurs,
-            _ => UsageAlimentation24V.Commande,
-        };
+        var dedies = projet.UsagesDedies.ToList();
         foreach (var c in consommateurs)
         {
             // Un consommateur ne va qu'aux sources de sa tension.
             var alimentations = toutes.Where(a => a.Sortie == c.Tension).ToList();
             if (alimentations.Count == 0) continue;
-            var usage = Usage(c.Poste);
+            var usage = SourcesCommande.UsagePoste(c.Poste);
             var cibles = alimentations.Where(a => a.Usage == usage).ToList();
             if (cibles.Count == 0) cibles = alimentations.Where(a => a.Usage == UsageAlimentation24V.Commande).ToList();
+            // Une alimentation réservée à une autre partie ne reçoit le reste de la commande qu'en dernier recours.
+            if (cibles.Count == 0) cibles = alimentations.Where(a => !dedies.Contains(a.Usage)).Take(1).ToList();
             if (cibles.Count == 0) cibles = alimentations.Take(1).ToList();
             foreach (var a in cibles)
                 repartition[a.Id].Add(cibles.Count == 1 ? c : c with { Designation = $"{c.Designation} (1/{cibles.Count})", Courant = c.Courant / cibles.Count });

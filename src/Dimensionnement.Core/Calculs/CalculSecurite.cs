@@ -81,7 +81,7 @@ public static class CalculSecurite
         IReadOnlyList<ModeleCapteurSecurite>? capteurs = null)
     {
         var config = projet.Securite;
-        var note = new NoteDeCalcul("SEC");
+        var note = new NoteDeCalcul("SEC") { Groupe = "Logique de sécurité" };
         var fonctions = new List<ResultatFonctionSecurite>();
         if (config.Fonctions.Count == 0)
             return new ResultatSecurite { Note = note, Fonctions = fonctions, Appareils = new List<ElementMateriel>(), Consommations = new List<ConsommationCommande>() };
@@ -102,6 +102,7 @@ public static class CalculSecurite
 
         foreach (var f in config.Fonctions)
         {
+            note.Groupe = f.Nom;
             var categorie = Categorie(f.PLr);
             var architecture = Redondant(f.PLr)
                 ? "deux canaux, surveillance des contacts miroirs, détection des défauts"
@@ -123,6 +124,7 @@ public static class CalculSecurite
             }
         }
 
+        note.Groupe = "Validation";
         note.Info("Validation", "Calculer le PL atteint (MTTFd, DCavg, CCF) dans SISTEMA à partir de l'export des fonctions, " +
                                 "puis le comparer au PLr de chaque fonction.", Ref);
         return new ResultatSecurite
@@ -383,6 +385,7 @@ public static class CalculSecurite
     /// <summary>Ajoute à un départ les appareils de coupure qu'impose la fonction de sécurité.</summary>
     static void PartiePuissance(FonctionSecurite f, ResultatDepart depart, NoteDeCalcul note)
     {
+        depart.Note.Groupe = "Sécurité machine";
         var n = depart.Depart.Numero;
         var variateur = depart.Depart is DepartMoteur { SurVariateur: true };
         if (variateur)

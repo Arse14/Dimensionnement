@@ -434,6 +434,7 @@ public partial class ModeleVuePrincipal : Observable
             _selection = value;
             Signaler();
             Signaler(nameof(Note));
+            Signaler(nameof(GroupesNote));
             Signaler(nameof(TitreNote));
         }
     }
@@ -565,6 +566,18 @@ public partial class ModeleVuePrincipal : Observable
         _ => Resultat.NoteArrivee,
     };
 
+    readonly Dictionary<string, bool> _etatsGroupesNote = new();
+
+    /// <summary>La note de l'élément édité en cartes : un objet contrôlé par carte, ses calculs pliés dessous.</summary>
+    public IReadOnlyList<GroupeNoteVue> GroupesNote => Note.Groupes.Select(g => new GroupeNoteVue(g, _etatsGroupesNote)).ToList();
+
+    /// <summary>Déplie ou replie toutes les cartes de la note affichée, calculs compris.</summary>
+    public void DeplierNote(bool ouvrir)
+    {
+        foreach (var g in GroupesNote) { g.Ouvert = ouvrir; g.CalculsOuverts = ouvrir; }
+        Signaler(nameof(GroupesNote));
+    }
+
     public string TitreNote => Selection switch
     {
         Depart d => $"NOTE DE CALCUL – {d.Code} {d.Designation}".ToUpperInvariant(),
@@ -622,8 +635,12 @@ public partial class ModeleVuePrincipal : Observable
     void NettoyerSources()
     {
         var besoins = Resultat.Consommateurs24V.Where(c => c.Courant > 0).Select(c => c.Tension).ToHashSet();
+        var dedies = _projet.UsagesDedies.ToList();
         var inutiles = _projet.Departs.OfType<DepartAlimentation24V>()
-            .Where(s => s.AjoutAutomatique && s.DepartsAlimentes.Count == 0 && !besoins.Contains(s.Sortie)).ToList();
+            .Where(s => s.AjoutAutomatique && s.DepartsAlimentes.Count == 0
+                        && (!besoins.Contains(s.Sortie)
+                            // Alimentation réservée à une partie dont l'option a été décochée : elle repart.
+                            || s.Usage != UsageAlimentation24V.Commande && s.Sortie == TensionCommande.Continu24 && !dedies.Contains(s.Usage))).ToList();
         _sourcesIgnorees.RemoveWhere(t => !besoins.Contains(t));
         _freinsDemandes.RemoveWhere(id => !_projet.Departs.OfType<DepartMoteur>().Any(m => m.Id == id && CalculDepart.SourceFreinDansArmoire(m)));
         if (inutiles.Count == 0) return;

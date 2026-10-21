@@ -274,6 +274,7 @@ public static class CalculCablage
     public static void Noter(NoteDeCalcul note, ResultatCablage c, int appareils)
     {
         if (c.NombreFils == 0) return;
+        note.Groupe = "Câblage";
         note.Info("Estimation du câblage",
             $"{c.NombreFils} fils pour {appareils} appareils implantés : " +
             string.Join(", ", c.Fils.GroupBy(f => f.Section).OrderByDescending(g => g.Key)

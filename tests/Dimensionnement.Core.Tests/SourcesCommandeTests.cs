@@ -111,19 +111,21 @@ public class CommandeAlimenteeTests
     {
         var projet = AvecAutomate();
         projet.Ajouter(new DepartAlimentation24V());
-        var carte = Dimensionnement.Core.Materiel.SyntheseMateriel.Grouper(CalculProjet.Calculer(projet))
-            .Single(g => g.Titre == Dimensionnement.Core.Materiel.SyntheseMateriel.TitreCommande).Cartes[0];
-        Assert.Equal("Alimentation", carte.Chaine[0].Element.Famille);
+        var domaine = Dimensionnement.Core.Materiel.SyntheseMateriel.Grouper(CalculProjet.Calculer(projet)).Single(g => g.Domaine);
+        Assert.Equal("Alimentation", domaine.Source!.Famille);
+        Assert.StartsWith("24 V DC – G", domaine.Titre);
+        Assert.Equal("Automate", domaine.Cartes[0].Chaine[0].Element.Famille);
     }
 
     [Fact]
     public void Sans_alimentation_la_commande_pend_a_une_alimentation_a_ajouter()
     {
         var r = CalculProjet.Calculer(AvecAutomate());
-        var carte = Dimensionnement.Core.Materiel.SyntheseMateriel.Grouper(r)
-            .Single(g => g.Titre == Dimensionnement.Core.Materiel.SyntheseMateriel.TitreCommande).Cartes[0];
+        var domaine = Dimensionnement.Core.Materiel.SyntheseMateriel.Grouper(r).Single(g => g.Domaine);
+        var carte = domaine.Cartes[0];
         Assert.Equal(CalculProjet.SourceManquante, carte.Chaine[0].Element.Famille);
         Assert.Equal(StatutCalcul.NonConforme, carte.Statut);
+        Assert.Contains("À AJOUTER", domaine.Titre);
         Assert.DoesNotContain(Dimensionnement.Core.Materiel.ListeDevis.Generer(r), l => l.Designation.Contains("à ajouter"));
     }
 
@@ -135,6 +137,60 @@ public class CommandeAlimenteeTests
         Dimensionnement.Core.Materiel.SyntheseMateriel.MarquerAVerifier(r, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { g.Reference });
         Assert.Equal(StatutCalcul.Alerte, g.Statut);
         Assert.All(r.Arbre.Parcourir().Where(e => !e.AVerifier && e.Statut != StatutCalcul.NonConforme), e => Assert.Equal(StatutCalcul.Conforme, e.Statut));
+    }
+
+    [Fact]
+    public void Alimentation_separee_pour_l_automate_ajoutee_et_dimensionnee_sur_lui_seul()
+    {
+        var projet = AvecAutomate();
+        projet.Ajouter(new DepartAlimentation24V());
+        projet.AlimentationAutomateDediee = true;
+        var r = CalculProjet.Calculer(projet);
+        var besoin = Assert.Single(r.SourcesManquantes);
+        Assert.Equal(UsageAlimentation24V.Automate, besoin.Usage);
+        Assert.Equal(TensionCommande.Continu24, besoin.Tension);
+
+        var ajoutees = SourcesCommande.Completer(projet, r.Consommateurs24V, _ => SourceAlimentation.Decoupage);
+        var dediee = Assert.Single(ajoutees);
+        Assert.Equal(UsageAlimentation24V.Automate, dediee.Usage);
+        Assert.Contains("automate", dediee.Designation);
+
+        r = CalculProjet.Calculer(projet);
+        Assert.Empty(r.SourcesManquantes);
+        var repartition = CalculProjet.Repartir(projet, r.Consommateurs24V);
+        var commune = projet.Departs.OfType<DepartAlimentation24V>().Single(a => a.Usage == UsageAlimentation24V.Commande);
+        Assert.All(repartition[dediee.Id], c => Assert.Equal(ConsommationCommande.Automate, c.Poste));
+        Assert.DoesNotContain(repartition[commune.Id], c => c.Poste == ConsommationCommande.Automate);
+        Assert.NotEmpty(repartition[dediee.Id]);
+
+        // L'automate pend sous son alimentation dédiée, dans son propre domaine de tension.
+        var domaines = Dimensionnement.Core.Materiel.SyntheseMateriel.Grouper(r).Where(g => g.Domaine).ToList();
+        var domaine = Assert.Single(domaines);
+        Assert.Contains("AUTOMATE", domaine.Titre);
+        Assert.Equal(r.Departs.Single(d => d.Depart.Id == dediee.Id).Materiel.Parcourir().Single(e => e.Famille == "Alimentation"), domaine.Source);
+        Assert.Contains("polyline", Dimensionnement.Core.Rapport.SchemaOrganigramme.Svg(r));
+    }
+
+    [Fact]
+    public void Sans_option_une_seule_alimentation_pour_toute_la_commande()
+    {
+        var projet = AvecAutomate();
+        projet.Ajouter(new DepartAlimentation24V());
+        var r = CalculProjet.Calculer(projet);
+        Assert.Empty(r.SourcesManquantes);
+        Assert.Single(Dimensionnement.Core.Materiel.SyntheseMateriel.Grouper(r), g => g.Domaine);
+    }
+
+    [Fact]
+    public void Une_alimentation_reservee_ne_couvre_pas_le_reste_de_la_commande()
+    {
+        var projet = AvecAutomate();
+        projet.AlimentationAutomateDediee = true;
+        projet.Ajouter(new DepartAlimentation24V { Usage = UsageAlimentation24V.Automate });
+        var r = CalculProjet.Calculer(projet);
+        // Les bobines des contacteurs (commande commune) n'ont pas de source : une alimentation commune est demandée.
+        var besoin = Assert.Single(r.SourcesManquantes);
+        Assert.Equal(UsageAlimentation24V.Commande, besoin.Usage);
     }
 }
 
@@ -155,10 +211,12 @@ public class IhmEnPorteTests
     [Fact]
     public void L_ihm_a_sa_carte_dans_l_arborescence()
     {
-        var cartes = Dimensionnement.Core.Materiel.SyntheseMateriel.Grouper(CalculProjet.Calculer(AvecIhm(true)))
-            .Single(g => g.Titre == Dimensionnement.Core.Materiel.SyntheseMateriel.TitreCommande).Cartes;
-        var ihm = cartes.Single(c => c.Chaine.Any(m => m.Element.Famille == "IHM"));
-        Assert.Equal("Alimentation", ihm.Chaine[0].Element.Famille);
+        var groupes = Dimensionnement.Core.Materiel.SyntheseMateriel.Grouper(CalculProjet.Calculer(AvecIhm(true)));
+        var domaine = groupes.Single(g => g.Domaine);
+        Assert.Contains(domaine.Cartes, c => c.Chaine[0].Element.Famille == "IHM");
+        // La carte de l'alimentation s'arrête à l'alimentation : l'IHM est dans son domaine, pas dans la chaîne du départ.
+        var alimentation = groupes.SelectMany(g => g.Cartes).Single(c => c.Depart is DepartAlimentation24V);
+        Assert.Equal("Alimentation", alimentation.Chaine[^1].Element.Famille);
     }
 
     [Fact]
