@@ -150,7 +150,13 @@
                       AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" CanUserAddRows="False"
                       HeadersVisibility="Column" GridLinesVisibility="Horizontal" RowHeight="40"
                       Background="{StaticResource Panneau}" RowBackground="{StaticResource Panneau}" AlternatingRowBackground="{StaticResource PanneauClair}"
-                      Foreground="{StaticResource Texte}" BorderBrush="{StaticResource Bordure}" HorizontalGridLinesBrush="{StaticResource Bordure}">
+                      Foreground="{StaticResource Texte}" BorderBrush="{StaticResource Bordure}" HorizontalGridLinesBrush="{StaticResource Bordure}"
+                      PreviewMouseRightButtonDown="SelectionnerAuClicDroit" PreviewKeyDown="CopierAuClavier">
+                <DataGrid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Copier la référence" InputGestureText="Ctrl+C" Click="CopierReference"/>
+                    </ContextMenu>
+                </DataGrid.ContextMenu>
                 <DataGrid.ColumnHeaderStyle>
                     <Style TargetType="DataGridColumnHeader">
                         <Setter Property="Background" Value="{StaticResource PanneauClair}"/>
@@ -228,6 +234,13 @@
                                 <TextBlock Text="{Binding Titre}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/>
                                 <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                                     <TextBlock Text="{Binding Reference}" FontFamily="Consolas" FontSize="15" Foreground="{StaticResource Accent}" VerticalAlignment="Center"/>
+                                    <Button x:Name="BoutonCopier" Click="CopierReference" Margin="6,0,0,0" Padding="6,2" VerticalAlignment="Center"
+                                            ToolTip="Copier la référence dans le presse-papiers (Ctrl+C sur le tableau)">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock x:Name="IconeCopier" FontFamily="{StaticResource Icones}" Text="&#xE8C8;" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="TexteCopier" Text="Copier" Margin="5,0,0,0" FontSize="11.5" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
                                     <Border x:Name="BadgeFiche" Style="{StaticResource Badge}" Margin="10,0,0,0">
                                         <Border.Resources>
                                             <Style TargetType="TextBlock">

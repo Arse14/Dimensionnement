@@ -3,7 +3,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Threading;
 using Dimensionnement.App.ModelesVue;
+using Dimensionnement.Core.Normes;
 
 namespace Dimensionnement.App.Vues;
 
@@ -41,6 +44,39 @@ public partial class FenetreCatalogue : Window
         // Valide la saisie en cours (le champ actif ne perd pas le focus avant la fermeture).
         if (Keyboard.FocusedElement is TextBox t) t.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
         e.Cancel = !_modele.ConfirmerAbandon();
+    }
+
+    /// <summary>Copie la référence de l'article sélectionné, sans la mention « à compléter » d'un article sans référence.</summary>
+    void CopierReference(object sender, RoutedEventArgs e)
+    {
+        if (_modele.Selection is not { } ligne || BibliothequeCatalogues.Chaine(ligne.Article, "reference") is not { Length: > 0 } reference) return;
+        // Le presse-papiers peut être tenu un instant par une autre application.
+        for (var essai = 0; ; essai++)
+        {
+            try { Clipboard.SetText(reference); break; }
+            catch (System.Runtime.InteropServices.COMException) when (essai < 4) { Thread.Sleep(50); }
+            catch (System.Runtime.InteropServices.COMException) { return; }
+        }
+        IconeCopier.Text = "\uE73E";
+        TexteCopier.Text = "Copié";
+        var minuterie = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.5) };
+        minuterie.Tick += (_, _) => { minuterie.Stop(); IconeCopier.Text = "\uE8C8"; TexteCopier.Text = "Copier"; };
+        minuterie.Start();
+    }
+
+    /// <summary>Ctrl+C sur le tableau copie la référence seule, pas toute la ligne.</summary>
+    void CopierAuClavier(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.C || Keyboard.Modifiers != ModifierKeys.Control) return;
+        CopierReference(sender, e);
+        e.Handled = true;
+    }
+
+    /// <summary>Le clic droit sélectionne la ligne visée avant d'ouvrir le menu.</summary>
+    void SelectionnerAuClicDroit(object sender, MouseButtonEventArgs e)
+    {
+        for (var o = e.OriginalSource as DependencyObject; o is not null; o = o is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(o) : LogicalTreeHelper.GetParent(o))
+            if (o is DataGridRow ligne) { ligne.IsSelected = true; return; }
     }
 
     /// <summary>Insère les colonnes propres au catalogue entre la marque et le statut.</summary>
