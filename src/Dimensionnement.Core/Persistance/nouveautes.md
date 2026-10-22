@@ -3,8 +3,9 @@
 # Cette page est affichée dans l'application (bouton « Nouveautés ») et sert de texte à la release GitHub.
 
 ## v1.2.2 – 22/10/2026
-- IHM : les Comfort Panels Siemens (KP400 à TP2200, ex. TP700 Comfort 6AV2124-0GC01-0AX0) et les variantes SIPLUS (Comfort, Basic, Unified) sont au catalogue, pour réutiliser l'existant ; on les choisit dans « Modèle », le choix automatique reste sur les gammes actuelles.
+- IHM : les Comfort Panels Siemens (KP400 à TP2200, ex. TP700 Comfort 6AV2124-0GC01-0AX0) et les variantes SIPLUS (Comfort, Basic, Unified) sont au catalogue, pour réutiliser l'existant ; on les choisit dans « Modèle », le choix automatique reste sur les gammes actuelles. Comfort marqués « fin de commercialisation ».
 - Catalogue des IHM personnalisé : les nouveaux pupitres livrés s'ajoutent à ton fichier sans toucher à tes modifications.
+- Cotes, découpes et consommations des Comfort Panels 7 à 12" et des Basic Panels relevées sur SiePortal (découpe du KTP400 Basic : 124 × 100 mm, du KTP700 Basic : 198 × 142 mm).
 
 ## v1.2.1 – 22/10/2026
 - Page « Nouveautés » : l'historique des versions, ouverte d'elle-même au premier démarrage après une mise à jour.

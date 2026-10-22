@@ -155,7 +155,8 @@ public class Version4Tests
     {
         var catalogue = CatalogueIhm.Charger();
         var tp700 = Assert.Single(catalogue, m => m.Reference == "6AV2124-0GC01-0AX0");
-        Assert.Equal((197.0, 141.0), (tp700.DecoupeLargeur, tp700.DecoupeHauteur));
+        Assert.Equal((198.0, 142.0), (tp700.DecoupeLargeur, tp700.DecoupeHauteur));
+        Assert.True(tp700.Verifie);
         Assert.Contains(catalogue, m => m.Reference == "6AG1124-0GC01-4AX0" && m.Gamme.StartsWith("SIPLUS"));
         Assert.Equal("6AV2128-3GB06-0AX1", CatalogueIhm.Choisir(new PupitreIhm { Diagonale = 7, Gamme = GammeIhm.Confort }, "Siemens", catalogue)!.Reference);
         Assert.Equal("6AV2124-0GC01-0AX0",
