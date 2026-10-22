@@ -17,7 +17,11 @@ public partial class FenetrePrincipale : Window
         InitializeComponent();
         DataContext = _modele;
         // Nouvelle version publiée sur GitHub ? Vérifié à chaque démarrage, sans bloquer l'ouverture.
-        Loaded += async (_, _) => await _modele.VerifierMiseAJour();
+        Loaded += async (_, _) =>
+        {
+            _modele.AfficherNouveautesSiNouvelle();
+            await _modele.VerifierMiseAJour();
+        };
         // Projet ouvert par double-clic sur un fichier .dimelec (association créée par l'installateur).
         var arguments = Environment.GetCommandLineArgs();
         if (arguments.Length > 1 && System.IO.File.Exists(arguments[1]))

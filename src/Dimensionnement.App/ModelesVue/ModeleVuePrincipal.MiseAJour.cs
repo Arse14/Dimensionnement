@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Windows;
 using Dimensionnement.App.Infrastructure;
+using Dimensionnement.App.Vues;
 using Dimensionnement.Core.Persistance;
 
 namespace Dimensionnement.App.ModelesVue;
@@ -36,11 +37,31 @@ public partial class ModeleVuePrincipal
     public double AvancementMiseAJour { get => _avancement; private set { _avancement = value; Signaler(); } }
     public string EtatMiseAJour { get => _etatMiseAJour; private set { _etatMiseAJour = value; Signaler(); } }
 
-    Commande? _installerMiseAJour, _masquerMiseAJour, _notesMiseAJour;
+    Commande? _installerMiseAJour, _masquerMiseAJour, _notesMiseAJour, _ouvrirNouveautes;
+    public Commande OuvrirNouveautes => _ouvrirNouveautes ??= new Commande(() =>
+        new FenetreNouveautes(VersionActuelle, _versionDisponible) { Owner = Application.Current.MainWindow }.Show());
     public Commande InstallerMiseAJour => _installerMiseAJour ??= new Commande(async () => await Installer(), () => !Telechargement);
     public Commande MasquerMiseAJour => _masquerMiseAJour ??= new Commande(() => { _miseAJourMasquee = true; Signaler(nameof(MiseAJourVisible)); });
-    public Commande NotesMiseAJour => _notesMiseAJour ??= new Commande(() =>
-        Process.Start(new ProcessStartInfo($"{MiseAJour.UrlReleases}/tag/{_versionDisponible?.Etiquette}") { UseShellExecute = true }));
+    public Commande NotesMiseAJour => _notesMiseAJour ??= new Commande(() => OuvrirNouveautes.Execute(null));
+
+    /// <summary>Dernière version dont la page « Nouveautés » a été montrée.</summary>
+    static readonly string CheminVersionVue = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Dimensionnement", "version-vue.txt");
+
+    /// <summary>Premier démarrage d'une nouvelle version : la page « Nouveautés » s'ouvre d'elle-même, une seule fois.</summary>
+    public void AfficherNouveautesSiNouvelle()
+    {
+        try
+        {
+            var vue = File.Exists(CheminVersionVue) ? File.ReadAllText(CheminVersionVue).Trim() : null;
+            if (!JournalVersions.NouvelleDepuis(vue, VersionActuelle)) return;
+            Directory.CreateDirectory(Path.GetDirectoryName(CheminVersionVue)!);
+            File.WriteAllText(CheminVersionVue, VersionTexte);
+        }
+        catch (IOException) { return; }
+        catch (UnauthorizedAccessException) { return; }
+        OuvrirNouveautes.Execute(null);
+    }
 
     /// <summary>Appelée au démarrage : silencieuse sans réseau ou sans nouveauté.</summary>
     public async Task VerifierMiseAJour()

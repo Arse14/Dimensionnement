@@ -1794,6 +1794,9 @@
                     <Button Command="{Binding OuvrirGlossaire}" ToolTip="Glossaire des coefficients, facteurs de correction et formules utilisés dans les notes de calcul">
                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE82D;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Glossaire"/></StackPanel>
                     </Button>
+                    <Button Command="{Binding OuvrirNouveautes}" ToolTip="Historique des versions et ce que chacune apporte">
+                        <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE789;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Nouveautés"/></StackPanel>
+                    </Button>
                     <Button Command="{Binding OuvrirCatalogues}" ToolTip="Catalogues du matériel : tableau filtrable, fiches techniques, photos et documents ; complétez les valeurs manquantes">
                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE8F1;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Catalogues"/></StackPanel>
                     </Button>
@@ -1845,7 +1848,7 @@
                                  VerticalAlignment="Center" Visibility="{Binding Telechargement, Converter={StaticResource VraiVisible}}"/>
                     <TextBlock Text="{Binding EtatMiseAJour}" Foreground="{StaticResource TexteSecondaire}" VerticalAlignment="Center" Margin="0,0,10,0"/>
                     <Button Content="Nouveautés" Command="{Binding NotesMiseAJour}" Padding="10,3" Margin="0,0,6,0"
-                            ToolTip="Ouvrir la page de la version sur GitHub"/>
+                            ToolTip="Voir ce qu'apporte cette version"/>
                     <Button Content="Mettre à jour maintenant" Command="{Binding InstallerMiseAJour}" Style="{StaticResource BoutonAccent}" Padding="10,3" Margin="0,0,6,0"
                             ToolTip="Télécharge la nouvelle version, ferme l'application, l'installe puis la relance. Ton projet est enregistré avant."/>
                     <Button Content="Plus tard" Command="{Binding MasquerMiseAJour}" Padding="10,3" Margin="0"

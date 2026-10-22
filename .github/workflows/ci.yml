@@ -62,6 +62,10 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: src/Dimensionnement.Core/Persistance/nouveautes.md
+          sparse-checkout-cone-mode: false
       - uses: actions/download-artifact@v4
         with:
           name: Dimensionnement-windows-x64
@@ -77,12 +81,20 @@ jobs:
           # Version portable : l'exécutable prêt à lancer, sans installation.
           cd publication && zip -r "../Dimensionnement-${{ github.ref_name }}-portable-windows-x64.zip" . && cd ..
           fichiers=(installation/*.exe "Dimensionnement-${{ github.ref_name }}-portable-windows-x64.zip")
+          # Texte de la release : la section de cette version dans nouveautes.md (la page « Nouveautés » de l'application).
+          awk -v v="## ${{ github.ref_name }} " 'index($0, v) == 1 { garde = 1; next } /^## / { garde = 0 } garde' \
+            src/Dimensionnement.Core/Persistance/nouveautes.md > notes.md
+          [ -s notes.md ] || echo "Voir la page Nouveautés de l'application." > notes.md
           # Release déjà créée à la main sur GitHub avec cette étiquette : on y joint les fichiers.
           if gh release view "${{ github.ref_name }}" --repo "${{ github.repository }}" > /dev/null 2>&1; then
             gh release upload "${{ github.ref_name }}" "${fichiers[@]}" --repo "${{ github.repository }}" --clobber
+            # Notes écrites à la main sur GitHub gardées ; sinon celles de nouveautes.md.
+            if [ -z "$(gh release view "${{ github.ref_name }}" --repo "${{ github.repository }}" --json body --jq .body)" ]; then
+              gh release edit "${{ github.ref_name }}" --repo "${{ github.repository }}" --notes-file notes.md
+            fi
           else
             gh release create "${{ github.ref_name }}" "${fichiers[@]}" \
-              --repo "${{ github.repository }}" --title "Dimensionnement électrique ${{ github.ref_name }}" --generate-notes
+              --repo "${{ github.repository }}" --title "Dimensionnement électrique ${{ github.ref_name }}" --notes-file notes.md
           fi
 
   # Ne garde que les 3 derniers exécutables publiés, toutes branches confondues.
