@@ -220,6 +220,27 @@ public class Version4Tests
     }
 
     [Fact]
+    public void Meilleur_variateur_du_catalogue_selon_le_besoin()
+    {
+        var catalogue = CatalogueVariateurs.Charger();
+        Assert.Equal("ATV320U22N4C", CatalogueVariateurs.Choisir(FabricantMateriel.Schneider, 2.2, 5, catalogue)!.Reference);
+        Assert.Equal("ATV320U07M2C", CatalogueVariateurs.Choisir(FabricantMateriel.Schneider, 0.75, 4.5, catalogue, monophase: true)!.Reference);
+        Assert.StartsWith("6SL3210-5BB", CatalogueVariateurs.Choisir(FabricantMateriel.Siemens, 0.75, 4, catalogue, monophase: true)!.Reference);
+        Assert.StartsWith("6SL3210-1PE", CatalogueVariateurs.Choisir(FabricantMateriel.Siemens, 200, 360, catalogue)!.Reference);
+    }
+
+    [Fact]
+    public void Autre_marque_quand_celle_du_projet_n_a_rien()
+    {
+        var projet = new Projet();
+        projet.References.MarqueVariateurs = FabricantMateriel.ABB;
+        projet.Ajouter(new DepartMoteur { PuissanceKw = 0.75, CourantPlaque = 4.5, Alimentation = TypeAlimentation.Mono230, Demarrage = ModeDemarrage.Variateur });
+        var d = CalculProjet.Calculer(projet).Departs.Single();
+        Assert.Contains(d.Note.Lignes, l => l.Libelle == "Autre marque");
+        Assert.Contains(d.Materiel.Parcourir(), e => e.Famille == "Variateur" && e.Reference.Length > 0);
+    }
+
+    [Fact]
     public void Marques_par_famille_pour_les_contacteurs_et_disjoncteurs()
     {
         var projet = new Projet();

@@ -151,6 +151,11 @@ public static class ListeDevis
             if (sansBlindage.Count > 0)
                 l.Add(new(Accessoires, "Collier de reprise de blindage à 360°", "pour câble moteur blindé", fabricant, "", 2 * sansBlindage.Count, "u",
                     Reperes(sansBlindage), "Kit de blindage non livré avec le variateur : barre de reprise et sortie variateur"));
+            // Variateur modulaire SINAMICS G120 : le module de puissance PM240-2 ne fonctionne qu'avec sa Control Unit.
+            var pm240 = variateurs.Where(v => v.Fabricant.Contains("PM240-2")).ToList();
+            if (pm240.Count > 0)
+                l.Add(new(Accessoires, "Control Unit SINAMICS CU240E-2 PN", "pour module de puissance PM240-2, PROFINET, STO intégré", "Siemens",
+                    "6SL3244-0BB12-1FA0", pm240.Count, "u", Reperes(pm240), "Avec pupitre opérateur BOP-2 ou IOP-2 si besoin"));
             var servos = r.Departs.Where(d => d.Depart is DepartMoteur { Demarrage: ModeDemarrage.Servomoteur }).ToList();
             if (servos.Count > 0)
                 l.Add(new(Accessoires, "Résistance de freinage externe", "selon le cycle et l'énergie de freinage", fabricant, "", servos.Count, "u",
