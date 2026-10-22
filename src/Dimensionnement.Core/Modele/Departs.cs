@@ -135,6 +135,14 @@ public class DepartMoteur : Depart
     public TypeDeuxVitesses TypeDeuxVitesses { get; set; } = TypeDeuxVitesses.Dahlander;
     public double PuissancePetiteVitesseKw { get; set; }
 
+    /// <summary>Étoile-triangle ou deux vitesses avec inversion du sens de marche.</summary>
+    public bool DeuxSens { get; set; }
+
+    /// <summary>Moteur monophasé : emplacement du condensateur et capacité permanente en µF (0 = estimée).</summary>
+    public CondensateurMoteur Condensateur { get; set; } = CondensateurMoteur.DansLeMoteur;
+    public double CapaciteCondensateurUf { get; set; }
+    [JsonIgnore] public bool CondensateurEnArmoire => Condensateur != CondensateurMoteur.DansLeMoteur;
+
     /// <summary>Moteur-frein : alimentation et puissance du frein. Retirer le frein oublie la source choisie pour sa bobine.</summary>
     public bool Frein
     {
@@ -170,10 +178,10 @@ public class DepartMoteur : Depart
     {
         ModeDemarrage.Direct => "Moteur, démarrage direct",
         ModeDemarrage.Inverseur => "Moteur, inverseur de sens",
-        ModeDemarrage.EtoileTriangle => "Moteur, étoile-triangle",
+        ModeDemarrage.EtoileTriangle => DeuxSens ? "Moteur, étoile-triangle deux sens" : "Moteur, étoile-triangle",
         ModeDemarrage.DemarreurProgressif => "Moteur, démarreur progressif",
         ModeDemarrage.Servomoteur => "Servomoteur",
-        ModeDemarrage.DeuxVitesses => "Moteur deux vitesses",
+        ModeDemarrage.DeuxVitesses => DeuxSens ? "Moteur deux vitesses deux sens" : "Moteur deux vitesses",
         _ => "Moteur sur variateur",
     };
     public override string PrefixeRecepteur => "M";

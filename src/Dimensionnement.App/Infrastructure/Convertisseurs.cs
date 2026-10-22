@@ -60,6 +60,9 @@ public class LibelleEnum : IValueConverter
         ModeDemarrage.DeuxVitesses => "Deux vitesses",
         TypeDeuxVitesses.Dahlander => "Dahlander (un enroulement)",
         TypeDeuxVitesses.DeuxEnroulements => "Deux enroulements séparés",
+        CondensateurMoteur.DansLeMoteur => "Dans la boîte à bornes du moteur",
+        CondensateurMoteur.Permanent => "En armoire : permanent",
+        CondensateurMoteur.PermanentEtDemarrage => "En armoire : permanent + démarrage",
         AlimentationFrein.BoiteABornes => "Par la boîte à bornes du moteur",
         AlimentationFrein.Separee230 => "Séparée (tension à préciser)",
         CommandeFrein.Automate => "Automate (contacteur ou relais)",
@@ -190,6 +193,7 @@ public static class Listes
     public static ModeDemarrage[] Demarrages { get; } = Enum.GetValues<ModeDemarrage>();
     public static MethodeRendement[] MethodesRendement { get; } = Enum.GetValues<MethodeRendement>();
     public static TypeDeuxVitesses[] TypesDeuxVitesses { get; } = Enum.GetValues<TypeDeuxVitesses>();
+    public static CondensateurMoteur[] CondensateursMoteur { get; } = Enum.GetValues<CondensateurMoteur>();
     public static AlimentationFrein[] AlimentationsFrein { get; } = Enum.GetValues<AlimentationFrein>();
     public static CommandeFrein[] CommandesFrein { get; } = Enum.GetValues<CommandeFrein>();
     public static TypePeripherique[] TypesPeripherique { get; } = Enum.GetValues<TypePeripherique>();

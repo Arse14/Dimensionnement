@@ -261,6 +261,7 @@ public static class CalculDepart
             et ? courantCable / Math.Sqrt(3) : courantCable, et ? ib / Math.Sqrt(3) : ib,
             m.CosPhi, reseau, chuteAmont);
         Frein(m, note, protection);
+        Condensateur(m, note, avalProtection);
         var w = avalProtection.Ajouter(ElementCable(n, m, cable, reseau.Slt, et || m.Demarrage == ModeDemarrage.DeuxVitesses ? 2 : 1));
         w.Ajouter(Element($"M{n}", "Moteur", m.Designation is { Length: > 0 } d ? d : "Moteur",
             $"{N(m.PuissanceKw)} kW, In {A(ib)}").Avec(ib, m.Alimentation is TypeAlimentation.Mono230 or TypeAlimentation.Bi400 ? 2 : 3, m.PuissanceKw));
@@ -508,6 +509,39 @@ public static class CalculDepart
         amont.Ajouter(source);
     }
 
+    static readonly double[] CapacitesNormalisees =
+        { 2, 2.5, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 100, 120, 150, 200 };
+
+    /// <summary>
+    /// Moteur monophasé avec condensateur en armoire : permanent d'environ 40 µF par kW sous 230 V (règle d'usage, à confirmer
+    /// sur la plaque), et condensateur de démarrage d'environ 2,5 fois le permanent, coupé par un relais en fin de démarrage.
+    /// </summary>
+    static void Condensateur(DepartMoteur m, NoteDeCalcul note, ElementMateriel aval)
+    {
+        if (m.Alimentation != TypeAlimentation.Mono230 || m.SurVariateur) return;
+        note.Groupe = "Condensateur";
+        if (m.Condensateur == CondensateurMoteur.DansLeMoteur)
+        {
+            note.Info("Condensateur", "Moteur monophasé : condensateur dans la boîte à bornes du moteur, rien à prévoir en armoire.");
+            return;
+        }
+        var n = m.Numero;
+        var estime = Math.Max(2, 40 * m.PuissanceKw);
+        var cp = m.CapaciteCondensateurUf > 0 ? m.CapaciteCondensateurUf : CapacitesNormalisees.FirstOrDefault(c => c >= estime - 1e-6, estime);
+        note.Verifier("Condensateur permanent", m.CapaciteCondensateurUf > 0,
+            m.CapaciteCondensateurUf > 0
+                ? $"{N(cp)} µF, 450 V AC, valeur saisie (plaque du moteur)."
+                : $"≈ 40 µF/kW × {N(m.PuissanceKw)} kW = {N(estime)} µF → {N(cp)} µF, 450 V AC : estimation, saisir la valeur de la plaque du moteur.",
+            "Plaque du moteur ; NF EN 60252-1", StatutCalcul.Alerte);
+        aval.Ajouter(Element($"C{n}.1", "Condensateur", "Condensateur permanent de moteur", $"{N(cp)} µF 450 V AC"));
+        if (m.Condensateur != CondensateurMoteur.PermanentEtDemarrage) return;
+        var cd = CapacitesNormalisees.FirstOrDefault(c => c >= 2.5 * cp - 1e-6, 2.5 * cp);
+        note.Info("Condensateur de démarrage", $"≈ 2,5 × {N(cp)} µF → {N(cd)} µF, 330 V AC, coupé en fin de démarrage par un relais de démarrage (ou relais temporisé).",
+            "Plaque du moteur ; NF EN 60252-2");
+        aval.Ajouter(Element($"C{n}.2", "Condensateur", "Condensateur de démarrage", $"{N(cd)} µF 330 V AC"));
+        aval.Ajouter(Element($"KA{n}.C", "Relais", "Relais de coupure du condensateur de démarrage", "relais de démarrage ou temporisé"));
+    }
+
     static ElementMateriel Contacteurs(DepartMoteur m, NoteDeCalcul note, double ib, ElementMateriel protection)
     {
         note.Groupe = "Contacteurs";
@@ -525,8 +559,22 @@ public static class CalculDepart
             note.Info("Deux vitesses", m.TypeDeuxVitesses == TypeDeuxVitesses.Dahlander
                 ? "Dahlander : contacteur petite vitesse, contacteur grande vitesse et contacteur étoile, verrouillés mécaniquement et électriquement."
                 : "Deux enroulements séparés : un contacteur par vitesse, verrouillés mécaniquement et électriquement.");
+            if (m.DeuxSens && m.TypeDeuxVitesses == TypeDeuxVitesses.Dahlander)
+            {
+                // Dahlander deux sens : inversion commune en tête, calibrée sur la grande vitesse.
+                note.Info("Deux sens", "Contacteurs sens avant et sens arrière en tête, communs aux deux vitesses, verrouillés mécaniquement et électriquement.");
+                protection.Ajouter(Element($"KM{n}.5", "Contacteur", "Contacteur sens arrière", $"AC-3 {A(kmGv)}").Avec(kmGv, 3));
+                protection = protection.Ajouter(Element($"KM{n}.4", "Contacteur", "Contacteur sens avant", $"AC-3 {A(kmGv)}").Avec(kmGv, 3));
+            }
+            else if (m.DeuxSens)
+                note.Info("Deux sens", "Deux enroulements : un contacteur sens avant et un sens arrière par vitesse, verrouillés mécaniquement et électriquement.");
             protection.Ajouter(Element($"KM{n}.1", "Contacteur", "Contacteur petite vitesse", $"AC-3 {A(kmPv)}").Avec(kmPv, 3))
                 .Ajouter(Element($"F{n}.1", "Relais thermique", "Relais thermique petite vitesse", $"réglé à {A(ibPv)}").Avec(ibPv));
+            if (m.DeuxSens && m.TypeDeuxVitesses == TypeDeuxVitesses.DeuxEnroulements)
+            {
+                protection.Ajouter(Element($"KM{n}.4", "Contacteur", "Contacteur petite vitesse sens arrière", $"AC-3 {A(kmPv)}").Avec(kmPv, 3));
+                protection.Ajouter(Element($"KM{n}.5", "Contacteur", "Contacteur grande vitesse sens arrière", $"AC-3 {A(kmGv)}").Avec(kmGv, 3));
+            }
             var gv = protection.Ajouter(Element($"KM{n}.2", "Contacteur", "Contacteur grande vitesse", $"AC-3 {A(kmGv)}").Avec(kmGv, 3));
             if (m.TypeDeuxVitesses == TypeDeuxVitesses.Dahlander)
                 gv.Ajouter(Element($"KM{n}.3", "Contacteur", "Contacteur étoile (grande vitesse)", $"AC-3 {A(kmGv)}").Avec(kmGv, 3));
@@ -543,6 +591,11 @@ public static class CalculDepart
             var ligne = protection.Ajouter(Element($"KM{n}.1", "Contacteur", "Contacteur de ligne", $"AC-3 {A(km)}").Avec(km, 3));
             ligne.Ajouter(Element($"KM{n}.2", "Contacteur", "Contacteur étoile", $"AC-3 {A(kmEtoile)}").Avec(kmEtoile, 3));
             ligne.Ajouter(Element($"KM{n}.3", "Contacteur", "Contacteur triangle", $"AC-3 {A(km)}").Avec(km, 3));
+            if (m.DeuxSens)
+            {
+                note.Info("Deux sens", "Contacteur de ligne sens arrière, de même calibre que la ligne, verrouillé mécaniquement et électriquement avec le sens avant.");
+                protection.Ajouter(Element($"KM{n}.4", "Contacteur", "Contacteur de ligne sens arrière", $"AC-3 {A(km)}").Avec(km, 3));
+            }
             return ligne;
         }
 

@@ -545,7 +545,10 @@ public static class CalculArmoire
         foreach (var d in r.Departs.Where(d => d.Depart is not DepartAlimentation24V))
         {
             var actifs = d.Depart.Alimentation switch { TypeAlimentation.Mono230 or TypeAlimentation.Bi400 => 2, TypeAlimentation.Tri400 => 3, _ => 4 };
-            if (d.Depart is DepartMoteur { Demarrage: ModeDemarrage.EtoileTriangle }) actifs = 6;
+            // Étoile-triangle et deux vitesses : six bornes vers les enroulements.
+            if (d.Depart is DepartMoteur { Demarrage: ModeDemarrage.EtoileTriangle or ModeDemarrage.DeuxVitesses }) actifs = 6;
+            // Monophasé à condensateur en armoire : une borne de plus vers l'enroulement auxiliaire.
+            if (d.Depart is DepartMoteur { Alimentation: TypeAlimentation.Mono230, SurVariateur: false, CondensateurEnArmoire: true }) actifs += 1;
             // Frein à alimentation séparée : deux bornes de plus vers la bobine.
             if (d.Depart is DepartMoteur { Frein: true, AlimentationFrein: AlimentationFrein.Separee230 }) actifs += 2;
             var nombre = actifs + 1;

@@ -633,11 +633,12 @@ public static class CalculProjet
         return redondants + projet.Departs.OfType<DepartMoteur>().Sum(m => m.Demarrage switch
         {
             ModeDemarrage.Inverseur => 2,
-            ModeDemarrage.EtoileTriangle => 3,
+            ModeDemarrage.EtoileTriangle => m.DeuxSens ? 4 : 3,
             ModeDemarrage.Variateur or ModeDemarrage.Servomoteur or ModeDemarrage.DemarreurProgressif => 0,
-            ModeDemarrage.DeuxVitesses => m.TypeDeuxVitesses == TypeDeuxVitesses.Dahlander ? 3 : 2,
+            ModeDemarrage.DeuxVitesses => (m.TypeDeuxVitesses == TypeDeuxVitesses.Dahlander ? 3 : 2) + (m.DeuxSens ? 2 : 0),
             _ => 1,
-        } + (m.Frein && m.AlimentationFrein == AlimentationFrein.Separee230 ? 1 : 0));
+        } + (m.Frein && m.AlimentationFrein == AlimentationFrein.Separee230 ? 1 : 0)
+          + (m.Alimentation == TypeAlimentation.Mono230 && !m.SurVariateur && m.Condensateur == CondensateurMoteur.PermanentEtDemarrage ? 1 : 0));
     }
 
     /// <summary>Périphérie 24 V estimée : bobines de contacteurs, capteurs et actionneurs des E/S de l'automate et des stations de l'armoire.</summary>

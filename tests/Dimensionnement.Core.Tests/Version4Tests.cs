@@ -190,6 +190,35 @@ public class Version4Tests
         Assert.Contains(d.Note.Lignes, l => l.Libelle == "Variateur imposé" && l.Statut == StatutCalcul.NonConforme);
     }
 
+    [Theory]
+    [InlineData(ModeDemarrage.EtoileTriangle, TypeDeuxVitesses.Dahlander, 4)]
+    [InlineData(ModeDemarrage.DeuxVitesses, TypeDeuxVitesses.Dahlander, 5)]
+    [InlineData(ModeDemarrage.DeuxVitesses, TypeDeuxVitesses.DeuxEnroulements, 4)]
+    public void Moteurs_deux_sens_ajoutent_les_contacteurs_d_inversion(ModeDemarrage demarrage, TypeDeuxVitesses type, int contacteurs)
+    {
+        var projet = new Projet();
+        projet.Ajouter(new DepartMoteur { PuissanceKw = 11, CourantPlaque = 21, Demarrage = demarrage, TypeDeuxVitesses = type, DeuxSens = true });
+        var d = CalculProjet.Calculer(projet).Departs.Single();
+        Assert.Equal(contacteurs, d.Materiel.Parcourir().Count(e => e.Famille == "Contacteur"));
+    }
+
+    [Fact]
+    public void Moteur_monophase_avec_condensateurs_en_armoire()
+    {
+        var projet = new Projet();
+        var m = new DepartMoteur { PuissanceKw = 0.75, CourantPlaque = 5, Alimentation = TypeAlimentation.Mono230, Condensateur = CondensateurMoteur.PermanentEtDemarrage };
+        projet.Ajouter(m);
+        var d = CalculProjet.Calculer(projet).Departs.Single();
+        var c = d.Materiel.Parcourir().Where(e => e.Famille == "Condensateur").ToList();
+        Assert.Equal(2, c.Count);
+        Assert.Contains("30 µF", c[0].Calibre);
+        Assert.Contains("80 µF", c[1].Calibre);
+        Assert.Contains(d.Materiel.Parcourir(), e => e.Repere.EndsWith(".C") && e.Famille == "Relais");
+
+        m.Condensateur = CondensateurMoteur.DansLeMoteur;
+        Assert.DoesNotContain(CalculProjet.Calculer(projet).Departs.Single().Materiel.Parcourir(), e => e.Famille == "Condensateur");
+    }
+
     [Fact]
     public void Marques_par_famille_pour_les_contacteurs_et_disjoncteurs()
     {

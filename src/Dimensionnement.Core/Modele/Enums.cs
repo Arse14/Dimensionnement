@@ -30,6 +30,9 @@ public enum ModeDemarrage { Direct, Inverseur, EtoileTriangle, Variateur, Demarr
 /// <summary>Moteur deux vitesses : couplage Dahlander (un enroulement) ou deux enroulements séparés.</summary>
 public enum TypeDeuxVitesses { Dahlander, DeuxEnroulements }
 
+/// <summary>Condensateur d'un moteur monophasé : dans la boîte à bornes du moteur, ou en armoire (permanent, avec ou sans condensateur de démarrage).</summary>
+public enum CondensateurMoteur { DansLeMoteur, Permanent, PermanentEtDemarrage }
+
 /// <summary>Alimentation du frein d'un moteur-frein.</summary>
 public enum AlimentationFrein
 {

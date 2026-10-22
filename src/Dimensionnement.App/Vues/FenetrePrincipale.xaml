@@ -372,6 +372,62 @@
                     <TextBlock Text="Puissance en petite vitesse (kW, 0 = 60 %)" Style="{StaticResource Etiquette}"/>
                     <TextBox Text="{inf:Lien PuissancePetiteVitesseKw}"/>
                 </DockPanel>
+                <DockPanel>
+                    <DockPanel.Style>
+                        <Style TargetType="DockPanel" BasedOn="{StaticResource Ligne}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Demarrage}" Value="{x:Static mod:ModeDemarrage.EtoileTriangle}">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Demarrage}" Value="{x:Static mod:ModeDemarrage.DeuxVitesses}">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DockPanel.Style>
+                    <TextBlock Text="Deux sens de marche" Style="{StaticResource Etiquette}"/>
+                    <CheckBox IsChecked="{inf:Lien DeuxSens}" VerticalAlignment="Center"
+                              ToolTip="Étoile-triangle : contacteur de ligne sens arrière. Deux vitesses Dahlander : inversion commune en tête ; deux enroulements : un contacteur sens arrière par vitesse."/>
+                </DockPanel>
+                <DockPanel>
+                    <DockPanel.Style>
+                        <Style TargetType="DockPanel" BasedOn="{StaticResource Ligne}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding Alimentation}" Value="{x:Static mod:TypeAlimentation.Mono230}"/>
+                                        <Condition Binding="{Binding SurVariateur}" Value="False"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DockPanel.Style>
+                    <TextBlock Text="Condensateur du moteur monophasé" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{x:Static inf:Listes.CondensateursMoteur}" SelectedItem="{inf:Lien Condensateur}"
+                              ItemTemplate="{StaticResource ModeleEnum}"/>
+                </DockPanel>
+                <DockPanel>
+                    <DockPanel.Style>
+                        <Style TargetType="DockPanel" BasedOn="{StaticResource Ligne}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding Alimentation}" Value="{x:Static mod:TypeAlimentation.Mono230}"/>
+                                        <Condition Binding="{Binding SurVariateur}" Value="False"/>
+                                        <Condition Binding="{Binding CondensateurEnArmoire}" Value="True"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DockPanel.Style>
+                    <TextBlock Text="Capacité permanente (µF, 0 = estimée)" Style="{StaticResource Etiquette}"/>
+                    <TextBox Text="{inf:Lien CapaciteCondensateurUf}" ToolTip="Valeur de la plaque du moteur ; à défaut, environ 40 µF par kW sous 230 V."/>
+                </DockPanel>
                 <TextBlock Text="Frein" Style="{StaticResource Section}"/>
                 <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Moteur-frein" Style="{StaticResource Etiquette}"/>

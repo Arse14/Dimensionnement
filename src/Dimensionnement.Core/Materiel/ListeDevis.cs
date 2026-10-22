@@ -116,7 +116,8 @@ public static class ListeDevis
                 l.Add(new(Accessoires, "Bloc de liaison disjoncteur moteur / contacteur", "", fabricant, "", avecContacteur.Count, "u",
                     Reperes(avecContacteur)));
         }
-        var verrouillages = r.Departs.Count(d => d.Depart is DepartMoteur { Demarrage: ModeDemarrage.Inverseur or ModeDemarrage.EtoileTriangle or ModeDemarrage.DeuxVitesses });
+        var verrouillages = r.Departs.Sum(d => d.Depart is DepartMoteur { Demarrage: ModeDemarrage.Inverseur or ModeDemarrage.EtoileTriangle or ModeDemarrage.DeuxVitesses } m
+            ? 1 + (m.DeuxSens && m.Demarrage is ModeDemarrage.EtoileTriangle or ModeDemarrage.DeuxVitesses ? 1 : 0) : 0);
         if (verrouillages > 0)
             l.Add(new(Accessoires, "Verrouillage mécanique entre contacteurs", "inverseurs, étoile-triangle et deux vitesses", fabricant, "", verrouillages, "u"));
         var etoileTriangle = r.Departs.Count(d => d.Depart is DepartMoteur { Demarrage: ModeDemarrage.EtoileTriangle });
