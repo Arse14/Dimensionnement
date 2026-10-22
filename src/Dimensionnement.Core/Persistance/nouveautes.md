@@ -5,6 +5,7 @@
 ## v1.3 – 22/10/2026
 - Page « Nouveautés » : l'historique des versions, ouverte d'elle-même au premier démarrage après une mise à jour.
 - Sélectivité : des seuils magnétiques qui se touchent ne sont plus une alerte (sélectivité partielle, cas normal entre modulaires) ; page réécrite en clair, niveaux en vert quand il n'y a rien à faire.
+- Rapport : le chapitre « Points à traiter » suit la liste des alertes de l'application ; les alertes ignorées passent dans « Points acceptés par le bureau d'étude » avec leur motif, leur auteur et leur date.
 - Le bouton « Nouveautés » du bandeau de mise à jour montre ce qu'apporte la version disponible, sans quitter l'application.
 
 ## v1.2 – 22/10/2026

@@ -56,6 +56,21 @@ public class AlertesTests
     }
 
     [Fact]
+    public void Rapport_reporte_les_alertes_ignorees_a_part_avec_leur_motif()
+    {
+        var projet = ProjetNonSelectif();
+        var alerte = CalculProjet.Calculer(projet).Alertes.First(a => a.Action == ActionAlerte.RemonterGeneral);
+        projet.AlertesIgnorees[alerte.Cle] = "Validé sur les tables Siemens (BE, 22/10/2026)";
+
+        var html = Dimensionnement.Core.Rapport.RapportHtml.Generer(CalculProjet.Calculer(projet));
+        var chapitre = html[html.IndexOf("5. Points à traiter")..];
+        var acceptes = chapitre.IndexOf("Points acceptés par le bureau d'étude");
+        Assert.True(acceptes > 0);
+        Assert.Contains("sur les tables Siemens", chapitre[acceptes..]);
+        Assert.DoesNotContain(System.Net.WebUtility.HtmlEncode(alerte.Point), chapitre[..acceptes]);
+    }
+
+    [Fact]
     public void Cartouche_a_completer_disparait_une_fois_renseigne()
     {
         var projet = ProjetNonSelectif();

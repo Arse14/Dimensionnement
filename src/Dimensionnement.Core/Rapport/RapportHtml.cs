@@ -63,6 +63,8 @@ public static class RapportHtml
         var annexe = r.Departs.Select((d, i) => (d, i)).ToDictionary(x => x.d, x => $"C{x.i + 1}");
 
         var reseau = p.Reseau;
+        // État du projet d'après les alertes encore actives : celles acceptées par le bureau d'étude ne comptent plus.
+        var etatProjet = r.Alertes.Actives().Select(a => a.Statut).DefaultIfEmpty(StatutCalcul.Conforme).Max();
         sb.Append($"""
             <h2>1. Projet et hypothèses</h2>
             <table class="garde">
@@ -73,8 +75,8 @@ public static class RapportHtml
                 {(reseau.Origine == OrigineAlimentation.ReseauPublicBT ? "réseau public BT" : "poste privé HTA/BT")}, Icc {N(reseau.IccKiloAmperes)} kA</td></tr>
             <tr><td>Température ambiante</td><td>{N(reseau.TemperatureAmbiante)} °C</td></tr>
             <tr><td>Câble d'arrivée</td><td>{N(reseau.CableArrivee.Longueur)} m, pose {reseau.CableArrivee.Pose}, {reseau.CableArrivee.Isolant}</td></tr>
-            <tr class="l-{r.StatutGlobal}"><td>État du projet</td><td class="{r.StatutGlobal} etat">{Statut(r.StatutGlobal)}
-                ({r.NombreAlertes} point(s) à traiter, voir chapitre 5)</td></tr>
+            <tr class="l-{etatProjet}"><td>État du projet</td><td class="{etatProjet} etat">{Statut(etatProjet)}
+                ({r.Alertes.Actives().Count()} point(s) à traiter, voir chapitre 5)</td></tr>
             </table>
             <p class="avert">Ce rapport est une aide au dimensionnement. Les résultats doivent être vérifiés et validés par le bureau d'étude ;
             les tables normatives embarquées sont à contrôler contre les éditions en vigueur des normes.</p>
@@ -246,38 +248,56 @@ public static class RapportHtml
         sb.Append("</table>");
     }
 
-    /// <summary>Chapitre 5 : toutes les alertes et non-conformités du projet, avec où les retrouver.</summary>
+    /// <summary>
+    /// Chapitre 5 : la liste des alertes de l'application (notes de calcul et informations à renseigner), avec où les retrouver ;
+    /// les alertes ignorées sont reportées à part avec le motif du bureau d'étude.
+    /// </summary>
     static void PointsATraiter(StringBuilder sb, ResultatProjet r, IReadOnlyDictionary<ResultatDepart, string> annexe)
     {
-        IEnumerable<(string Ou, NoteDeCalcul Note, string Renvoi, string Lien)> sources = r.Departs
-            .Select(d => (d.Depart.Code, d.Note, $"Annexe {annexe[d]}", $"#{annexe[d]}"))
-            .Append(("Arrivée", r.NoteArrivee, "Annexe C0", "#C0"));
-        if (r.Armoire is { } a)
+        (string Renvoi, string Lien) Renvoi(Alerte a)
         {
-            sources = sources.Append(("Armoire", a.Note, "Chapitre 6", ""));
-            sources = sources.Concat(a.Coffrets.Select(c => (c.Nom, c.Note, "Chapitre 6", "")));
+            if (a.DepartId is { } id && r.Departs.FirstOrDefault(d => d.Depart.Id == id) is { } d) return ($"Annexe {annexe[d]}", $"#{annexe[d]}");
+            return a.Cible switch
+            {
+                CibleAlerte.Projet when a.Type != TypeAlerte.ARenseigner => ("Annexe C0", "#C0"),
+                CibleAlerte.Armoire or CibleAlerte.Thermique => ("Chapitre 6", ""),
+                CibleAlerte.Automate or CibleAlerte.Securite => ("Annexe A", "#annexe-a"),
+                CibleAlerte.Selectivite or CibleAlerte.References => ("Annexe C", "#annexe-c"),
+                _ => ("", ""),
+            };
         }
-        if (r.Thermique is { } t) sources = sources.Append(("Thermique", t.Note, "Chapitre 6", ""));
-        if (r.Automate is { } api) sources = sources.Append(("Automate", api.Note, "Annexe A", "#annexe-a"));
-        if (r.Securite is { } sec) sources = sources.Append(("Sécurité", sec.Note, "Annexe A", "#annexe-a"));
-        if (r.Selectivite is { } sel) sources = sources.Append(("Sélectivité", sel.Note, "Annexe C", "#annexe-c"));
-        if (r.References is { } refs) sources = sources.Append(("Références", refs.Note, "Annexe C", "#annexe-c"));
+        static string Etat(Alerte a) => a.Type switch
+        {
+            TypeAlerte.NonConforme => "Non conforme",
+            TypeAlerte.AVerifier => "Alerte",
+            _ => "À renseigner",
+        };
+        void Tableau(IEnumerable<Alerte> alertes, bool ignorees)
+        {
+            sb.Append($"<table><tr><th>Où</th><th>Point</th><th>Détail</th><th>{(ignorees ? "Motif" : "État")}</th><th>Renvoi</th></tr>");
+            foreach (var a in alertes)
+            {
+                var (renvoi, lien) = Renvoi(a);
+                var classe = ignorees ? "Info" : a.Statut.ToString();
+                sb.Append($"<tr class=\"l-{classe}\"><td class=\"rep\">{E(a.Lieu)}</td><td>{E(a.Point)}</td><td>{E(a.Detail)}</td>" +
+                          (ignorees ? $"<td>{E(a.Motif ?? "")}</td>" : $"<td class=\"{a.Statut} etat\">{Etat(a)}</td>") +
+                          $"<td>{(lien.Length > 0 ? $"<a href=\"{lien}\">{E(renvoi)}</a>" : E(renvoi))}</td></tr>");
+            }
+            sb.Append("</table>");
+        }
 
-        var points = sources.SelectMany(s => s.Note.Lignes.Where(l => l.Statut is StatutCalcul.Alerte or StatutCalcul.NonConforme)
-                .Select(l => (s.Ou, Ligne: l, s.Renvoi, s.Lien)))
-            .OrderByDescending(x => x.Ligne.Statut).ToList();
+        var actives = r.Alertes.Actives().ToList();
+        var ignorees = r.Alertes.Where(a => a.Ignoree).ToList();
         sb.Append("<h2>5. Points à traiter</h2>");
-        if (points.Count == 0)
+        if (actives.Count == 0)
+            sb.Append("<p class=\"Conforme etat\">Aucun point à traiter : tous les contrôles sont conformes ou acceptés par le bureau d'étude.</p>");
+        else
+            Tableau(actives, false);
+        if (ignorees.Count > 0)
         {
-            sb.Append("<p class=\"Conforme etat\">Aucun point à traiter : tous les contrôles sont conformes.</p>");
-            return;
+            sb.Append("<h3>Points acceptés par le bureau d'étude</h3>");
+            Tableau(ignorees, true);
         }
-        sb.Append("<table><tr><th>Où</th><th>Point</th><th>Détail</th><th>État</th><th>Renvoi</th></tr>");
-        foreach (var (ou, l, renvoi, lien) in points)
-            sb.Append($"<tr class=\"l-{l.Statut}\"><td class=\"rep\">{E(ou)}</td><td>{E(l.Libelle)}</td><td>{M(l.Message)}</td>" +
-                      $"<td class=\"{l.Statut} etat\">{Statut(l.Statut)}</td>" +
-                      $"<td>{(lien.Length > 0 ? $"<a href=\"{lien}\">{E(renvoi)}</a>" : E(renvoi))}</td></tr>");
-        sb.Append("</table>");
     }
 
     /// <summary>Annexe A : automatisme et sécurité, une ligne par appareil avec ses accessoires et sa référence.</summary>
