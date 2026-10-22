@@ -217,7 +217,9 @@ public class Version3Tests
         var d02 = sel.Lignes.Single(l => l.Depart == "D02");
         Assert.Equal(NiveauSelectivite.Partielle, d02.Niveau);
         Assert.Equal(160, d02.Limite);
-        Assert.Equal(NiveauSelectivite.AVerifier, sel.Lignes.Single(l => l.Depart == "D01").Niveau);
+        // Seuils magnétiques qui se touchent : sélectivité partielle, sans alerte (cas courant entre modulaires).
+        Assert.Equal(NiveauSelectivite.Partielle, sel.Lignes.Single(l => l.Depart == "D01").Niveau);
+        Assert.DoesNotContain(sel.Note.Lignes, l => l.Statut == StatutCalcul.Alerte);
     }
 
     [Theory]

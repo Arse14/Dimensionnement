@@ -17,10 +17,10 @@ public class ResultatSelectivite
     public IReadOnlyList<LigneSelectivite> Lignes { get; init; } = Array.Empty<LigneSelectivite>();
 
     /// <summary>
-    /// Vrai quand un départ approche de la limite : sélectivité absente, à vérifier ou seulement partielle,
-    /// ou rapport des calibres sous <see cref="CalculSelectivite.RapportVigilance"/>. Sinon la section reste masquée.
+    /// Vrai quand un départ n'est pas sélectif (rapport des calibres sous 1,6) : ⚠ sur l'onglet et chapitre dans le rapport.
+    /// Une sélectivité partielle est le cas normal entre modulaires : elle ne demande rien.
     /// </summary>
-    public bool AttentionRequise => Lignes.Any(l => l.Niveau != NiveauSelectivite.Totale || l.RapportSurcharge < CalculSelectivite.RapportVigilance);
+    public bool AttentionRequise => Lignes.Any(l => l.Niveau is NiveauSelectivite.Absente or NiveauSelectivite.AVerifier);
 }
 
 /// <summary>
@@ -86,9 +86,12 @@ public static class CalculSelectivite
             }
             else if (imAval >= seuilAmont)
             {
-                niveau = NiveauSelectivite.AVerifier;
-                limite = 0;
-                commentaire = $"Seuils magnétiques qui se recouvrent ({type}) : sélectivité à confirmer dans les tables du fabricant.";
+                // Seuils magnétiques qui se touchent : cas courant entre modulaires, sélectif en surcharge ; la limite en
+                // court-circuit vient des tables du fabricant. Pas une alerte.
+                niveau = NiveauSelectivite.Partielle;
+                limite = seuilAmont;
+                commentaire = $"Sélectif en surcharge. En court-circuit, {protection.Repere} peut attendre jusqu'à {A(imAval)} et {libelleAmont.Split(' ')[0]} " +
+                              $"peut déclencher dès {A(seuilAmont)} ({type}) : la limite exacte est dans les tables de sélectivité du fabricant, souvent au-delà.";
             }
             else if (iccLocal <= seuilAmont)
             {
@@ -100,7 +103,7 @@ public static class CalculSelectivite
             {
                 niveau = NiveauSelectivite.Partielle;
                 limite = seuilAmont;
-                commentaire = $"Partielle jusqu'à {A(seuilAmont)} ; au-delà, voir les tables de sélectivité (souvent totale entre gammes adaptées).";
+                commentaire = $"Sélectif jusqu'à {A(seuilAmont)} de défaut (valeur minimale) ; au-delà, les tables de sélectivité du fabricant donnent souvent mieux.";
             }
             lignes.Add(new LigneSelectivite(nom, libelleAmont, $"{protection.Repere} {protection.Calibre}", rapport, seuilAmont, imAval,
                 limite, niveau, commentaire));
@@ -114,7 +117,7 @@ public static class CalculSelectivite
             }
             else
                 note.Verifier($"Sélectivité avec {nom}", true,
-                    $"Rapport {N(rapport)} ; magnétique aval ≈ {A(imAval)} < {A(seuilAmont)} ({type}). {commentaire}", Ref);
+                    $"Rapport des calibres {N(rapport)} ≥ {N(RapportSurchargeMini)}. {commentaire}", Ref);
         }
         return new ResultatSelectivite { Note = note, Lignes = lignes };
     }

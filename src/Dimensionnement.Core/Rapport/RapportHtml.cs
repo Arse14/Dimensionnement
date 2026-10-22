@@ -150,7 +150,7 @@ public static class RapportHtml
             Etapes(sb, d.Note);
             sb.Append("</div>");
         }
-        if (r.Selectivite is { AttentionRequise: true } sel)
+        if (r.Selectivite is { Lignes.Count: > 0 } sel)
         {
             sb.Append("<h3>Sélectivité</h3><table><tr><th>Départ</th><th>Amont</th><th>Aval</th><th class=\"nb\">Rapport</th>" +
                       "<th class=\"nb\">Magn. amont mini</th><th class=\"nb\">Magn. aval maxi</th><th>Sélectivité</th></tr>");

@@ -1366,23 +1366,36 @@
             <StackPanel>
                 <TextBlock Text="SÉLECTIVITÉ GÉNÉRAL / DÉPARTS" Style="{StaticResource TitrePanneau}"/>
                 <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,0,8"
-                           Text="Sélectivité ampèremétrique minimale ; les tables de sélectivité du fabricant donnent souvent mieux."/>
+                           Text="Un défaut sur un départ doit faire déclencher son seul disjoncteur, pas le général. « Partielle » est le cas normal entre disjoncteurs modulaires : rien à faire. Calcul minimal ; les tables de sélectivité du fabricant donnent souvent mieux."/>
                 <ItemsControl ItemsSource="{Binding DataContext.Resultat.Selectivite.Lignes, RelativeSource={RelativeSource AncestorType=Window}}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type calc:LigneSelectivite}">
                             <Border Background="{StaticResource PanneauClair}" CornerRadius="4" Padding="10" Margin="0,0,0,6">
                                 <StackPanel>
                                     <DockPanel>
-                                        <TextBlock DockPanel.Dock="Right" FontWeight="SemiBold" Foreground="{StaticResource Accent}"
-                                                   Text="{Binding Niveau, Converter={StaticResource LibelleEnum}}"/>
+                                        <TextBlock DockPanel.Dock="Right" FontWeight="SemiBold" Text="{Binding Niveau, Converter={StaticResource LibelleEnum}}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <!-- Totale ou partielle : rien à faire ; absente ou à vérifier : orange -->
+                                                    <Setter Property="Foreground" Value="#3FB950"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Niveau}" Value="{x:Static calc:NiveauSelectivite.Absente}">
+                                                            <Setter Property="Foreground" Value="#F0A020"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Niveau}" Value="{x:Static calc:NiveauSelectivite.AVerifier}">
+                                                            <Setter Property="Foreground" Value="#F0A020"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
                                         <TextBlock FontWeight="SemiBold">
                                             <Run Text="{Binding Depart, Mode=OneWay}"/><Run Text=" : "/><Run Text="{Binding Amont, Mode=OneWay}"/><Run Text=" → "/><Run Text="{Binding Aval, Mode=OneWay}"/>
                                         </TextBlock>
                                     </DockPanel>
                                     <TextBlock Foreground="{StaticResource TexteSecondaire}" Margin="0,2,0,0">
-                                        <Run Text="Rapport des calibres "/><Run Text="{Binding RapportSurcharge, Mode=OneWay, StringFormat={}{0:0.00}}"/>
-                                        <Run Text=" – magnétique amont "/><Run Text="{Binding SeuilAmont, Mode=OneWay, StringFormat={}{0:0} A}"/>
-                                        <Run Text=", aval "/><Run Text="{Binding SeuilAval, Mode=OneWay, StringFormat={}{0:0} A}"/>
+                                        <Run Text="Surcharge : rapport des calibres "/><Run Text="{Binding RapportSurcharge, Mode=OneWay, StringFormat={}{0:0.00}}"/><Run Text=" (mini 1,6)"/>
+                                        <Run Text=" · Court-circuit : l'amont déclenche dès "/><Run Text="{Binding SeuilAmont, Mode=OneWay, StringFormat={}{0:0} A}"/><Run Text=", le départ au plus tard à "/><Run Text="{Binding SeuilAval, Mode=OneWay, StringFormat={}{0:0} A}"/>
                                     </TextBlock>
                                     <TextBlock Text="{Binding Commentaire}" TextWrapping="Wrap" Margin="0,2,0,0"/>
                                 </StackPanel>
@@ -2003,9 +2016,9 @@
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Armoire" Command="{Binding AfficherArmoire}"/>
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Thermique" Command="{Binding AfficherThermique}"/>
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Command="{Binding AfficherSelectivite}"
-                                Visibility="{Binding Resultat.Selectivite.AttentionRequise, Converter={StaticResource VraiVisible}, FallbackValue=Collapsed}"
-                                ToolTip="Un départ approche de la limite de sélectivité avec le disjoncteur général">
-                            <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE7BA;" Foreground="{StaticResource Accent}" Margin="0,0,5,0" VerticalAlignment="Center"/><TextBlock Text="Sélectivité"/></StackPanel>
+                                ToolTip="Sélectivité entre le disjoncteur général et les départs ; ⚠ quand un départ n'est pas sélectif en surcharge">
+                            <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE7BA;" Foreground="{StaticResource Accent}" Margin="0,0,5,0" VerticalAlignment="Center"
+                                Visibility="{Binding Resultat.Selectivite.AttentionRequise, Converter={StaticResource VraiVisible}, FallbackValue=Collapsed}"/><TextBlock Text="Sélectivité"/></StackPanel>
                         </Button>
                         <Button Style="{StaticResource BoutonPetit}" Margin="0,0,4,4" Content="Références" Command="{Binding AfficherReferences}"/>
                     </WrapPanel>

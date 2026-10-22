@@ -4,6 +4,7 @@
 
 ## v1.3 – 22/10/2026
 - Page « Nouveautés » : l'historique des versions, ouverte d'elle-même au premier démarrage après une mise à jour.
+- Sélectivité : des seuils magnétiques qui se touchent ne sont plus une alerte (sélectivité partielle, cas normal entre modulaires) ; page réécrite en clair, niveaux en vert quand il n'y a rien à faire.
 - Le bouton « Nouveautés » du bandeau de mise à jour montre ce qu'apporte la version disponible, sans quitter l'application.
 
 ## v1.2 – 22/10/2026
