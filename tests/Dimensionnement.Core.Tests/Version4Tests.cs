@@ -175,6 +175,22 @@ public class Version4Tests
     }
 
     [Fact]
+    public void Variateur_impose_par_sa_reference_et_controle()
+    {
+        var projet = new Projet();
+        var m = new DepartMoteur { PuissanceKw = 2.2, CourantPlaque = 5, Demarrage = ModeDemarrage.Variateur, ReferenceVariateur = "atv320u30n4c" };
+        projet.Ajouter(m);
+        var r = CalculProjet.Calculer(projet);
+        var d = r.Departs.Single();
+        Assert.Contains(d.Note.Lignes, l => l.Libelle == "Variateur imposé" && l.Statut == StatutCalcul.Conforme);
+        Assert.Contains("ATV320U30N4C", string.Join(" ", d.Note.Lignes.Select(l => l.Message)));
+
+        m.ReferenceVariateur = "ATV320U04N4C";
+        d = CalculProjet.Calculer(projet).Departs.Single();
+        Assert.Contains(d.Note.Lignes, l => l.Libelle == "Variateur imposé" && l.Statut == StatutCalcul.NonConforme);
+    }
+
+    [Fact]
     public void Marques_par_famille_pour_les_contacteurs_et_disjoncteurs()
     {
         var projet = new Projet();

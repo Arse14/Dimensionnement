@@ -248,6 +248,14 @@ public partial class ModeleVuePrincipal : Observable
     public string RapportHtmlApercu => RapportHtml.Generer(Resultat);
 
     /// <summary>IHM de la marque de l'automate, pour le choix manuel d'une référence.</summary>
+    /// <summary>Variateurs du catalogue proposés au choix sur un départ moteur, par marque et puissance.</summary>
+    public IReadOnlyList<ChoixCpu> VariateursDisponibles => _variateurs
+        .Where(v => v.Reference.Length > 0)
+        .OrderBy(v => v.Servo).ThenBy(v => v.Fabricant).ThenBy(v => v.Gamme).ThenBy(v => v.Kw)
+        .Select(v => new ChoixCpu(v.Reference, $"{v.Fabricant} {v.Gamme} – {v.Reference}, {v.Kw:0.##} kW, {v.Courant:0.#} A{(v.Monophase ? ", mono 230 V" : "")}"))
+        .Prepend(new ChoixCpu("", "Automatique, selon la puissance et le courant"))
+        .ToList();
+
     public IReadOnlyList<ChoixCpu> IhmDisponibles => _ihm
         .Where(m => m.Fabricant.Equals(_projet.Automate.Marque.ToString(), StringComparison.OrdinalIgnoreCase))
         .Select(m => new ChoixCpu(m.Reference, $"{m.Gamme} – {m.Libelle}"))
@@ -958,6 +966,7 @@ public partial class ModeleVuePrincipal : Observable
         _catalogue = CatalogueAutomates.Charger(CheminCatalogue);
         _references = CatalogueReferences.Charger(CheminReferences);
         _variateurs = CatalogueVariateurs.Charger(CheminVariateurs);
+        Signaler(nameof(VariateursDisponibles));
         _enveloppes = CatalogueEnveloppes.Charger(CheminEnveloppes);
         _securite = CatalogueSecurite.Charger(CheminSecurite);
         _capteurs = CatalogueCapteursSecurite.Charger(CheminCapteurs);

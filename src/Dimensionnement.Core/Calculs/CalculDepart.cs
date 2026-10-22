@@ -136,7 +136,19 @@ public static class CalculDepart
                 "Directive 2014/30/UE ; NF EN 61800-3");
             var marque = CatalogueVariateurs.Marque(m.MarqueVariateur, fabricant);
             var mono = m.Alimentation == TypeAlimentation.Mono230;
-            var modele = CatalogueVariateurs.Choisir(marque, m.PuissanceKw, ib, variateurs, servo, mono);
+            var impose = CatalogueVariateurs.Trouver(m.ReferenceVariateur, variateurs);
+            var modele = impose ?? CatalogueVariateurs.Choisir(marque, m.PuissanceKw, ib, variateurs, servo, mono);
+            if (impose is not null)
+            {
+                marque = Enum.TryParse<FabricantMateriel>(impose.Fabricant, true, out var f) ? f : marque;
+                var suffisant = impose.Kw >= m.PuissanceKw - 1e-6 && impose.Courant >= ib - 1e-6;
+                note.Verifier("Variateur imposé", suffisant,
+                    $"{impose.Reference} choisi à la main : {N(impose.Kw)} kW et {A(impose.Courant)} pour un moteur de {N(m.PuissanceKw)} kW à {A(ib)}" +
+                    (suffisant ? "." : " : trop petit, choisir un calibre au-dessus ou repasser en automatique."),
+                    "Catalogue du fabricant ; NF EN 61800-2");
+            }
+            else if (m.ReferenceVariateur.Trim().Length > 0)
+                note.Info("Variateur imposé", $"{m.ReferenceVariateur} n'est pas au catalogue des variateurs : choix automatique d'après la puissance.");
             if (servo)
                 note.Info("Servomoteur", "Servovariateur et servomoteur de la même gamme ; câble moteur et câble codeur blindés préconfectionnés, " +
                     "résistance de freinage selon le cycle (énergie renvoyée au freinage).", "Documentation du fabricant ; NF EN 61800-5-1");

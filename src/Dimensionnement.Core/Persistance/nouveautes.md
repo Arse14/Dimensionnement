@@ -7,6 +7,8 @@
 - Catalogue des IHM personnalisé : les nouveaux pupitres livrés s'ajoutent à ton fichier sans toucher à tes modifications.
 - Cotes, découpes et consommations des Comfort Panels 7 à 12" et des Basic Panels relevées sur SiePortal (découpe du KTP400 Basic : 124 × 100 mm, du KTP700 Basic : 198 × 142 mm).
 - Catalogues : bouton « Copier » à côté de la référence sur la fiche, clic droit « Copier la référence » et Ctrl+C sur le tableau.
+- Départ moteur : choix « Variateur imposé » pour prendre une référence précise du catalogue, contrôlée face à la puissance et au courant du moteur.
+- Tous les catalogues modifiés reçoivent les nouveaux modèles livrés par une mise à jour (variateurs, disjoncteurs, enveloppes, sécurité, cartes d'E/S, répartiteurs), sans toucher aux modifications.
 
 ## v1.2.1 – 22/10/2026
 - Page « Nouveautés » : l'historique des versions, ouverte d'elle-même au premier démarrage après une mise à jour.

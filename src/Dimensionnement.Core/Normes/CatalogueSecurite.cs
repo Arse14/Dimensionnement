@@ -53,7 +53,9 @@ public static class CatalogueSecurite
     static readonly Lazy<IReadOnlyList<ModeleSecurite>> Embarque = new(() => Lire(TexteEmbarque()));
 
     public static IReadOnlyList<ModeleSecurite> Charger(string? fichierPersonnalise = null) =>
-        fichierPersonnalise is not null && File.Exists(fichierPersonnalise) ? Lire(File.ReadAllText(fichierPersonnalise)) : Embarque.Value;
+        fichierPersonnalise is not null && File.Exists(fichierPersonnalise)
+            ? CatalogueAutomates.Completer(Lire(File.ReadAllText(fichierPersonnalise)), Embarque.Value, m => m.Reference)
+            : Embarque.Value;
 
     public static string TexteEmbarque()
     {

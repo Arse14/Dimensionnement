@@ -328,6 +328,25 @@
                         <Style TargetType="DockPanel" BasedOn="{StaticResource Ligne}">
                             <Setter Property="Visibility" Value="Collapsed"/>
                             <Style.Triggers>
+                                <DataTrigger Binding="{Binding Demarrage}" Value="{x:Static mod:ModeDemarrage.Variateur}">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Demarrage}" Value="{x:Static mod:ModeDemarrage.Servomoteur}">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DockPanel.Style>
+                    <TextBlock Text="Variateur imposé" Style="{StaticResource Etiquette}"/>
+                    <ComboBox ItemsSource="{Binding DataContext.VariateursDisponibles, RelativeSource={RelativeSource AncestorType=Window}}"
+                              SelectedValuePath="Reference" SelectedValue="{inf:Lien ReferenceVariateur}" DisplayMemberPath="Libelle"
+                              ToolTip="Référence précise du catalogue « Variateurs » ; « Automatique » prend le plus petit calibre qui convient."/>
+                </DockPanel>
+                <DockPanel>
+                    <DockPanel.Style>
+                        <Style TargetType="DockPanel" BasedOn="{StaticResource Ligne}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
                                 <DataTrigger Binding="{Binding Demarrage}" Value="{x:Static mod:ModeDemarrage.DeuxVitesses}">
                                     <Setter Property="Visibility" Value="Visible"/>
                                 </DataTrigger>

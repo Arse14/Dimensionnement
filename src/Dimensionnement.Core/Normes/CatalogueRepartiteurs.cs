@@ -43,7 +43,9 @@ public static class CatalogueRepartiteurs
     public static IReadOnlyList<ModeleRepartiteur> Actif { get; set; } = Embarque.Value;
 
     public static IReadOnlyList<ModeleRepartiteur> Charger(string? fichierPersonnalise = null) =>
-        fichierPersonnalise is not null && File.Exists(fichierPersonnalise) ? Lire(File.ReadAllText(fichierPersonnalise)) : Embarque.Value;
+        fichierPersonnalise is not null && File.Exists(fichierPersonnalise)
+            ? CatalogueAutomates.Completer(Lire(File.ReadAllText(fichierPersonnalise)), Embarque.Value, m => m.Reference)
+            : Embarque.Value;
 
     public static string TexteEmbarque()
     {

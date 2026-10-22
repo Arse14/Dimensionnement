@@ -53,7 +53,9 @@ public static class CatalogueDisjoncteurs
     public static IReadOnlyList<ModeleDisjoncteur> Actif { get; set; } = Embarque.Value;
 
     public static IReadOnlyList<ModeleDisjoncteur> Charger(string? fichierPersonnalise = null) =>
-        fichierPersonnalise is not null && File.Exists(fichierPersonnalise) ? Lire(File.ReadAllText(fichierPersonnalise)) : Embarque.Value;
+        fichierPersonnalise is not null && File.Exists(fichierPersonnalise)
+            ? CatalogueAutomates.Completer(Lire(File.ReadAllText(fichierPersonnalise)), Embarque.Value, m => m.Reference)
+            : Embarque.Value;
 
     public static string TexteEmbarque()
     {

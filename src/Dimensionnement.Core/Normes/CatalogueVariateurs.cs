@@ -54,8 +54,11 @@ public static class CatalogueVariateurs
     static readonly JsonSerializerOptions Options = new() { PropertyNameCaseInsensitive = true, ReadCommentHandling = JsonCommentHandling.Skip };
     static readonly Lazy<IReadOnlyList<ModeleVariateur>> Embarque = new(() => Lire(TexteEmbarque()));
 
+    /// <summary>Catalogue de l'utilisateur complété des variateurs livrés qu'il ne contient pas encore.</summary>
     public static IReadOnlyList<ModeleVariateur> Charger(string? fichierPersonnalise = null) =>
-        fichierPersonnalise is not null && File.Exists(fichierPersonnalise) ? Lire(File.ReadAllText(fichierPersonnalise)) : Embarque.Value;
+        fichierPersonnalise is not null && File.Exists(fichierPersonnalise)
+            ? CatalogueAutomates.Completer(Lire(File.ReadAllText(fichierPersonnalise)), Embarque.Value, m => m.Reference)
+            : Embarque.Value;
 
     public static string TexteEmbarque()
     {
@@ -88,4 +91,8 @@ public static class CatalogueVariateurs
                         && v.Kw >= kw - 1e-6 && v.Courant >= courant - 1e-6)
             .OrderBy(v => v.Rang).ThenBy(v => v.Kw).ThenBy(v => v.Largeur * v.Hauteur)
             .FirstOrDefault();
+
+    /// <summary>Variateur imposé par sa référence, quelle que soit sa marque ; null s'il n'est pas au catalogue.</summary>
+    public static ModeleVariateur? Trouver(string reference, IReadOnlyList<ModeleVariateur> catalogue) =>
+        reference.Trim() is { Length: > 0 } r ? catalogue.FirstOrDefault(v => v.Reference.Equals(r, StringComparison.OrdinalIgnoreCase)) : null;
 }

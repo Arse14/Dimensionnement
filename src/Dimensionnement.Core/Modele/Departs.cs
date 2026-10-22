@@ -127,6 +127,10 @@ public class DepartMoteur : Depart
     /// <summary>Marque du variateur (démarrage par variateur seulement).</summary>
     public MarqueVariateur MarqueVariateur { get; set; } = MarqueVariateur.Projet;
 
+    /// <summary>Référence de variateur choisie à la main dans le catalogue ; vide pour un choix d'après la puissance et le courant.</summary>
+    public string ReferenceVariateur { get => _referenceVariateur; set => _referenceVariateur = value ?? ""; }
+    string _referenceVariateur = "";
+
     /// <summary>Moteur deux vitesses : couplage et puissance en petite vitesse (0 = moitié de la grande vitesse).</summary>
     public TypeDeuxVitesses TypeDeuxVitesses { get; set; } = TypeDeuxVitesses.Dahlander;
     public double PuissancePetiteVitesseKw { get; set; }
