@@ -291,8 +291,10 @@ public static class CalculDepart
         };
         note.Info("Porte-fusibles", $"Sectionneur porte-fusibles taille {taille}, {poles} ; {cartouches} cartouche(s) {classe} {A(calibre)}.",
             "NF EN 60947-3");
-        note.Info("Pouvoir de coupure", $"Pouvoir de coupure des cartouches ≥ {N(reseau.IccKiloAmperes)} kA (en général 100 kA ou plus).",
-            "NF EN 60269");
+        note.Verifier("Pouvoir de coupure", reseau.IccKiloAmperes <= 50,
+            $"Cartouches industrielles gG / aM : au moins 50 kA sous 400 V, pour Icc = {N(reseau.IccKiloAmperes)} kA" +
+            (reseau.IccKiloAmperes <= 50 ? "." : " : vérifier le pouvoir de coupure des cartouches choisies."),
+            "NF EN 60269-2", StatutCalcul.Alerte);
         var sectionneur = Element($"Q{d.Numero}", "Sectionneur porte-fusibles", $"Sectionneur porte-fusibles {taille}", poles)
             .Avec(calibre, NombrePoles(d.Alimentation, reseau.Slt), tailleFusible: taille);
         var fusibles = sectionneur.Ajouter(new ElementMateriel

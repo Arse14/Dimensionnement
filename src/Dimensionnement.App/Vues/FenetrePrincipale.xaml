@@ -2073,6 +2073,17 @@
                     </DockPanel>
                     <TextBlock DockPanel.Dock="Top" Foreground="{StaticResource TexteSecondaire}" FontSize="11" Margin="0,0,0,8" TextWrapping="Wrap"
                                Text="Une carte par objet contrôlé : ses vérifications restent visibles, les calculs qui les préparent se déplient sous « Note de calcul »."/>
+                    <!-- Légende des pastilles -->
+                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,10" TextBlock.FontSize="11" TextBlock.Foreground="{StaticResource TexteSecondaire}">
+                        <Ellipse Width="8" Height="8" Fill="#3FB950" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="vérifié conforme" Margin="0,0,12,2"/>
+                        <Ellipse Width="8" Height="8" Fill="#F0A020" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="à vérifier ou forcé" Margin="0,0,12,2"/>
+                        <Ellipse Width="8" Height="8" Fill="#F85149" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="non conforme" Margin="0,0,12,2"/>
+                        <Ellipse Width="8" Height="8" Fill="#6E7681" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="information ou choix, sans contrôle" Margin="0,0,0,2"/>
+                    </WrapPanel>
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding GroupesNote}" ItemTemplate="{StaticResource CarteNote}"/>
                     </ScrollViewer>

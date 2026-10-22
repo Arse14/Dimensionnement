@@ -96,6 +96,7 @@ public static class CatalogueReferences
             if (config.Forcees.TryGetValue(e.Repere, out var forcee) && forcee.Length > 0)
             {
                 e.Reference = forcee;
+                if (CatalogueDisjoncteurs.Trouver(forcee) is { } choisi) e.PouvoirCoupureKa = choisi.Icu;
                 e.AVerifier = false;
                 if (e.Fabricant.Length == 0) e.Fabricant = config.FabricantDe(e.Famille).ToString();
                 completees++;
@@ -120,6 +121,7 @@ public static class CatalogueReferences
             // le catalogue par gamme ne sert que de repli.
             if (e.Famille == "Disjoncteur" && Disjoncteur(e, config.FabricantDe(e.Famille), iccKiloAmperes) is { } m)
             {
+                e.PouvoirCoupureKa = m.Icu;
                 if (iccKiloAmperes > 0 && m.Icu < iccKiloAmperes) coupure.Add($"{e.Repere} ({m.Gamme}, {m.Icu:0.#} kA)");
                 if (!m.Verifie) nonVerifiees++;
                 completees++;
@@ -146,6 +148,7 @@ public static class CatalogueReferences
                 sans.Add(e.Repere);
                 continue;
             }
+            if (trouve.Famille == "Disjoncteur" && PouvoirCoupure.TryGetValue(trouve.Gamme, out var pdcGamme)) e.PouvoirCoupureKa = pdcGamme;
             if (CoupureInsuffisante(trouve, iccKiloAmperes)) coupure.Add($"{e.Repere} ({trouve.Gamme}, {PouvoirCoupure[trouve.Gamme]} kA)");
             e.Reference = Remplir(trouve.Reference, e);
             e.Fabricant = trouve.Gamme.Length > 0 ? $"{fabricant} – {trouve.Gamme}" : fabricant.ToString();

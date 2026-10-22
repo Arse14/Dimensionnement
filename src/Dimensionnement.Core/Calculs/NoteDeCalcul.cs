@@ -141,6 +141,22 @@ public class NoteDeCalcul
         return conforme;
     }
 
+    /// <summary>
+    /// Change une ligne d'information déjà écrite en vérification, une fois connu ce qui permet de conclure (ex. le pouvoir
+    /// de coupure de la référence retenue) ; sans effet si la ligne n'existe pas.
+    /// </summary>
+    public void Requalifier(string libelle, bool conforme, string message, StatutCalcul siEchec = StatutCalcul.NonConforme)
+    {
+        var i = Lignes.FindIndex(l => l.Libelle == libelle && l.Statut == StatutCalcul.Info && !l.Forcable);
+        if (i < 0) return;
+        var l = Lignes[i];
+        Lignes[i] = new LigneCalcul
+        {
+            Identifiant = l.Identifiant, Libelle = l.Libelle, Groupe = l.Groupe, Reference = l.Reference,
+            Statut = conforme ? StatutCalcul.Conforme : siEchec, Message = message,
+        };
+    }
+
     /// <summary>Ajoute une préconisation ou une information sans vérification.</summary>
     public void Info(string libelle, string message, string reference = "") =>
         Lignes.Add(new LigneCalcul

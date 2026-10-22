@@ -63,9 +63,11 @@ public static class CalculCable
             $"ΔU départ = {Pct(du)}, cumulée avec l'amont = {Pct(chuteAmont + du)}, limite = {Pct(limite)}", RefDu);
 
         var pe = TablesCables.SectionPe(section);
-        note.Info("Section du conducteur de protection", $"PE = {Mm2(pe)}", "NF C 15-100, tableau 54.2");
+        // Le PE est pris dans le même câble, à la section du tableau 54.2 : le contrôle compare au minimum de ce tableau.
+        note.Verifier("Section du conducteur de protection", pe >= TablesCables.SectionPe(section),
+            $"PE = {Mm2(pe)} ≥ minimum du tableau 54.2 pour {Mm2(section)} de phase (PE dans le même câble).", "NF C 15-100, tableau 54.2");
         if (reseau.Slt == SchemaLiaisonTerre.TNC && alimentation is TypeAlimentation.Mono230 or TypeAlimentation.Tetra400)
-            note.Info("Conducteur PEN", Pen(section)
+            note.Verifier("Conducteur PEN", true, Pen(section)
                 ? $"Section {Mm2(section)} ≥ 10 mm² : neutre et protection confondus (PEN), un conducteur de moins."
                 : $"Section {Mm2(section)} < 10 mm² : le PEN est interdit, le circuit est en TN-S (neutre et PE séparés).",
                 "NF C 15-100, 543.4");

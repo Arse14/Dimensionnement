@@ -213,9 +213,11 @@ public static class CalculProjet
         if (k > 1)
         {
             var sansExtension = CalculCable.Dimensionner(new NoteDeCalcul("TMP"), reseau.CableArrivee, reseau.Alimentation, qg, ib, cosPhi, reseau, 0);
-            note.Info("Marge en intensité", $"Iz corrigé = {A(cable.CourantAdmissible)} pour Ib = {A(ib)} : marge de {A(cable.CourantAdmissible - ib)} " +
+            note.Verifier("Marge en intensité", cable.CourantAdmissible >= ib * k, $"Iz corrigé = {A(cable.CourantAdmissible)} pour Ib = {A(ib)} : marge de {A(cable.CourantAdmissible - ib)} " +
                 $"({N(100 * (cable.CourantAdmissible / Math.Max(ib, 1e-6) - 1), 0)} %). Sans coefficient : {N(sansExtension.Section)} mm², " +
-                $"Iz = {A(sansExtension.CourantAdmissible)}, marge {A(sansExtension.CourantAdmissible - ib)}.", "Voir le glossaire : Iz, K1, K2");
+                $"Iz = {A(sansExtension.CourantAdmissible)}, marge {A(sansExtension.CourantAdmissible - ib)}." +
+                (cable.CourantAdmissible >= ib * k ? "" : $" Iz reste sous Ib × k = {A(ib * k)} : coefficient non tenu."),
+                "Voir le glossaire : Iz, K1, K2", StatutCalcul.Alerte);
         }
 
         var departs = Passe(cable.ChuteTension);
@@ -301,6 +303,7 @@ public static class CalculProjet
         }
 
         AppliquerRenommages(arbre, projet);
+        PouvoirsDeCoupure(departs, note, arbre, projet.Reseau.IccKiloAmperes);
 
         var resultat = new ResultatProjet
         {
@@ -712,4 +715,26 @@ public static class CalculProjet
         TypeAlimentation.Tri400 => "triphasée 400 V",
         _ => "triphasée 400 V + N",
     };
+
+    /// <summary>
+    /// Pouvoir de coupure : une fois la référence choisie, son Icu est comparé à l'Icc de l'arrivée (vert ou orange) ;
+    /// sans référence du catalogue des disjoncteurs, la ligne reste une information à confirmer.
+    /// </summary>
+    static void PouvoirsDeCoupure(IEnumerable<ResultatDepart> departs, NoteDeCalcul arrivee, ElementMateriel arbre, double icc)
+    {
+        if (icc <= 0) return;
+        void Controler(NoteDeCalcul note, ElementMateriel? e)
+        {
+            if (e is not { PouvoirCoupureKa: > 0 } d) return;
+            var conforme = d.PouvoirCoupureKa >= icc;
+            note.Requalifier("Pouvoir de coupure", conforme, conforme
+                    ? $"Icu = {N(d.PouvoirCoupureKa)} kA ({d.Reference}) ≥ Icc = {N(icc)} kA."
+                    : $"Icu = {N(d.PouvoirCoupureKa)} kA ({d.Reference}) < Icc = {N(icc)} kA : choisir une gamme plus performante " +
+                      "ou justifier la filiation avec le disjoncteur amont (tables du fabricant).",
+                StatutCalcul.Alerte);
+            if (!conforme && d.Statut < StatutCalcul.Alerte) d.Statut = StatutCalcul.Alerte;
+        }
+        foreach (var d in departs) Controler(d.Note, d.Materiel);
+        Controler(arrivee, arbre.Parcourir().FirstOrDefault(e => e.RepereOrigine == "QG"));
+    }
 }

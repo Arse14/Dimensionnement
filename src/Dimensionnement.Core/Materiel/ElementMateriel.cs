@@ -47,6 +47,9 @@ public class ElementMateriel
     public double ProfondeurMm { get; set; }
     public double PertesW { get; set; }
 
+    /// <summary>Pouvoir de coupure de la référence retenue (Icu, kA sous 400 V), 0 tant qu'il n'est pas connu.</summary>
+    public double PouvoirCoupureKa { get; set; }
+
     /// <summary>Logé dans un autre appareil (module dans un châssis, connecteur frontal) : pas de place propre sur la plaque.</summary>
     public bool Loge { get; set; }
 

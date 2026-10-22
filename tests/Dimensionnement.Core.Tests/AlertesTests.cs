@@ -77,3 +77,31 @@ public class AlertesTests
         Assert.True(r.Alertes.Count(a => a.Type != TypeAlerte.ARenseigner) >= attendues);
     }
 }
+
+public class ControlesNoteTests
+{
+    [Fact]
+    public void Pouvoir_de_coupure_compare_a_l_Icc_une_fois_la_reference_choisie()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        projet.Reseau.IccKiloAmperes = 10;
+        var r = CalculProjet.Calculer(projet);
+        var ligne = r.NoteArrivee.Lignes.Single(l => l.Libelle == "Pouvoir de coupure");
+        Assert.Equal(StatutCalcul.Conforme, ligne.Statut);
+        Assert.Contains("Icu", ligne.Message);
+
+        projet.Reseau.IccKiloAmperes = 200;
+        var fort = CalculProjet.Calculer(projet).NoteArrivee.Lignes.Single(l => l.Libelle == "Pouvoir de coupure");
+        Assert.Equal(StatutCalcul.Alerte, fort.Statut);
+    }
+
+    [Fact]
+    public void PE_et_marge_sont_des_controles()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        projet.Reseau.CoefficientExtension = 1.5;
+        var lignes = CalculProjet.Calculer(projet).NoteArrivee.Lignes;
+        Assert.Equal(StatutCalcul.Conforme, lignes.Single(l => l.Libelle == "Section du conducteur de protection").Statut);
+        Assert.Equal(StatutCalcul.Conforme, lignes.Single(l => l.Libelle == "Marge en intensité").Statut);
+    }
+}
