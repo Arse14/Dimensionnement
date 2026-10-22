@@ -81,16 +81,26 @@ public static class CatalogueVariateurs
     };
 
     /// <summary>
-    /// Plus petit calibre de la marque couvrant la puissance et le courant du moteur, la gamme machine compacte
-    /// d'abord, puis la gamme usage général.
+    /// Meilleur variateur de la marque pour le moteur : parmi ceux qui couvrent sa puissance et son courant, la gamme la plus
+    /// adaptée d'abord (machine compacte, puis usage général, puis process), puis le plus petit calibre, puis celui qui évite
+    /// du matériel en plus (filtre CEM intégré), puis le moins encombrant sur la plaque et enfin celui qui chauffe le moins.
     /// </summary>
     public static ModeleVariateur? Choisir(FabricantMateriel fabricant, double kw, double courant, IReadOnlyList<ModeleVariateur> catalogue,
         bool servo = false, bool monophase = false) =>
-        catalogue
-            .Where(v => v.Servo == servo && v.Monophase == monophase && v.Fabricant.Equals(fabricant.ToString(), StringComparison.OrdinalIgnoreCase)
-                        && v.Kw >= kw - 1e-6 && v.Courant >= courant - 1e-6)
-            .OrderBy(v => v.Rang).ThenBy(v => v.Kw).ThenBy(v => v.Largeur * v.Hauteur)
+        Candidats(kw, courant, catalogue, servo, monophase)
+            .Where(v => v.Fabricant.Equals(fabricant.ToString(), StringComparison.OrdinalIgnoreCase))
             .FirstOrDefault();
+
+    /// <summary>Tous les variateurs du catalogue qui conviennent, du meilleur au moins bon, toutes marques confondues.</summary>
+    public static IEnumerable<ModeleVariateur> Candidats(double kw, double courant, IReadOnlyList<ModeleVariateur> catalogue,
+        bool servo = false, bool monophase = false) =>
+        catalogue
+            .Where(v => v.Servo == servo && v.Monophase == monophase && v.Kw >= kw - 1e-6 && v.Courant >= courant - 1e-6)
+            .OrderBy(v => v.Rang)
+            .ThenBy(v => v.Courant)
+            .ThenBy(v => v.FiltreCemIntegre ? 0 : 1)
+            .ThenBy(v => v.Largeur * v.Hauteur)
+            .ThenBy(v => v.Pertes);
 
     /// <summary>Variateur imposé par sa référence, quelle que soit sa marque ; null s'il n'est pas au catalogue.</summary>
     public static ModeleVariateur? Trouver(string reference, IReadOnlyList<ModeleVariateur> catalogue) =>

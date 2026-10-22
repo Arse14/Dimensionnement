@@ -138,6 +138,15 @@ public static class CalculDepart
             var mono = m.Alimentation == TypeAlimentation.Mono230;
             var impose = CatalogueVariateurs.Trouver(m.ReferenceVariateur, variateurs);
             var modele = impose ?? CatalogueVariateurs.Choisir(marque, m.PuissanceKw, ib, variateurs, servo, mono);
+            // Marque laissée au projet et rien dans cette marque ne convient : meilleur modèle des autres marques du catalogue.
+            if (modele is null && impose is null && m.MarqueVariateur == MarqueVariateur.Projet
+                && CatalogueVariateurs.Candidats(m.PuissanceKw, ib, variateurs, servo, mono).FirstOrDefault() is { } autre
+                && Enum.TryParse<FabricantMateriel>(autre.Fabricant, true, out var autreMarque))
+            {
+                note.Info("Autre marque", $"Aucun variateur {marque}{(mono ? " monophasé" : "")} du catalogue ne couvre {N(m.PuissanceKw)} kW et {A(ib)} : " +
+                    $"{autre.Fabricant} {autre.Gamme} retenu à la place.");
+                (modele, marque) = (autre, autreMarque);
+            }
             if (impose is not null)
             {
                 marque = Enum.TryParse<FabricantMateriel>(impose.Fabricant, true, out var f) ? f : marque;

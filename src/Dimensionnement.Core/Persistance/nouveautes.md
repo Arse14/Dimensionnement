@@ -8,6 +8,7 @@
 - Cotes, découpes et consommations des Comfort Panels 7 à 12" et des Basic Panels relevées sur SiePortal (découpe du KTP400 Basic : 124 × 100 mm, du KTP700 Basic : 198 × 142 mm).
 - Catalogues : bouton « Copier » à côté de la référence sur la fiche, clic droit « Copier la référence » et Ctrl+C sur le tableau.
 - Départ moteur : choix « Variateur imposé » pour prendre une référence précise du catalogue, contrôlée face à la puissance et au courant du moteur.
+- Variateurs : choix automatique du meilleur modèle du catalogue (gamme la plus adaptée, plus petit calibre, filtre CEM intégré, encombrement, pertes) ; si la marque du projet n'a rien qui convient, le meilleur modèle des autres marques est retenu et signalé.
 - Moteurs : étoile-triangle deux sens, deux vitesses deux sens (Dahlander ou deux enroulements), monophasé avec condensateur en armoire (permanent, ou permanent + démarrage avec son relais), capacité estimée en orange tant que la plaque n'est pas saisie.
 - Bornier : six bornes pour un moteur deux vitesses (comme l'étoile-triangle).
 - Tous les catalogues modifiés reçoivent les nouveaux modèles livrés par une mise à jour (variateurs, disjoncteurs, enveloppes, sécurité, cartes d'E/S, répartiteurs), sans toucher aux modifications.
