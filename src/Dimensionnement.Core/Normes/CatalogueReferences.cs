@@ -24,6 +24,14 @@ public record ReferenceCatalogue
     public string Taille { get; init; } = "";
     public string Classe { get; init; } = "";
 
+    /// <summary>Cotes de la fiche (mm) et pertes (W) saisies dans le catalogue ; prises pour l'implantation quand les trois cotes sont là.</summary>
+    public double Largeur { get; init; }
+    public double Hauteur { get; init; }
+    public double Profondeur { get; init; }
+    public double Pertes { get; init; }
+
+    public bool CotesCompletes => Largeur > 0 && Hauteur > 0 && Profondeur > 0;
+
     /// <summary>Vrai une fois la référence contrôlée sur le catalogue du fabricant.</summary>
     public bool Verifie { get; init; }
 }
@@ -96,6 +104,7 @@ public static class CatalogueReferences
             if (config.Forcees.TryGetValue(e.Repere, out var forcee) && forcee.Length > 0)
             {
                 e.Reference = forcee;
+                if (catalogue.FirstOrDefault(r => r.Reference.Equals(forcee, StringComparison.OrdinalIgnoreCase)) is { } saisie) AppliquerCotes(e, saisie);
                 if (CatalogueDisjoncteurs.Trouver(forcee) is { } choisi) e.PouvoirCoupureKa = choisi.Icu;
                 e.AVerifier = false;
                 if (e.Fabricant.Length == 0) e.Fabricant = config.FabricantDe(e.Famille).ToString();
@@ -151,6 +160,7 @@ public static class CatalogueReferences
             if (trouve.Famille == "Disjoncteur" && PouvoirCoupure.TryGetValue(trouve.Gamme, out var pdcGamme)) e.PouvoirCoupureKa = pdcGamme;
             if (CoupureInsuffisante(trouve, iccKiloAmperes)) coupure.Add($"{e.Repere} ({trouve.Gamme}, {PouvoirCoupure[trouve.Gamme]} kA)");
             e.Reference = Remplir(trouve.Reference, e);
+            AppliquerCotes(e, trouve);
             e.Fabricant = trouve.Gamme.Length > 0 ? $"{fabricant} – {trouve.Gamme}" : fabricant.ToString();
             if (!trouve.Verifie) nonVerifiees++;
             completees++;
@@ -197,6 +207,21 @@ public static class CatalogueReferences
             return m;
         }
         return null;
+    }
+
+    /// <summary>
+    /// Cotes saisies sur la fiche de la référence (largeur, hauteur et profondeur) : elles priment sur les cotes de gamme ;
+    /// sans pertes saisies, l'estimation de la famille est gardée.
+    /// </summary>
+    static void AppliquerCotes(ElementMateriel e, ReferenceCatalogue r)
+    {
+        if (!r.CotesCompletes) return;
+        var pertes = r.Pertes > 0 ? r.Pertes * Math.Max(1, e.Quantite) : Armoire.Encombrements.Estimer(e)?.DissipationW ?? 0;
+        e.LargeurMm = r.Largeur;
+        e.HauteurMm = r.Hauteur;
+        e.ProfondeurMm = r.Profondeur;
+        e.PertesW = pertes;
+        e.CotesIncompletes = false;
     }
 
     /// <summary>Appareils qui se commandent (les câbles et récepteurs sont traités à part dans la liste de matériel).</summary>

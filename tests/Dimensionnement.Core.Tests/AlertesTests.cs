@@ -1,3 +1,4 @@
+using Dimensionnement.Core.Normes;
 using Dimensionnement.Core.Calculs;
 using Dimensionnement.Core.Materiel;
 using Dimensionnement.Core.Modele;
@@ -103,5 +104,27 @@ public class ControlesNoteTests
         var lignes = CalculProjet.Calculer(projet).NoteArrivee.Lignes;
         Assert.Equal(StatutCalcul.Conforme, lignes.Single(l => l.Libelle == "Section du conducteur de protection").Statut);
         Assert.Equal(StatutCalcul.Conforme, lignes.Single(l => l.Libelle == "Marge en intensité").Statut);
+    }
+}
+
+public class CotesReferencesTests
+{
+    [Fact]
+    public void Cotes_saisies_sur_la_fiche_d_une_reference_passent_dans_l_implantation()
+    {
+        var projet = Version3Tests.ProjetMachine();
+        var catalogue = CatalogueReferences.Charger();
+        // Toutes les fiches de contacteurs complétées : chaque contacteur de l'arbre prend ces cotes.
+        var modifie = catalogue.Select(r => r.Famille == "Contacteur" ? r with { Largeur = 77, Hauteur = 88, Profondeur = 99 } : r).ToList();
+        var r = CalculProjet.Calculer(projet, CatalogueAutomates.Charger(), modifie);
+        var km = r.Arbre.Parcourir().First(e => e.Famille == "Contacteur" && e.Reference.Length > 0);
+        Assert.Equal((77.0, 88.0, 99.0), (km.LargeurMm, km.HauteurMm, km.ProfondeurMm));
+        Assert.True(km.PertesW > 0);
+        Assert.False(km.CotesIncompletes);
+
+        // Cotes incomplètes sur la fiche : la gamme reste utilisée.
+        var partiel = catalogue.Select(x => x.Famille == "Contacteur" ? x with { Largeur = 77 } : x).ToList();
+        var km2 = CalculProjet.Calculer(projet, CatalogueAutomates.Charger(), partiel).Arbre.Parcourir().First(e => e.Repere == km.Repere);
+        Assert.NotEqual(77.0, km2.LargeurMm);
     }
 }

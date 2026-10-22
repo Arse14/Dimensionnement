@@ -162,7 +162,8 @@ public static class BibliothequeCatalogues
         new FamilleCatalogue("references", "Appareillage (références)", CatalogueReferences.NomFichier, CatalogueReferences.TexteEmbarque,
             new[] { T("fabricant", "Fabricant"), T("famille", "Famille d'appareil", true), T("gamme", "Gamme", true), T("reference", "Référence"),
                     N("min", "Calibre min.", "A", true, true), N("max", "Calibre max.", "A", true, true), T("courbe", "Courbe"), T("taille", "Taille"),
-                    T("classe", "Classe") })
+                    T("classe", "Classe"), N("pertes", "Pertes", "W") }
+                .Concat(Cotes()).ToArray())
             { LireType = t => CatalogueReferences.Lire(t), ChampPrincipal = "max", ChampGamme = "famille", Designation = "Appareil" },
     };
 
@@ -324,6 +325,8 @@ public static class BibliothequeCatalogues
         {
             // La puissance en VA ne concerne que les transformateurs.
             if (c.Cle == "va" && Chaine(article, "type") != "Transformateur") continue;
+            // Références : les cotes sont facultatives, celles de la gamme servent tant qu'elles ne sont pas saisies.
+            if (c.Cote && famille.Id == "references") continue;
             if (Nombre(article, c.Cle) is null) points.Add($"{c.Libelle} non renseigné(e)");
         }
         if (Nombre(article, "rendement") is { } eta && (eta < 0.5 || eta > 0.99))

@@ -307,7 +307,8 @@ public class ModeleVueCatalogue : Observable
     public bool ACotes => LargeurCote > 0 && HauteurCote > 0;
     public string ResumeCotes => ACotes
         ? $"{LargeurCote:0.#} × {HauteurCote:0.#}{(ProfondeurCote > 0 ? $" × {ProfondeurCote:0.#}" : "")} mm (L × H{(ProfondeurCote > 0 ? " × P" : "")})"
-        : "Encombrement à compléter : clique sur « Modifier » et saisis les cotes manquantes (largeur, hauteur, profondeur).";
+        : "Encombrement à compléter : clique sur « Modifier » et saisis largeur, hauteur et profondeur. " +
+          "Avec les trois cotes, l'implantation prend celles de cette fiche.";
 
     public IReadOnlyList<string> Photos => Article is { } a ? BibliothequeCatalogues.ListeTexte(a, BibliothequeCatalogues.Photos) : Array.Empty<string>();
     public string? PhotoCourante
