@@ -1830,7 +1830,31 @@
                         <TextBlock x:Name="TexteErreur" Foreground="{StaticResource Texte}" TextWrapping="Wrap" VerticalAlignment="Center"/>
                     </DockPanel>
                 </Border>
+                <TextBlock DockPanel.Dock="Left" Text="{Binding VersionTexte}" Foreground="{StaticResource TexteSecondaire}" Margin="0,0,14,0"
+                           ToolTip="Version de l'application ; les mises à jour sont vérifiées sur GitHub à chaque démarrage."/>
                 <TextBlock Text="{Binding Chemin}" Foreground="{StaticResource TexteSecondaire}"/>
+            </DockPanel>
+        </Border>
+
+        <!-- Mise à jour disponible : vérifiée sur GitHub au démarrage -->
+        <Border DockPanel.Dock="Top" Background="#1E3A2A" BorderBrush="#3FB950" BorderThickness="0,0,0,1" Padding="16,6"
+                Visibility="{Binding MiseAJourVisible, Converter={StaticResource VraiVisible}}">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <ProgressBar Width="160" Height="8" Minimum="0" Maximum="1" Value="{Binding AvancementMiseAJour, Mode=OneWay}" Margin="0,0,10,0"
+                                 VerticalAlignment="Center" Visibility="{Binding Telechargement, Converter={StaticResource VraiVisible}}"/>
+                    <TextBlock Text="{Binding EtatMiseAJour}" Foreground="{StaticResource TexteSecondaire}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <Button Content="Nouveautés" Command="{Binding NotesMiseAJour}" Padding="10,3" Margin="0,0,6,0"
+                            ToolTip="Ouvrir la page de la version sur GitHub"/>
+                    <Button Content="Mettre à jour maintenant" Command="{Binding InstallerMiseAJour}" Style="{StaticResource BoutonAccent}" Padding="10,3" Margin="0,0,6,0"
+                            ToolTip="Télécharge la nouvelle version, ferme l'application, l'installe puis la relance. Ton projet est enregistré avant."/>
+                    <Button Content="Plus tard" Command="{Binding MasquerMiseAJour}" Padding="10,3" Margin="0"
+                            ToolTip="Masquer jusqu'au prochain démarrage"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE896;" FontFamily="{StaticResource Icones}" Foreground="#3FB950" FontSize="15" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding TexteMiseAJour}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                </StackPanel>
             </DockPanel>
         </Border>
 

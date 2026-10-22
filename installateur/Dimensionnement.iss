@@ -52,3 +52,11 @@ Root: HKA; Subkey: "Software\Classes\Dimensionnement.Projet\shell\open\command";
 
 [Run]
 Filename: "{app}\Dimensionnement.App.exe"; Description: "Lancer Dimensionnement électrique"; Flags: nowait postinstall skipifsilent
+; Mise à jour lancée depuis l'application (/RELANCER=1) : l'application redémarre une fois installée, sous l'utilisateur.
+Filename: "{app}\Dimensionnement.App.exe"; Flags: nowait runasoriginaluser; Check: Relancer
+
+[Code]
+function Relancer: Boolean;
+begin
+  Result := ExpandConstant('{param:RELANCER|0}') = '1';
+end;
