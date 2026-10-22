@@ -22,6 +22,9 @@ public record ModeleIhm
     public string Interface { get; init; } = "";
     public bool Verifie { get; init; }
 
+    /// <summary>Faux pour une ancienne série ou une variante SIPLUS : proposée au choix, jamais retenue d'office.</summary>
+    public bool ChoixAuto { get; init; } = true;
+
     public string Libelle => $"{Designation} ({Reference}), {Diagonale:0.#}\"";
 }
 
@@ -36,8 +39,11 @@ public static class CatalogueIhm
     static readonly JsonSerializerOptions Options = new() { PropertyNameCaseInsensitive = true, ReadCommentHandling = JsonCommentHandling.Skip };
     static readonly Lazy<IReadOnlyList<ModeleIhm>> Embarque = new(() => Lire(TexteEmbarque()));
 
+    /// <summary>Catalogue de l'utilisateur complété des pupitres livrés qu'il ne contient pas encore.</summary>
     public static IReadOnlyList<ModeleIhm> Charger(string? fichierPersonnalise = null) =>
-        fichierPersonnalise is not null && File.Exists(fichierPersonnalise) ? Lire(File.ReadAllText(fichierPersonnalise)) : Embarque.Value;
+        fichierPersonnalise is not null && File.Exists(fichierPersonnalise)
+            ? CatalogueAutomates.Completer(Lire(File.ReadAllText(fichierPersonnalise)), Embarque.Value, m => m.Reference)
+            : Embarque.Value;
 
     public static string TexteEmbarque()
     {
@@ -50,13 +56,13 @@ public static class CatalogueIhm
     public static IReadOnlyList<ModeleIhm> Lire(string json) =>
         JsonSerializer.Deserialize<List<ModeleIhm>>(json, Options) ?? new List<ModeleIhm>();
 
-    /// <summary>Modèle imposé, sinon le plus petit de la marque et de la gamme qui atteint la diagonale, sinon le plus grand de la gamme.</summary>
+    /// <summary>Modèle imposé, sinon le plus petit modèle courant de la marque et de la gamme qui atteint la diagonale, sinon le plus grand de la gamme.</summary>
     public static ModeleIhm? Choisir(PupitreIhm p, string marque, IReadOnlyList<ModeleIhm> catalogue)
     {
         if (p.ReferenceImposee.Trim() is { Length: > 0 } reference)
             return catalogue.FirstOrDefault(m => m.Reference.Equals(reference, StringComparison.OrdinalIgnoreCase));
         var rang = p.Gamme == GammeIhm.Standard ? 1 : 2;
-        var gamme = catalogue.Where(m => m.Fabricant.Equals(marque, StringComparison.OrdinalIgnoreCase) && m.Rang == rang).ToList();
+        var gamme = catalogue.Where(m => m.ChoixAuto && m.Fabricant.Equals(marque, StringComparison.OrdinalIgnoreCase) && m.Rang == rang).ToList();
         return gamme.Where(m => m.Diagonale >= p.Diagonale - 0.3).OrderBy(m => m.Diagonale).FirstOrDefault()
                ?? gamme.OrderByDescending(m => m.Diagonale).FirstOrDefault();
     }

@@ -151,6 +151,29 @@ public class Version4Tests
     }
 
     [Fact]
+    public void Comfort_Panel_et_SIPLUS_au_catalogue_mais_jamais_choisis_d_office()
+    {
+        var catalogue = CatalogueIhm.Charger();
+        var tp700 = Assert.Single(catalogue, m => m.Reference == "6AV2124-0GC01-0AX0");
+        Assert.Equal((197.0, 141.0), (tp700.DecoupeLargeur, tp700.DecoupeHauteur));
+        Assert.Contains(catalogue, m => m.Reference == "6AG1124-0GC01-4AX0" && m.Gamme.StartsWith("SIPLUS"));
+        Assert.Equal("6AV2128-3GB06-0AX1", CatalogueIhm.Choisir(new PupitreIhm { Diagonale = 7, Gamme = GammeIhm.Confort }, "Siemens", catalogue)!.Reference);
+        Assert.Equal("6AV2124-0GC01-0AX0",
+            CatalogueIhm.Choisir(new PupitreIhm { ReferenceImposee = "6av2124-0gc01-0ax0" }, "Siemens", catalogue)!.Reference);
+    }
+
+    [Fact]
+    public void Catalogue_IHM_utilisateur_complete_des_nouveaux_pupitres()
+    {
+        var fichier = Path.GetTempFileName();
+        File.WriteAllText(fichier, """[{"fabricant": "Siemens", "rang": 1, "reference": "6AV2123-2GB03-0AX0", "designation": "Mon KTP700", "diagonale": 7}]""");
+        var catalogue = CatalogueIhm.Charger(fichier);
+        File.Delete(fichier);
+        Assert.Equal("Mon KTP700", catalogue.Single(m => m.Reference == "6AV2123-2GB03-0AX0").Designation);
+        Assert.Contains(catalogue, m => m.Reference == "6AV2124-0JC01-0AX0");
+    }
+
+    [Fact]
     public void Marques_par_famille_pour_les_contacteurs_et_disjoncteurs()
     {
         var projet = new Projet();

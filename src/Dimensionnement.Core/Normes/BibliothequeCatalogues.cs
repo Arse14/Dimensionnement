@@ -78,7 +78,8 @@ public static class BibliothequeCatalogues
             new[] { T("fabricant", "Fabricant"), T("gamme", "Gamme", true), T("reference", "Référence"), T("designation", "Désignation", true),
                     N("diagonale", "Diagonale", "\"", true, true), N("consommation", "Consommation 24 V DC", "A", true, true), T("interface", "Interface", true),
                     N("decoupeLargeur", "Découpe largeur", "mm", false, false, true), N("decoupeHauteur", "Découpe hauteur", "mm", false, false, true),
-                    N("rang", "Rang (1 standard, 2 confort)", "") }
+                    N("rang", "Rang (1 standard, 2 confort)", ""),
+                    B("choixAuto", "Retenu par le choix automatique (non : ancienne série, SIPLUS)") }
                 .Concat(Cotes()).ToArray())
             { LireType = t => CatalogueIhm.Lire(t), ChampPrincipal = "diagonale", Designation = "Pupitre" },
         new FamilleCatalogue("automates", "CPU automates", CatalogueAutomates.NomFichier, CatalogueAutomates.TexteEmbarque,
