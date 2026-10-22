@@ -7,7 +7,16 @@ namespace Dimensionnement.Core.Materiel;
 public record MaillonMateriel(ElementMateriel Element, bool EnParallele);
 
 /// <summary>Une carte : l'arrivée, un départ ou un ensemble de commande, avec sa chaîne d'appareils.</summary>
-public record CarteMateriel(string Titre, string SousTitre, StatutCalcul Statut, IReadOnlyList<MaillonMateriel> Chaine, Depart? Depart);
+public record CarteMateriel(string Titre, string SousTitre, StatutCalcul Statut, IReadOnlyList<MaillonMateriel> Chaine, Depart? Depart)
+{
+    /// <summary>Alerte affichée sous la carte, avec sa correction proposée (sélectivité sous le général).</summary>
+    public EncartAlerte? Encart { get; init; }
+    /// <summary>Étiquette orange à côté du titre (ex. « Sélectivité avec QG »), vide sinon.</summary>
+    public string Etiquette { get; init; } = "";
+}
+
+/// <summary>Encart d'alerte d'une carte : le problème, son risque et l'alerte qui porte l'action proposée.</summary>
+public record EncartAlerte(string Titre, string Detail, Alerte Alerte);
 
 /// <summary>
 /// Un groupe de cartes : une rubrique de départs, ou un domaine de tension (tout ce qu'une alimentation de commande
@@ -60,9 +69,16 @@ public static class SyntheseMateriel
     {
         var groupes = new List<GroupeMateriel>();
         var arrivee = r.Arbre.Parcourir().Where(e => e.RepereOrigine is "W0" or "QS0" or "QG").Select(e => new MaillonMateriel(e, false)).ToList();
+        // Sélectivité non assurée sous le général : encart sur l'arrivée, étiquette sur chaque départ concerné.
+        var selectivite = r.Alertes.Actives().Where(a => a.Action == ActionAlerte.RemonterGeneral).ToList();
+        var nonSelectifs = selectivite.Select(a => a.Point.Replace("Sélectivité avec ", "")).ToHashSet();
+        var encart = selectivite.Count == 0 ? null : new EncartAlerte(
+            $"Sélectivité non assurée avec {string.Join(", ", nonSelectifs)}",
+            $"Disjoncteur général {Format.A(r.CalibreGeneral)} : rapport des calibres sous {Format.N(CalculSelectivite.RapportSurchargeMini)}. " +
+            "Une surcharge de ce départ peut faire déclencher le général et couper toute l'armoire.", selectivite[0]);
         groupes.Add(new GroupeMateriel("ARRIVÉE", new[]
         {
-            new CarteMateriel(r.Arbre.Designation, r.Arbre.Calibre, Pire(arrivee), arrivee, null),
+            new CarteMateriel(r.Arbre.Designation, r.Arbre.Calibre, Pire(arrivee), arrivee, null) { Encart = encart },
         }));
 
         foreach (var rubrique in r.Departs.GroupBy(d => d.Depart.Rubrique is { Length: > 0 } x ? x : "Puissance"))
@@ -70,7 +86,8 @@ public static class SyntheseMateriel
             var cartes = rubrique.Select(d =>
             {
                 var chaine = Chaine(d.Materiel);
-                return new CarteMateriel($"{d.Depart.Code}  {d.Depart.Designation}".TrimEnd(), d.Depart.TypeLibelle, Pire(chaine), chaine, d.Depart);
+                return new CarteMateriel($"{d.Depart.Code}  {d.Depart.Designation}".TrimEnd(), d.Depart.TypeLibelle, Pire(chaine), chaine, d.Depart)
+                    { Etiquette = nonSelectifs.Contains($"{d.Depart.Code}") ? "Sélectivité avec QG" : "" };
             }).ToList();
             groupes.Add(new GroupeMateriel($"{rubrique.Key.ToUpperInvariant()} ({cartes.Count})", cartes));
         }

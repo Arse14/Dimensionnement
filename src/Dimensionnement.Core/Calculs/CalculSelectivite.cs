@@ -38,6 +38,11 @@ public static class CalculSelectivite
     /// <summary>Rapport des calibres sous lequel la sélectivité est signalée, avant d'atteindre le minimum.</summary>
     public const double RapportVigilance = 2;
 
+    static void Signaler(ElementMateriel? e)
+    {
+        if (e is not null && e.Statut < StatutCalcul.Alerte) e.Statut = StatutCalcul.Alerte;
+    }
+
     public static ResultatSelectivite Calculer(ResultatProjet r)
     {
         var note = new NoteDeCalcul("SEL") { Groupe = "Sélectivité" };
@@ -101,7 +106,12 @@ public static class CalculSelectivite
                 limite, niveau, commentaire));
 
             if (niveau is NiveauSelectivite.Absente or NiveauSelectivite.AVerifier)
+            {
                 note.Verifier($"Sélectivité avec {nom}", false, commentaire, Ref, StatutCalcul.Alerte);
+                // Les deux protections concernées passent en orange dans les cartes et l'organigramme.
+                Signaler(protection);
+                if (calibreAmont == qg) Signaler(r.Arbre.Parcourir().FirstOrDefault(e => e.RepereOrigine == "QG"));
+            }
             else
                 note.Verifier($"Sélectivité avec {nom}", true,
                     $"Rapport {N(rapport)} ; magnétique aval ≈ {A(imAval)} < {A(seuilAmont)} ({type}). {commentaire}", Ref);

@@ -51,6 +51,10 @@ public class ResultatProjet
     public int NombreAlertes => Notes.SelectMany(n => n.Lignes)
         .Count(l => l.Statut is StatutCalcul.Alerte or StatutCalcul.NonConforme);
 
+    /// <summary>Points à traiter du projet (notes de calcul et informations à compléter), recalculés à chaque calcul.</summary>
+    public IReadOnlyList<Alerte> Alertes => _alertes ??= ListeAlertes.Generer(this);
+    IReadOnlyList<Alerte>? _alertes;
+
     /// <summary>Nomenclature : appareils de l'arbre regroupés par désignation et calibre.</summary>
     public IReadOnlyList<ElementMateriel> Nomenclature => Arbre.Parcourir()
         .Where(e => e.Famille != "Réseau")

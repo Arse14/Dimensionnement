@@ -73,6 +73,9 @@ public class Projet
     /// <summary>Valeurs forcées de l'arrivée (simultanéité, calibres de tête, section d'arrivée).</summary>
     public Dictionary<string, Forcage> ForcagesArrivee { get; set; } = new();
 
+    /// <summary>Alertes ignorées par l'utilisateur (clé de l'alerte → motif), reprises dans la liste des alertes.</summary>
+    public Dictionary<string, string> AlertesIgnorees { get; set; } = new();
+
     /// <summary>Ajoute un départ en lui attribuant le prochain numéro libre.</summary>
     public T Ajouter<T>(T depart) where T : Depart
     {

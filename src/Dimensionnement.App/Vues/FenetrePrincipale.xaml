@@ -1523,6 +1523,11 @@
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Right" Text="{Binding SousTitre}" Foreground="{StaticResource TexteSecondaire}"
                                        FontSize="11.5" Margin="8,0,0,0" VerticalAlignment="Center" MaxWidth="170" TextTrimming="CharacterEllipsis"/>
+                            <Border DockPanel.Dock="Right" Background="#F0A020" CornerRadius="3" Padding="5,0" Margin="8,0,0,0" VerticalAlignment="Center"
+                                    Visibility="{Binding Etiquette, Converter={StaticResource VideMasque}}"
+                                    ToolTip="Sélectivité non assurée avec le disjoncteur général : voir l'encart de la carte Arrivée.">
+                                <TextBlock Text="{Binding Etiquette}" Foreground="#1B1F24" FontWeight="Bold" FontSize="10.5"/>
+                            </Border>
                             <TextBlock Text="{Binding Titre}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
                         </DockPanel>
                         <ItemsControl ItemsSource="{Binding Chaine}" ItemTemplate="{StaticResource MaillonMateriel}">
@@ -1530,6 +1535,25 @@
                                 <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                         </ItemsControl>
+                        <!-- Encart d'alerte : le problème, son risque, la correction proposée -->
+                        <Border Margin="0,8,0,0" Padding="9,7" CornerRadius="4" BorderBrush="#F0A020" BorderThickness="1" Background="#1FF0A020"
+                                Visibility="{Binding Encart, Converter={StaticResource NonNulVisible}}">
+                            <DockPanel>
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
+                                    <Button Style="{StaticResource BoutonAccent}" Padding="8,3" Margin="0,0,6,0"
+                                            Content="{Binding Encart.Alerte.LibelleAction}" CommandParameter="{Binding Encart.Alerte}"
+                                            Command="{Binding DataContext.AppliquerAlerte, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            ToolTip="Force le disjoncteur général à ce calibre (motif automatique) ; sectionneur et câble d'arrivée suivent."/>
+                                    <Button Content="Ignorer…" Padding="8,3" Margin="0" CommandParameter="{Binding Encart.Alerte}"
+                                            Command="{Binding DataContext.IgnorerAlerte, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            ToolTip="Garder ce calibre : un motif est demandé, il reste visible dans la liste des alertes."/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Encart.Titre}" Foreground="#F0A020" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding Encart.Detail}" Foreground="{StaticResource TexteSecondaire}" FontSize="11.5" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
                     </StackPanel>
                 </DockPanel>
             </Button>
@@ -1814,14 +1838,94 @@
         <Border DockPanel.Dock="Top" Background="{StaticResource Panneau}" BorderBrush="{StaticResource Bordure}"
                 BorderThickness="0,0,0,1" Padding="16,10">
             <UniformGrid Rows="1">
-                <StackPanel Orientation="Horizontal">
-                    <Ellipse Width="22" Height="22" Margin="0,0,12,0" VerticalAlignment="Center"
-                             Fill="{Binding Resultat.StatutGlobal, Converter={StaticResource StatutCouleur}}"/>
-                    <StackPanel>
-                        <TextBlock Text="ALERTES" Style="{StaticResource IndicateurLibelle}"/>
-                        <TextBlock Text="{Binding Resultat.NombreAlertes}" Style="{StaticResource IndicateurValeur}"/>
-                    </StackPanel>
-                </StackPanel>
+                <!-- Compteur d'alertes cliquable : la liste de tout ce qui reste à traiter, recalculée à chaque modification -->
+                <Grid HorizontalAlignment="Left">
+                    <Button x:Name="BoutonAlertes" Command="{Binding BasculerAlertes}" Cursor="Hand" Background="Transparent"
+                            ToolTip="Cliquer pour voir la liste des alertes et ce qui reste à renseigner">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Cadre" Background="{TemplateBinding Background}" CornerRadius="4" Padding="6,2,10,2" Margin="-6,-2,0,-2">
+                                    <ContentPresenter/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Cadre" Property="Background" Value="{StaticResource Survol}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="22" Height="22" Margin="0,0,12,0" VerticalAlignment="Center"
+                                     Fill="{Binding StatutAlertes, Converter={StaticResource StatutCouleur}}"/>
+                            <StackPanel>
+                                <TextBlock Text="ALERTES" Style="{StaticResource IndicateurLibelle}"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding NombreAlertesActives}" Style="{StaticResource IndicateurValeur}"/>
+                                    <TextBlock Text="&#xE70D;" FontFamily="{StaticResource Icones}" FontSize="10" Margin="8,0,0,0" VerticalAlignment="Center"
+                                               Foreground="{StaticResource TexteSecondaire}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </Button>
+                    <Popup IsOpen="{Binding AlertesOuvertes, Mode=TwoWay}" StaysOpen="False" PlacementTarget="{Binding ElementName=BoutonAlertes}"
+                           Placement="Bottom" VerticalOffset="6" AllowsTransparency="True" PopupAnimation="Fade">
+                        <Border Width="620" Background="{StaticResource PanneauClair}" BorderBrush="#F0A020" BorderThickness="1" CornerRadius="6" Padding="12,10">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,8">
+                                    <Button DockPanel.Dock="Right" Content="&#xE711;" FontFamily="{StaticResource Icones}" Padding="6,3" Margin="0"
+                                            Command="{Binding BasculerAlertes}" ToolTip="Fermer"/>
+                                    <TextBlock Text="{Binding TitreAlertes}" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                </DockPanel>
+                                <TextBlock Text="Rien à signaler : toutes les vérifications passent et le projet est renseigné."
+                                           Foreground="{StaticResource TexteSecondaire}" Visibility="{Binding AucuneAlerte, Converter={StaticResource VraiVisible}}"/>
+                                <ScrollViewer MaxHeight="480" VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding Alertes}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type calc:Alerte}">
+                                                <Border x:Name="Ligne" BorderBrush="{StaticResource Bordure}" BorderThickness="0,1,0,0" Padding="0,7">
+                                                    <DockPanel>
+                                                        <Ellipse DockPanel.Dock="Left" Width="9" Height="9" Margin="0,4,10,0" VerticalAlignment="Top"
+                                                                 Fill="{Binding Statut, Converter={StaticResource StatutCouleur}}"/>
+                                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top" Margin="10,0,0,0">
+                                                            <Button Content="{Binding LibelleAction}" Style="{StaticResource BoutonAccent}" Padding="7,2" Margin="0,0,6,0" FontSize="11.5"
+                                                                    Visibility="{Binding LibelleAction, Converter={StaticResource VideMasque}}" CommandParameter="{Binding}"
+                                                                    Command="{Binding DataContext.AppliquerAlerte, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                                            <Button Content="Voir" Padding="7,2" Margin="0,0,6,0" FontSize="11.5" CommandParameter="{Binding}"
+                                                                    Command="{Binding DataContext.VoirAlerte, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                    ToolTip="Ouvrir la page concernée"/>
+                                                            <Button x:Name="Ignorer" Content="Ignorer…" Padding="7,2" Margin="0" FontSize="11.5" CommandParameter="{Binding}"
+                                                                    Command="{Binding DataContext.IgnorerAlerte, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                    ToolTip="Garder tel quel avec un motif"/>
+                                                            <Button x:Name="Retablir" Content="Rétablir" Padding="7,2" Margin="0" FontSize="11.5" CommandParameter="{Binding}"
+                                                                    Visibility="Collapsed"
+                                                                    Command="{Binding DataContext.RetablirAlerte, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                                        </StackPanel>
+                                                        <StackPanel>
+                                                            <TextBlock TextWrapping="Wrap">
+                                                                <Run Text="{Binding Lieu, Mode=OneWay}" FontWeight="SemiBold"/><Run Text=" · " Foreground="{StaticResource TexteSecondaire}"/><Run Text="{Binding Point, Mode=OneWay}"/>
+                                                            </TextBlock>
+                                                            <TextBlock Text="{Binding Detail}" Foreground="{StaticResource TexteSecondaire}" FontSize="11.5" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                            <TextBlock x:Name="Motif" Text="{Binding Motif, StringFormat=Ignorée : {0}}" FontStyle="Italic" FontSize="11.5"
+                                                                       Foreground="{StaticResource TexteSecondaire}" TextWrapping="Wrap" Margin="0,2,0,0" Visibility="Collapsed"/>
+                                                        </StackPanel>
+                                                    </DockPanel>
+                                                </Border>
+                                                <DataTemplate.Triggers>
+                                                    <DataTrigger Binding="{Binding Ignoree}" Value="True">
+                                                        <Setter TargetName="Ligne" Property="Opacity" Value="0.55"/>
+                                                        <Setter TargetName="Motif" Property="Visibility" Value="Visible"/>
+                                                        <Setter TargetName="Ignorer" Property="Visibility" Value="Collapsed"/>
+                                                        <Setter TargetName="Retablir" Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </DataTemplate.Triggers>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </StackPanel>
+                        </Border>
+                    </Popup>
+                </Grid>
                 <StackPanel>
                     <TextBlock Text="PUISSANCE ACTIVE" Style="{StaticResource IndicateurLibelle}"/>
                     <TextBlock Text="{Binding Resultat.PuissanceActive, StringFormat={}{0:0.0} kW}" Style="{StaticResource IndicateurValeur}"/>
