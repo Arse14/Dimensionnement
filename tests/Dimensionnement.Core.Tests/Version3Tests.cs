@@ -129,6 +129,21 @@ public class Version3Tests
     }
 
     [Fact]
+    public void Courant_d_emploi_force_remonte_le_general_et_le_cable()
+    {
+        var projet = ProjetMachine();
+        var avant = CalculProjet.Calculer(projet);
+        projet.ForcagesArrivee[CodesCalcul.CourantEmploi] = Force(avant.CourantEmploi + 20);
+
+        var apres = CalculProjet.Calculer(projet);
+
+        Assert.Equal(avant.CourantEmploi + 20, apres.CourantEmploi, 3);
+        Assert.True(apres.CalibreGeneral > avant.CalibreGeneral);
+        Assert.True(apres.CalibreGeneral >= apres.CourantEmploi);
+        Assert.True(apres.SectionArrivee >= avant.SectionArrivee);
+    }
+
+    [Fact]
     public void Devis_suit_la_configuration_thermique()
     {
         var projet = ProjetMachine();

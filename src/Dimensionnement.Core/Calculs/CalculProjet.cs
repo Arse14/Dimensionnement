@@ -174,8 +174,9 @@ public static class CalculProjet
         var s = ks * Math.Sqrt(p * p + q * q);
         var cosPhi = s > 0 ? ks * p / s : 1;
         var mono = reseau.Alimentation == TypeAlimentation.Mono230;
+        // Valeur forcée par l'utilisateur prise en compte : sectionneur, disjoncteur et câble d'arrivée la suivent.
         var ib = s * 1000 / (mono ? 230 : Math.Sqrt(3) * 400);
-        note.Valeur(CodesCalcul.CourantEmploi, "Courant d'emploi de l'armoire", ib, ib, "A",
+        ib = note.Valeur(CodesCalcul.CourantEmploi, "Courant d'emploi de l'armoire", ib, ib, "A",
             mono ? "Ib = S / U" : "Ib = S / (√3 × U)",
             $"S = ks × √(P² + Q²) = {N(s)} kVA, cos φ global = {N(cosPhi)}", RefBilan);
         if (projet.Departs.Any(d => d.Alimentation is TypeAlimentation.Mono230 or TypeAlimentation.Bi400) && !mono)
