@@ -39,11 +39,21 @@ public partial class FenetreCatalogue : Window
     /// <summary>Affiche la fiche de cette référence ; faux si aucun catalogue ne la contient.</summary>
     public bool Selectionner(string reference) => _modele.SelectionnerReference(reference);
 
-    void Fermeture(object? sender, CancelEventArgs e)
+    /// <summary>Vrai quand l'application se ferme : les modifications ont déjà été proposées à l'enregistrement.</summary>
+    public bool FermetureSansQuestion { get; set; }
+
+    /// <summary>Propose d'enregistrer les modifications du catalogue ; faux si l'utilisateur annule.</summary>
+    public bool ConfirmerAbandon()
     {
         // Valide la saisie en cours (le champ actif ne perd pas le focus avant la fermeture).
-        if (Keyboard.FocusedElement is TextBox t) t.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
-        e.Cancel = !_modele.ConfirmerAbandon();
+        if (Keyboard.FocusedElement is TextBox t && IsAncestorOf(t)) t.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
+        return _modele.ConfirmerAbandon();
+    }
+
+    void Fermeture(object? sender, CancelEventArgs e)
+    {
+        if (FermetureSansQuestion) return;
+        e.Cancel = !ConfirmerAbandon();
     }
 
     /// <summary>Copie la référence de l'article sélectionné, sans la mention « à compléter » d'un article sans référence.</summary>

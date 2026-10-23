@@ -98,5 +98,28 @@ public partial class FenetrePrincipale : Window
         menu.IsOpen = true;
     }
 
-    void Fermeture(object? sender, CancelEventArgs e) => e.Cancel = !_modele.ConfirmerAbandon();
+    /// <summary>
+    /// Fermeture de l'application : les catalogues ouverts et non enregistrés sont proposés à l'enregistrement d'abord, puis
+    /// toutes les fenêtres secondaires sont fermées avec la principale, pour qu'aucune ne reste affichée seule.
+    /// </summary>
+    void Fermeture(object? sender, CancelEventArgs e)
+    {
+        var secondaires = OwnedWindows.OfType<Window>().ToList();
+        if (secondaires.OfType<FenetreCatalogue>().Any(c => !c.ConfirmerAbandon()) || !_modele.ConfirmerAbandon())
+        {
+            e.Cancel = true;
+            return;
+        }
+        foreach (var f in secondaires)
+        {
+            if (f is FenetreCatalogue c) c.FermetureSansQuestion = true;
+            f.Close();
+        }
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        base.OnClosed(e);
+        Application.Current.Shutdown();
+    }
 }

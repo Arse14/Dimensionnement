@@ -74,7 +74,10 @@ public partial class ModeleVuePrincipal
 
     async Task Installer()
     {
-        if (_versionDisponible is not { } v || !ConfirmerAbandon()) return;
+        // Catalogues ouverts : leurs modifications sont proposées à l'enregistrement avant l'installation, pas pendant la fermeture.
+        var catalogues = Application.Current.MainWindow.OwnedWindows.OfType<FenetreCatalogue>().ToList();
+        if (_versionDisponible is not { } v || catalogues.Any(c => !c.ConfirmerAbandon()) || !ConfirmerAbandon()) return;
+        foreach (var c in catalogues) c.FermetureSansQuestion = true;
         Telechargement = true;
         EtatMiseAJour = "Téléchargement…";
         try
