@@ -4,7 +4,11 @@ using static Dimensionnement.Core.Calculs.Format;
 
 namespace Dimensionnement.Core.Calculs;
 
-public record ResultatCable(double Section, double CourantAdmissible, double ChuteTension, double SectionPe);
+public record ResultatCable(double Section, double CourantAdmissible, double ChuteTension, double SectionPe)
+{
+    /// <summary>Chute de tension en amont du départ, en % : la chute cumulée vaut ChuteAmont + ChuteTension.</summary>
+    public double ChuteAmont { get; init; }
+}
 
 /// <summary>Choix de la section d'un câble cuivre : courant admissible puis chute de tension.</summary>
 public static class CalculCable
@@ -15,10 +19,13 @@ public static class CalculCable
     /// <param name="courantProtection">Courant assigné ou de réglage de la protection, que Iz doit couvrir.</param>
     /// <param name="courantEmploi">Courant d'emploi qui circule dans le câble, pour la chute de tension.</param>
     /// <param name="chuteAmont">Chute de tension déjà consommée en amont, en %.</param>
+    /// <summary>Vrai : en TN-C, la section permet un conducteur PEN (10 mm² cuivre au moins).</summary>
+    public static bool Pen(double section) => section >= 10;
+
     public static ResultatCable Dimensionner(NoteDeCalcul note, CaracteristiquesCable cable, TypeAlimentation alimentation,
         double courantProtection, double courantEmploi, double cosPhi, Reseau reseau, double chuteAmont)
     {
-        var conducteursCharges = alimentation == TypeAlimentation.Mono230 ? 2 : 3;
+        var conducteursCharges = alimentation is TypeAlimentation.Mono230 or TypeAlimentation.Bi400 ? 2 : 3;
         var kt = TablesCables.FacteurTemperature(cable.Isolant, reseau.TemperatureAmbiante);
         var kg = TablesCables.FacteurGroupement(cable.Pose, cable.CircuitsGroupes);
         var limite = TablesCables.ChuteTensionMax(reseau.Origine);
@@ -56,9 +63,16 @@ public static class CalculCable
             $"ΔU départ = {Pct(du)}, cumulée avec l'amont = {Pct(chuteAmont + du)}, limite = {Pct(limite)}", RefDu);
 
         var pe = TablesCables.SectionPe(section);
-        note.Info("Section du conducteur de protection", $"PE = {Mm2(pe)}", "NF C 15-100, tableau 54.2");
+        // Le PE est pris dans le même câble, à la section du tableau 54.2 : le contrôle compare au minimum de ce tableau.
+        note.Verifier("Section du conducteur de protection", pe >= TablesCables.SectionPe(section),
+            $"PE = {Mm2(pe)} ≥ minimum du tableau 54.2 pour {Mm2(section)} de phase (PE dans le même câble).", "NF C 15-100, tableau 54.2");
+        if (reseau.Slt == SchemaLiaisonTerre.TNC && alimentation is TypeAlimentation.Mono230 or TypeAlimentation.Tetra400)
+            note.Verifier("Conducteur PEN", true, Pen(section)
+                ? $"Section {Mm2(section)} ≥ 10 mm² : neutre et protection confondus (PEN), un conducteur de moins."
+                : $"Section {Mm2(section)} < 10 mm² : le PEN est interdit, le circuit est en TN-S (neutre et PE séparés).",
+                "NF C 15-100, 543.4");
 
-        return new ResultatCable(section, iz, du, pe);
+        return new ResultatCable(section, iz, du, pe) { ChuteAmont = chuteAmont };
     }
 
     /// <summary>
@@ -67,10 +81,11 @@ public static class CalculCable
     /// </summary>
     public static double ChuteTension(TypeAlimentation alimentation, double longueur, double section, double courant, double cosPhi)
     {
-        var b = alimentation == TypeAlimentation.Mono230 ? 2 : 1;
+        var b = alimentation is TypeAlimentation.Mono230 or TypeAlimentation.Bi400 ? 2 : 1;
         var sinPhi = Math.Sqrt(Math.Max(0, 1 - cosPhi * cosPhi));
         var du = b * (TablesCables.ResistiviteCuivre * longueur / section * cosPhi
                       + TablesCables.ReactanceLineique * longueur * sinPhi) * courant;
-        return 100 * du / 230;
+        // Biphasé : boucle entre deux phases, rapportée à la tension composée.
+        return 100 * du / (alimentation == TypeAlimentation.Bi400 ? 400 : 230);
     }
 }

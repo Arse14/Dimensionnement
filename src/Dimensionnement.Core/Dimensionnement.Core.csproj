@@ -8,6 +8,19 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Normes\catalogue-automates.json" LogicalName="Dimensionnement.Core.Normes.catalogue-automates.json" />
+    <EmbeddedResource Include="Normes\catalogue-references.json" LogicalName="Dimensionnement.Core.Normes.catalogue-references.json" />
+    <EmbeddedResource Include="Normes\catalogue-variateurs.json" LogicalName="Dimensionnement.Core.Normes.catalogue-variateurs.json" />
+    <EmbeddedResource Include="Normes\catalogue-enveloppes.json" LogicalName="Dimensionnement.Core.Normes.catalogue-enveloppes.json" />
+    <EmbeddedResource Include="Normes\catalogue-securite.json" LogicalName="Dimensionnement.Core.Normes.catalogue-securite.json" />
+    <EmbeddedResource Include="Normes\catalogue-capteurs-securite.json" LogicalName="Dimensionnement.Core.Normes.catalogue-capteurs-securite.json" />
+    <EmbeddedResource Include="Normes\catalogue-encombrements.json" LogicalName="Dimensionnement.Core.Normes.catalogue-encombrements.json" />
+    <EmbeddedResource Include="Normes\catalogue-cartes-es.json" LogicalName="Dimensionnement.Core.Normes.catalogue-cartes-es.json" />
+    <EmbeddedResource Include="Normes\catalogue-ihm.json" LogicalName="Dimensionnement.Core.Normes.catalogue-ihm.json" />
+    <EmbeddedResource Include="Normes\catalogue-repartiteurs.json" LogicalName="Dimensionnement.Core.Normes.catalogue-repartiteurs.json" />
+    <EmbeddedResource Include="Normes\catalogue-ventilateurs.json" LogicalName="Dimensionnement.Core.Normes.catalogue-ventilateurs.json" />
+    <EmbeddedResource Include="Normes\catalogue-alimentations.json" LogicalName="Dimensionnement.Core.Normes.catalogue-alimentations.json" />
+    <EmbeddedResource Include="Normes\catalogue-disjoncteurs.json" LogicalName="Dimensionnement.Core.Normes.catalogue-disjoncteurs.json" />
+    <EmbeddedResource Include="Persistance\nouveautes.md" LogicalName="Dimensionnement.Core.Persistance.nouveautes.md" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,5 +1,6 @@
 using ClosedXML.Excel;
 using Dimensionnement.Core.Calculs;
+using Dimensionnement.Core.Materiel;
 
 namespace Dimensionnement.Core.Rapport;
 
@@ -21,7 +22,7 @@ public static class ExportExcel
             "Section (mm²)", "ΔU départ (%)", "Statut");
         ligne = 2;
         foreach (var d in r.Departs)
-            Remplir(departs, ligne++, $"D{d.Depart.Numero:00}", d.Depart.Rubrique, d.Depart.Designation, d.Depart.TypeLibelle,
+            Remplir(departs, ligne++, $"{d.Depart.Code}", d.Depart.Rubrique, d.Depart.Designation, d.Depart.TypeLibelle,
                 Math.Round(d.CourantEmploi, 2), d.CalibreProtection, d.Section, Math.Round(d.ChuteTension, 2), d.Note.StatutGlobal.ToString());
 
         var notes = Feuille(classeur, "Notes de calcul", "Identifiant", "Libellé", "Valeur calculée", "Valeur retenue", "Unité",
@@ -29,7 +30,7 @@ public static class ExportExcel
         ligne = 2;
         foreach (var l in r.Notes.SelectMany(n => n.Lignes))
             Remplir(notes, ligne++, l.Identifiant, l.Libelle, l.ValeurCalculee.HasValue ? Math.Round(l.ValeurCalculee.Value, 3) : "",
-                l.ValeurRetenue.HasValue ? Math.Round(l.ValeurRetenue.Value, 3) : "", l.Unite, l.Formule, l.Entrees, l.Message,
+                l.ValeurRetenue.HasValue ? Math.Round(l.ValeurRetenue.Value, 3) : "", l.Unite, EcritureMath.Texte(l.Formule), EcritureMath.Texte(l.Entrees), EcritureMath.Texte(l.Message),
                 l.Reference, l.Statut.ToString(), l.Forcage?.Auteur ?? "", l.Forcage?.Motif ?? "");
 
         var bilan = Feuille(classeur, "Bilan 24 V", "Consommateur", "Courant (A)");
@@ -39,14 +40,134 @@ public static class ExportExcel
         Remplir(bilan, ligne, "Total", Math.Round(r.Consommation24V, 3));
         bilan.Row(ligne).Style.Font.Bold = true;
 
-        var controles = Feuille(classeur, "Contrôles CEM-BT", "Vérifié", "Point de contrôle", "Référence");
-        ligne = 2;
-        foreach (var c in r.Controles)
-            Remplir(controles, ligne++, c.Fait ? "Oui" : "Non", c.Libelle, c.Reference);
+        FeuilleDevis(classeur, r);
 
-        foreach (var feuille in classeur.Worksheets)
-            feuille.Columns().AdjustToContents(1, 200, 8, 70);
+        // La demande de devis a ses propres largeurs de colonnes.
+        foreach (var feuille in classeur.Worksheets.Where(w => w.Name != "Demande de devis"))
+            feuille.Columns().AdjustToContents(1, 300, 8, 70);
         classeur.SaveAs(chemin);
+    }
+
+    /// <summary>Classeur à envoyer au fournisseur : la seule liste de matériel, avec l'en-tête du projet.</summary>
+    public static void EnregistrerDevis(ResultatProjet r, string chemin)
+    {
+        using var classeur = new XLWorkbook();
+        FeuilleDevis(classeur, r);
+        classeur.SaveAs(chemin);
+    }
+
+    static readonly XLColor Marine = XLColor.FromHtml("#1F3A5F");
+    static readonly XLColor Bandeau = XLColor.FromHtml("#DCE6F0");
+    static readonly XLColor Zebre = XLColor.FromHtml("#F5F8FB");
+    static readonly XLColor Trait = XLColor.FromHtml("#C5D0DC");
+    static readonly XLColor Gris = XLColor.FromHtml("#5B6573");
+
+    /// <summary>
+    /// Liste de matériel mise en page pour le fournisseur, qui chiffre de son côté : bandeau titre, cartouche du projet,
+    /// une section par catégorie avec numéros 1.1, 1.2…, impression A4 paysage sur une largeur de page avec l'en-tête répété.
+    /// </summary>
+    static IXLWorksheet FeuilleDevis(XLWorkbook classeur, ResultatProjet r)
+    {
+        var p = r.Projet;
+        var f = classeur.Worksheets.Add("Demande de devis");
+        f.Style.Font.FontName = "Calibri";
+        f.Style.Font.FontSize = 10;
+        f.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+        f.ShowGridLines = false;
+
+        string[] colonnes = { "N°", "Désignation", "Caractéristiques", "Fabricant", "Référence", "Qté", "Unité", "Repères", "Remarque" };
+        double[] largeurs = { 6, 40, 48, 24, 24, 7, 6, 22, 40 };
+        var n = colonnes.Length;
+        for (var i = 0; i < n; i++) f.Column(i + 1).Width = largeurs[i];
+        const int cQte = 6;
+
+        // Bandeau titre.
+        var titre = f.Range(1, 1, 1, n).Merge();
+        titre.Value = "DEMANDE DE PRIX – MATÉRIEL ÉLECTRIQUE";
+        titre.Style.Font.SetBold().Font.SetFontSize(15).Font.SetFontColor(XLColor.White).Fill.SetBackgroundColor(Marine);
+        titre.Style.Alignment.SetIndent(1);
+        f.Row(1).Height = 30;
+        var emetteur = f.Range(2, 1, 2, n).Merge();
+        emetteur.Value = $"{p.Fabricant} · bureau d'études électrique";
+        emetteur.Style.Font.SetItalic().Font.SetFontColor(Gris).Alignment.SetIndent(1);
+
+        // Cartouche du projet sur deux colonnes.
+        var gauche = new (string, string)[] { ("Projet", p.Nom), ("Affaire", p.Affaire), ("Client", p.Client) };
+        var droite = new (string, string)[] { ("Indice", p.Indice), ("Date", DateTime.Today.ToString("dd/MM/yyyy")),
+            ("Marque souhaitée", p.References.Fabricant.ToString()) };
+        for (var i = 0; i < 3; i++)
+        {
+            Cartouche(f, 4 + i, 2, 3, gauche[i]);
+            Cartouche(f, 4 + i, 4, 5, droite[i]);
+        }
+        var consigne = f.Range(8, 1, 8, n).Merge();
+        consigne.Value = "Références à confirmer par le fournisseur ; équivalences acceptées si signalées.";
+        consigne.Style.Font.SetItalic().Font.SetFontColor(Gris).Alignment.SetIndent(1);
+
+        // En-tête du tableau, figé et répété à l'impression.
+        const int debut = 10;
+        for (var i = 0; i < n; i++) f.Cell(debut, i + 1).Value = colonnes[i];
+        var entete = f.Range(debut, 1, debut, n);
+        entete.Style.Font.SetBold().Font.SetFontColor(XLColor.White).Fill.SetBackgroundColor(Marine)
+            .Alignment.SetWrapText().Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+        entete.Style.Border.SetInsideBorder(XLBorderStyleValues.Thin).Border.SetInsideBorderColor(XLColor.White);
+        f.Row(debut).Height = 28;
+        f.SheetView.FreezeRows(debut);
+
+        var ligne = debut;
+        foreach (var categorie in ListeDevis.Generer(r).GroupBy(d => d.Categorie))
+        {
+            var section = f.Range(++ligne, 1, ligne, n).Merge();
+            section.Value = categorie.Key.ToUpperInvariant();
+            section.Style.Font.SetBold().Font.SetFontColor(Marine).Fill.SetBackgroundColor(Bandeau).Alignment.SetIndent(1);
+            f.Row(ligne).Height = 20;
+            var numeroSection = categorie.Key.Split('.')[0];
+            var premiere = ligne + 1;
+            var rang = 0;
+            foreach (var d in categorie)
+            {
+                rang++;
+                Remplir(f, ++ligne, $"{numeroSection}.{rang}", d.Designation, d.Caracteristiques, d.Fabricant, d.Reference,
+                    d.Quantite, d.Unite, d.Reperes, d.Remarque);
+                var rangee = f.Range(ligne, 1, ligne, n);
+                rangee.Style.Alignment.SetWrapText();
+                if (rang % 2 == 0) rangee.Style.Fill.SetBackgroundColor(Zebre);
+                f.Range(ligne, cQte, ligne, cQte + 1).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                f.Cell(ligne, 1).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center).Font.SetFontColor(Gris);
+                f.Cell(ligne, cQte).Style.NumberFormat.Format = "0.##";
+                var remarque = f.Cell(ligne, 9);
+                remarque.Style.Font.SetFontColor(d.Remarque.Contains("à compléter") ? XLColor.FromHtml("#C65A00") : Gris);
+            }
+            var bloc = f.Range(premiere, 1, ligne, n);
+            bloc.Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin).Border.SetOutsideBorderColor(Trait)
+                .Border.SetInsideBorder(XLBorderStyleValues.Hair).Border.SetInsideBorderColor(Trait);
+            ligne++;
+        }
+
+        f.Range(debut, 1, ligne - 1, n).SetAutoFilter();
+        var page = f.PageSetup;
+        page.PaperSize = XLPaperSize.A4Paper;
+        page.PageOrientation = XLPageOrientation.Landscape;
+        page.FitToPages(1, 0);
+        page.Margins.SetLeft(0.4).SetRight(0.4).SetTop(0.5).SetBottom(0.6);
+        page.SetRowsToRepeatAtTop(debut, debut);
+        page.PrintAreas.Add(1, 1, ligne, n);
+        page.Footer.Left.AddText($"{p.Fabricant} – {p.Nom} – indice {p.Indice}");
+        page.Footer.Right.AddText("Page &P / &N");
+        return f;
+    }
+
+    /// <summary>Libellé en gras sur fond clair, valeur à côté, dans le cartouche du projet.</summary>
+    static void Cartouche(IXLWorksheet f, int ligne, int colLibelle, int colValeur, (string Libelle, string Valeur) champ)
+    {
+        var libelle = f.Cell(ligne, colLibelle);
+        libelle.Value = champ.Libelle;
+        libelle.Style.Font.SetBold().Font.SetFontColor(Marine).Fill.SetBackgroundColor(Bandeau).Alignment.SetIndent(1);
+        var valeur = f.Cell(ligne, colValeur);
+        valeur.Value = champ.Valeur;
+        valeur.Style.Alignment.SetIndent(1);
+        f.Range(ligne, colLibelle, ligne, colValeur).Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin).Border.SetOutsideBorderColor(Trait);
+        f.Row(ligne).Height = 18;
     }
 
     static IXLWorksheet Feuille(XLWorkbook classeur, string nom, params string[] entetes)

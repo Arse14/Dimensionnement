@@ -21,7 +21,9 @@ public class CalculProjetTests
     [Fact]
     public void Bilan_applique_ku_et_ks_puis_dimensionne_l_arrivee()
     {
-        var r = CalculProjet.Calculer(ProjetExemple());
+        var projet = ProjetExemple();
+        projet.Reseau.CoefficientSimultaneite = 0.8; // minimum du guide
+        var r = CalculProjet.Calculer(projet);
 
         Assert.Equal(0.8, r.CoefficientSimultaneite); // 4 départs
         // P = 7,5/0,89 + 4/0,87 + 9 + 0,5 × 3,68 = 23,87 kW avant ks
@@ -39,7 +41,8 @@ public class CalculProjetTests
 
         var qg = r.Arbre.Enfants.Single().Enfants.Single().Enfants.Single();
         Assert.Equal("QG", qg.Repere);
-        Assert.Equal(new[] { "Q1", "Q2", "Q3", "Q4" }, qg.Enfants.Select(e => e.Repere));
+        Assert.Equal(new[] { "Q1", "Q2", "Q3", "Q4" }, qg.Enfants.Where(e => e.Famille != "Répartiteur" && !e.Repere.StartsWith("Q-EV")).Select(e => e.Repere));
+        Assert.Contains(qg.Enfants, e => e.Repere == "XR");
         Assert.Contains(r.Arbre.Parcourir(), e => e.Repere == "M1");
         Assert.Contains(r.Nomenclature, e => e.Famille == "Contacteur" && e.Repere == "KM1");
     }
@@ -48,12 +51,31 @@ public class CalculProjetTests
     public void Simultaneite_forcee_est_retenue_et_tracee()
     {
         var projet = ProjetExemple();
-        projet.ForcagesArrivee[CodesCalcul.Simultaneite] = new Forcage { Valeur = 1, Motif = "tout fonctionne ensemble" };
+        projet.ForcagesArrivee[CodesCalcul.Simultaneite] = new Forcage { Valeur = 0.9, Motif = "deux axes jamais ensemble" };
 
         var r = CalculProjet.Calculer(projet);
 
-        Assert.Equal(1, r.CoefficientSimultaneite);
+        Assert.Equal(0.9, r.CoefficientSimultaneite);
         Assert.Contains(r.NoteArrivee.Lignes, l => l.Identifiant == "ARR-KS" && l.Statut == StatutCalcul.Forcee);
+    }
+
+    [Fact]
+    public void Simultaneite_vaut_1_par_defaut_sur_une_armoire_de_machine()
+    {
+        var r = CalculProjet.Calculer(ProjetExemple());
+        Assert.Equal(1, r.CoefficientSimultaneite);
+    }
+
+    [Fact]
+    public void Simultaneite_ne_descend_pas_sous_le_guide_UTE()
+    {
+        var projet = ProjetExemple();
+        projet.Reseau.CoefficientSimultaneite = 0.5;
+
+        var r = CalculProjet.Calculer(projet);
+
+        Assert.Equal(0.8, r.CoefficientSimultaneite); // minimum du guide pour 4 départs
+        Assert.Contains(r.NoteArrivee.Lignes, l => l.Libelle == "Coefficient de simultanéité" && l.Statut == StatutCalcul.Alerte);
     }
 
     [Fact]
@@ -85,10 +107,23 @@ public class CalculProjetTests
     {
         var html = RapportHtml.Generer(CalculProjet.Calculer(ProjetExemple()));
 
-        foreach (var titre in new[] { "1. Page de garde", "2. Données d'entrée", "3. Liste des départs", "4. Arbre du matériel",
-                     "5. Notes de calcul", "6. Arrivée générale", "7. Directives CEM", "8. Nomenclature", "9. Historique" })
+        foreach (var titre in new[] { "1. Projet et hypothèses", "2. Bilan de puissance", "3. Matériel par départ", "4. Synthèse des calculs",
+                     "5. Points à traiter", "7. Nomenclature", "8. Historique", "Annexe A.", "Annexe B.", "Annexe C.", "Annexe D.", "Annexe E." })
             Assert.Contains(titre, html);
         Assert.Contains("NF EN 61800-3", html);
+        // Renvois : chaque départ vers son calcul détaillé, chaque étape vers le glossaire.
+        Assert.Contains("href=\"#C1\"", html);
+        Assert.Contains("id=\"C1\"", html);
+        Assert.Contains("href=\"#G1\"", html);
+        Assert.Contains("id=\"G1\"", html);
+    }
+
+    [Fact]
+    public void Fabricant_ITP_INTERPIPE_par_defaut_et_sur_le_rapport()
+    {
+        var projet = ProjetExemple();
+        Assert.Equal("ITP INTERPIPE", projet.Fabricant);
+        Assert.Contains("ITP INTERPIPE", RapportHtml.Generer(CalculProjet.Calculer(projet)));
     }
 
     [Fact]
@@ -108,29 +143,154 @@ public class CalculProjetTests
 public class ExportsTests
 {
     [Fact]
-    public void Export_Excel_contient_nomenclature_departs_notes_bilan_et_controles()
+    public void Export_Excel_contient_nomenclature_departs_notes_bilan_et_devis()
     {
         var projet = new Projet { Nom = "Essai" };
         projet.Ajouter(new DepartMoteur { Designation = "Pompe", PuissanceKw = 4, Demarrage = ModeDemarrage.Variateur });
         projet.Ajouter(new DepartAlimentation24V());
         projet.Consommateurs24V.Add(new Consommateur24V { Designation = "Capteurs", CourantMa = 500 });
-        projet.Controles["CEM-PLAQUE"] = true;
         var chemin = Path.Combine(Path.GetTempPath(), $"essai-{Guid.NewGuid()}.xlsx");
         try
         {
             ExportExcel.Enregistrer(CalculProjet.Calculer(projet), chemin);
 
             using var classeur = new ClosedXML.Excel.XLWorkbook(chemin);
-            Assert.Equal(new[] { "Nomenclature", "Départs", "Notes de calcul", "Bilan 24 V", "Contrôles CEM-BT" },
+            Assert.Equal(new[] { "Nomenclature", "Départs", "Notes de calcul", "Bilan 24 V", "Demande de devis" },
                 classeur.Worksheets.Select(f => f.Name));
             Assert.Equal("D01", classeur.Worksheet("Départs").Cell(2, 1).GetString());
-            Assert.Contains(classeur.Worksheet("Contrôles CEM-BT").RowsUsed(),
-                r => r.Cell(1).GetString() == "Oui" && r.Cell(2).GetString().StartsWith("Plaque de montage"));
-            Assert.Contains(classeur.Worksheet("Contrôles CEM-BT").RowsUsed(), r => r.Cell(2).GetString().StartsWith("D01 : câble moteur blindé"));
         }
         finally
         {
             File.Delete(chemin);
         }
+    }
+}
+
+public class RendementTests
+{
+    // Motoréducteur NORD SK9012.1AZD-80LP/4 : 0,75 kW, 1,79 A sous 400 V, cos φ 0,72, 5,1 N·m à 1415 tr/min, rendement non donné.
+    static DepartMoteur Nord() => new() { PuissanceKw = 0.75, CourantPlaque = 1.79, CosPhi = 0.72, CoupleNominal = 5.1, VitesseNominale = 1415 };
+
+    [Fact]
+    public void Rendement_retrouve_par_la_plaque()
+    {
+        var r = CalculRendement.Calculer(Nord(), MethodeRendement.Plaque)!;
+        Assert.Equal(893, r.PuissanceAbsorbeeW, 0);
+        Assert.Equal(0.840, r.Rendement, 3);
+        Assert.Empty(r.Alerte);
+    }
+
+    [Fact]
+    public void Rendement_retrouve_par_le_couple_et_la_vitesse()
+    {
+        var r = CalculRendement.Calculer(Nord(), MethodeRendement.CoupleVitesse)!;
+        Assert.Equal(756, r.PuissanceUtileW, 0);
+        Assert.Equal(0.846, r.Rendement, 3);
+    }
+
+    [Fact]
+    public void Rendement_applique_puis_trace_dans_la_note()
+    {
+        var m = Nord();
+        Assert.True(m.AppliquerRendementCalcule());
+        Assert.Equal(0.84, m.Rendement, 3);
+        Assert.Equal("calculé (plaque)", m.OrigineRendement);
+        var projet = new Projet();
+        projet.Ajouter(m);
+        var d = CalculProjet.Calculer(projet).Departs[0];
+        Assert.Contains(d.Note.Lignes, l => l.Libelle == "Rendement" && l.Message.Contains("893"));
+        m.Rendement = 0.8;
+        Assert.Equal("", m.OrigineRendement);
+    }
+
+    [Fact]
+    public void Plaque_incoherente_signalee()
+    {
+        var m = Nord();
+        m.CourantPlaque = 1.0;
+        Assert.NotEmpty(CalculRendement.Calculer(m, MethodeRendement.Plaque)!.Alerte);
+        Assert.Null(CalculRendement.Calculer(new DepartMoteur { PuissanceKw = 1 }, MethodeRendement.Plaque));
+    }
+}
+
+public class FreinTests
+{
+    static (ResultatDepart D, ResultatProjet R) Calculer(DepartMoteur m)
+    {
+        var projet = new Projet();
+        projet.Ajouter(m);
+        var r = CalculProjet.Calculer(projet);
+        return (r.Departs[0], r);
+    }
+
+    static DepartMoteur MoteurFrein() => new()
+    {
+        PuissanceKw = 0.75, CourantPlaque = 1.79, CosPhi = 0.72, Frein = true, AlimentationFrein = AlimentationFrein.Separee230,
+        PuissanceFreinW = 30, TensionFreinV = 400, TensionBobineFreinV = 180,
+    };
+
+    [Fact]
+    public void Frein_180_V_sous_400_V_demi_onde_dans_le_moteur()
+    {
+        var (d, r) = Calculer(MoteurFrein());
+        Assert.Contains(d.Note.Lignes, l => l.Libelle == "Tension de bobine du frein" && l.Statut == StatutCalcul.Conforme && l.Message.Contains("demi-onde"));
+        var q = r.Arbre.Parcourir().Single(e => e.Repere == "Q1.F");
+        Assert.Contains("2P", q.Calibre);
+        Assert.Equal(1, q.Courant); // 2 × 30 / 400 = 0,15 A : 1 A minimum
+        Assert.DoesNotContain(r.Arbre.Parcourir(), e => e.Famille == "Redresseur");
+    }
+
+    [Fact]
+    public void Sans_redresseur_dans_le_moteur_l_armoire_en_recoit_un()
+    {
+        var m = MoteurFrein();
+        m.RedresseurDansMoteur = false;
+        var (_, r) = Calculer(m);
+        Assert.Contains(r.Arbre.Parcourir(), e => e.Repere == "V1.F" && e.Designation.Contains("demi-onde"));
+
+        m.TensionBobineFreinV = 24;
+        Assert.Contains(Calculer(m).R.Arbre.Parcourir(), e => e.Repere == "G1.F" && e.Famille == "Alimentation");
+
+        m.TensionBobineFreinV = 96;
+        var (d, r3) = Calculer(m);
+        Assert.Contains(r3.Arbre.Parcourir(), e => e.Repere == "T1.F" && e.Famille == "Transformateur");
+        Assert.Contains(r3.Arbre.Parcourir(), e => e.Repere == "V1.F" && e.Designation.Contains("pont"));
+        Assert.Contains(d.Note.Lignes, l => l.Libelle == "Alimentation du frein" && l.Statut == StatutCalcul.Alerte);
+    }
+
+    [Fact]
+    public void Source_du_frein_choisie_est_respectee_et_oubliee_sans_frein()
+    {
+        var m = MoteurFrein();
+        m.RedresseurDansMoteur = false;
+        Assert.True(CalculDepart.SourceFreinDansArmoire(m));
+        Assert.Equal(SourceFrein.Redresseur, CalculDepart.SourcesFreinPossibles(m)[0].Source);
+
+        m.SourceFrein = SourceFrein.Transformateur;
+        var arbre = Calculer(m).R.Arbre.Parcourir().ToList();
+        Assert.Contains(arbre, e => e.Repere == "T1.F");
+        Assert.Contains(arbre, e => e.Repere == "V1.F" && e.Designation.Contains("pont"));
+
+        // Choix impossible pour cette bobine (découpage en 180 V) : la recommandation reprend la main.
+        m.SourceFrein = SourceFrein.Decoupage;
+        Assert.DoesNotContain(Calculer(m).R.Arbre.Parcourir(), e => e.Repere == "G1.F");
+
+        m.Frein = false;
+        Assert.Equal(SourceFrein.Automatique, m.SourceFrein);
+        Assert.False(CalculDepart.SourceFreinDansArmoire(m));
+        Assert.DoesNotContain(Calculer(m).R.Arbre.Parcourir(), e => e.Repere.EndsWith(".F"));
+    }
+
+    [Fact]
+    public void Frein_pilote_par_le_variateur()
+    {
+        var m = MoteurFrein();
+        m.Demarrage = ModeDemarrage.Variateur;
+        m.CommandeFrein = CommandeFrein.Variateur;
+        var (d, _) = Calculer(m);
+        Assert.Contains(d.Note.Lignes, l => l.Libelle == "Frein" && l.Message.Contains("logique de frein du variateur"));
+
+        m.Demarrage = ModeDemarrage.Direct;
+        Assert.Contains(Calculer(m).D.Note.Lignes, l => l.Libelle == "Commande du frein" && l.Statut == StatutCalcul.Alerte);
     }
 }

@@ -16,6 +16,45 @@ public record CpuAutomate
     public int? MemoireTravailKo { get; init; }
     public int? EntreesSortiesMax { get; init; }
     public bool? VersionSecurite { get; init; }
+    /// <summary>Cette référence est la version de sécurité (CPU F) ; les autres sont standard.</summary>
+    public bool Securite { get; init; }
+
+    /// <summary>Famille des cartes d'E/S raccordées ; vide = déduite de la gamme.</summary>
+    public string FamilleCartes { get; init; } = "";
+    /// <summary>Cartes d'E/S admises à côté de la CPU (ou dans son châssis) ; null = non renseigné.</summary>
+    public int? CartesMax { get; init; }
+    public int EntreesTorIntegrees { get; init; }
+    public int SortiesTorIntegrees { get; init; }
+    public int EntreesAnaIntegrees { get; init; }
+    public int SortiesAnaIntegrees { get; init; }
+    /// <summary>Cotes en mm ; une largeur nulle signale une CPU logée dans un châssis.</summary>
+    public double Largeur { get; init; }
+    public double Hauteur { get; init; }
+    public double Profondeur { get; init; }
+    /// <summary>Consommation sur le 24 V en A et pertes en W.</summary>
+    public double Consommation { get; init; }
+    public double Pertes { get; init; }
+    /// <summary>CPU au format de la périphérie compacte (ET200SP).</summary>
+    public bool Compacte { get; init; }
+    /// <summary>Zone d'adresses d'E/S, en octets en entrée comme en sortie ; null = non renseigné.</summary>
+    public int? ZoneEsOctets { get; init; }
+
+    public string Libelle => $"{Marque} {Gamme} – {Cpu} ({Reference})";
+
+    /// <summary>Famille des cartes d'E/S, déduite de la gamme quand le catalogue ne la donne pas.</summary>
+    public string Cartes => FamilleCartes.Length > 0 ? FamilleCartes
+        : Gamme.Contains("M580") ? "Modicon X80"
+        : Gamme.StartsWith("Modicon") ? "Modicon TM3"
+        : Gamme;
+
+    public int Integrees(string type) => type switch
+    {
+        "DI" => EntreesTorIntegrees,
+        "DQ" => SortiesTorIntegrees,
+        "AI" => EntreesAnaIntegrees,
+        "AQ" => SortiesAnaIntegrees,
+        _ => 0,
+    };
 
     /// <summary>Vrai une fois les valeurs contrôlées contre la fiche technique du fabricant.</summary>
     public bool Verifie { get; init; }
@@ -34,9 +73,20 @@ public static class CatalogueAutomates
 
     public static IReadOnlyList<CpuAutomate> Charger(string? fichierPersonnalise = null)
     {
+        var embarque = Lire(TexteEmbarque());
         if (fichierPersonnalise is not null && File.Exists(fichierPersonnalise))
-            return Lire(File.ReadAllText(fichierPersonnalise));
-        return Lire(TexteEmbarque());
+            return Completer(Lire(File.ReadAllText(fichierPersonnalise)), embarque, c => c.Reference);
+        return embarque;
+    }
+
+    /// <summary>
+    /// Catalogue de l'utilisateur complété des modèles livrés qu'il ne contient pas (ajoutés par une mise à jour du logiciel) :
+    /// ses valeurs priment pour les modèles qu'il a.
+    /// </summary>
+    public static IReadOnlyList<T> Completer<T>(IReadOnlyList<T> utilisateur, IReadOnlyList<T> livre, Func<T, string> cle)
+    {
+        var connus = utilisateur.Select(cle).Where(k => k.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return utilisateur.Concat(livre.Where(m => cle(m).Length > 0 && !connus.Contains(cle(m)))).ToList();
     }
 
     /// <summary>Contenu du catalogue livré avec l'application, à copier pour le compléter.</summary>

@@ -1,0 +1,23 @@
+<Window x:Class="Dimensionnement.App.Vues.FenetreSchema"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="Schéma" Width="1200" Height="850" MinWidth="700" MinHeight="500"
+        Icon="/Ressources/icone.ico"
+        WindowStartupLocation="CenterOwner" Background="{StaticResource Fond}"
+        Foreground="{StaticResource Texte}" FontFamily="Segoe UI" FontSize="13">
+    <DockPanel Margin="10">
+        <Border DockPanel.Dock="Top" Style="{StaticResource CadrePanneau}" Margin="0,0,0,8">
+            <WrapPanel>
+                <Button x:Name="BoutonEnregistrer" Content="Enregistrer en SVG" Margin="0,0,8,0"/>
+                <Button Content="Ouvrir dans le navigateur" Click="OuvrirNavigateur" Margin="0,0,16,0"/>
+                <TextBlock x:Name="Aide" VerticalAlignment="Center" Foreground="{StaticResource TexteSecondaire}"/>
+            </WrapPanel>
+        </Border>
+        <Grid>
+            <wv2:WebView2 x:Name="Vue"/>
+            <TextBlock x:Name="Erreur" Visibility="Collapsed" TextWrapping="Wrap" Margin="20"
+                       Foreground="{StaticResource TexteSecondaire}"/>
+        </Grid>
+    </DockPanel>
+</Window>

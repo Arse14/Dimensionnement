@@ -33,6 +33,9 @@ public static class Calibres
     /// <summary>Courants assignés des alimentations 24 V DC à découpage, en A.</summary>
     public static readonly double[] Alimentations24V = { 2.5, 3.8, 5, 10, 20, 40 };
 
+    /// <summary>Puissances assignées des transformateurs de commande et de séparation, en VA.</summary>
+    public static readonly double[] Transformateurs = { 40, 63, 100, 160, 250, 400, 630, 1000, 1600, 2500, 4000, 6300, 10000 };
+
     /// <summary>Taille de cartouche et de porte-fusible pour un calibre et une classe donnés.</summary>
     public static string TailleFusible(double calibre, Modele.ClasseFusible classe)
     {

@@ -17,6 +17,14 @@
     <inf:StatutCouleur x:Key="StatutCouleur"/>
     <inf:LibelleEnum x:Key="LibelleEnum"/>
     <inf:VideMasque x:Key="VideMasque"/>
+    <inf:AvecGlossaire x:Key="AvecGlossaire"/>
+    <BooleanToVisibilityConverter x:Key="VraiVisible"/>
+    <inf:CheminImage x:Key="CheminImage"/>
+    <inf:NomFichier x:Key="NomFichier"/>
+    <inf:FauxVisible x:Key="FauxVisible"/>
+    <inf:NonNulVisible x:Key="NonNulVisible"/>
+    <inf:Majuscules x:Key="Majuscules"/>
+    <inf:MemeDepart x:Key="MemeDepart"/>
     <FontFamily x:Key="Icones">Segoe MDL2 Assets</FontFamily>
 
     <DataTemplate x:Key="ModeleEnum">
@@ -119,6 +127,11 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="Validation.HasError" Value="True">
+                <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style TargetType="ComboBoxItem">
