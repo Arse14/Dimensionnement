@@ -2,6 +2,18 @@
 # Une section par version, la plus récente en haut : « ## vX.Y – JJ/MM/AAAA », puis une ligne « - » par changement.
 # Cette page est affichée dans l'application (bouton « Nouveautés ») et sert de texte à la release GitHub.
 
+## v1.3 – 14/11/2026
+- Contacts indirects (NF C 15-100, 411.4 et 411.6) : en TN et IT, le courant de défaut minimal en bout de câble est calculé (méthode conventionnelle) et comparé au seuil magnétique de la protection ; la section monte si besoin, la longueur maximale protégée est donnée dans la note de calcul. Un différentiel sur le départ lève la limite ; avec des fusibles, contrôle à faire sur la courbe de fusion (orange).
+- Schéma TT : un départ sans différentiel est signalé (NF C 15-100, 411.5), sauf si la nouvelle case « Différentiel en amont » de « Projet et réseau » est cochée ; R_A maximal rappelé pour 30 et 300 mA.
+- Interrupteur différentiel séparé (derrière un disjoncteur moteur, des fusibles ou le disjoncteur d'un variateur) : il entre maintenant dans le matériel, l'implantation et le devis, référence à saisir.
+- Variateurs : le disjoncteur amont est choisi sur le courant d'entrée du variateur (estimé sans self de ligne, en orange tant que la fiche ne le donne pas), et le bilan de l'armoire voit ce même courant. Le câble moteur reste choisi sur le courant du moteur (protégé par le variateur).
+- Variateur à entrée monophasée : le moteur est un triphasé 230 V ; courant moteur, câble 4G et chute de tension calculés en triphasé 230 V.
+- Disjoncteur général : contrôle du démarrage du plus gros moteur en direct (Id + autres départs face au seuil magnétique bas du général).
+- Bilan de puissance : chauffage, climatiseur et ventilateurs 230 V de l'enveloppe sont comptés dans le courant d'emploi de l'armoire.
+- Chute de tension : en plus de la limite NF C 15-100, chaque départ seul est limité à 5 % (NF EN 60204-1, 12.5).
+- Câbles PR : facteur de température jusqu'à 80 °C ; une ambiance au-delà du tableau (60 °C en PVC) est signalée en rouge au lieu d'être ramenée en silence à 60 °C.
+- Saisies : un cos φ ou un rendement hors de ]0 ; 1] est signalé en rouge et le calcul continue, au lieu d'afficher des courants infinis.
+
 ## v1.2.3 – 23/10/2026
 - Fermeture de l'application : un catalogue ouvert et modifié est proposé à l'enregistrement d'abord, puis toutes les fenêtres (catalogues, aperçus) se ferment avec la fenêtre principale.
 - Mise à jour : les catalogues ouverts sont proposés à l'enregistrement avant l'installation, plus pendant la fermeture.

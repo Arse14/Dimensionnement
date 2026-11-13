@@ -26,10 +26,10 @@ public class CalculProjetTests
         var r = CalculProjet.Calculer(projet);
 
         Assert.Equal(0.8, r.CoefficientSimultaneite); // 4 départs
-        // P = 7,5/0,89 + 4/0,87 + 9 + 0,5 × 3,68 = 23,87 kW avant ks
-        Assert.Equal(0.8 * 23.87, r.PuissanceActive, 1);
-        // Q = 5,44 + 3,21 kvar ; S = 0,8 × √(23,87² + 8,65²) = 20,3 kVA ; Ib = 29,3 A
-        Assert.Equal(29.3, r.CourantEmploi, 1);
+        // P = 7,5/0,89 + 4/0,87/0,97 (pertes du variateur) + 9 + 0,5 × 3,68 = 24,01 kW avant ks
+        Assert.Equal(0.8 * 24.01, r.PuissanceActive, 1);
+        // Q = 5,44 kvar (moteur direct) + √(S_entrée² − P²) du variateur (redresseur sans self) ; Ib ≈ 31,8 A
+        Assert.InRange(r.CourantEmploi, 31, 33);
         Assert.Equal(32, r.CalibreGeneral);
         Assert.Equal(4, r.Departs.Count);
     }

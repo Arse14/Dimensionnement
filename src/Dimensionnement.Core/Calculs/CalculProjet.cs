@@ -32,6 +32,9 @@ public class ResultatProjet
     /// <summary>Tensions de commande dont le projet a besoin et qu'aucune source ne fournit encore.</summary>
     public IReadOnlyList<BesoinSource> SourcesManquantes { get; init; } = Array.Empty<BesoinSource>();
 
+    /// <summary>Auxiliaires 230 V des enveloppes (chauffage, climatiseur, ventilateurs) comptés dans le bilan de puissance.</summary>
+    public IReadOnlyList<CalculProjet.Auxiliaire> Auxiliaires { get; init; } = Array.Empty<CalculProjet.Auxiliaire>();
+
     /// <summary>Arbre du matériel, de l'arrivée réseau jusqu'à chaque récepteur.</summary>
     public required ElementMateriel Arbre { get; init; }
 
@@ -94,11 +97,41 @@ public static class CalculProjet
     {
         // Des ventilateurs 24 V DC ne sont connus qu'après le bilan thermique : un second passage les ajoute au bilan 24 V,
         // pour que l'alimentation soit dimensionnée avec eux.
+        // De même, chauffage, climatiseur et ventilateurs 230 V de l'enveloppe s'ajoutent au bilan de puissance de l'armoire.
         var r = Calculer(projet, catalogue, references, variateurs, enveloppes, catalogueSecurite, cartes, alimentations, ihm, capteursSecurite,
-            Array.Empty<ConsommationCommande>());
+            Array.Empty<ConsommationCommande>(), Array.Empty<Auxiliaire>());
         var ventilation = Ventilation24V(r);
-        return ventilation.Count == 0 ? r
-            : Calculer(projet, catalogue, references, variateurs, enveloppes, catalogueSecurite, cartes, alimentations, ihm, capteursSecurite, ventilation);
+        var auxiliaires = Auxiliaires(r);
+        return ventilation.Count == 0 && auxiliaires.Count == 0 ? r
+            : Calculer(projet, catalogue, references, variateurs, enveloppes, catalogueSecurite, cartes, alimentations, ihm, capteursSecurite,
+                ventilation, auxiliaires);
+    }
+
+    /// <summary>Consommateur 230 V de l'enveloppe elle-même (chauffage, climatiseur, ventilateurs), en kW et kvar.</summary>
+    public record Auxiliaire(string Designation, double P, double Q);
+
+    /// <summary>Facteur de puissance retenu pour un climatiseur d'armoire (compresseur).</summary>
+    const double CosPhiClimatiseur = 0.8;
+
+    /// <summary>
+    /// Auxiliaires 230 V des enveloppes retenus par le bilan thermique. La puissance absorbée d'un climatiseur est prise égale à sa
+    /// puissance frigorifique (estimation prudente, à remplacer par la notice).
+    /// </summary>
+    static List<Auxiliaire> Auxiliaires(ResultatProjet r)
+    {
+        var liste = new List<Auxiliaire>();
+        foreach (var e in r.Armoire?.Enveloppes ?? Enumerable.Empty<ResultatArmoire>())
+        {
+            if (e.Thermique is not { } t) continue;
+            var lieu = e.Id is null ? "" : $" ({e.Nom})";
+            if (t.Resistance > 0) liste.Add(new($"Chauffage anticondensation {t.Resistance:0} W{lieu}", t.Resistance / 1000, 0));
+            if (t is { Solution: SolutionThermique.Climatisation, Climatiseur: > 0 })
+                liste.Add(new($"Climatiseur {t.Climatiseur:0} W frigorifiques{lieu} (puissance absorbée estimée)", t.Climatiseur / 1000,
+                    t.Climatiseur / 1000 * Math.Tan(Math.Acos(CosPhiClimatiseur))));
+            if (t is { Solution: SolutionThermique.Ventilation, ModeleVentilateur: { EnContinu24V: false } m })
+                liste.Add(new($"Ventilateurs {m.Reference} × {t.NombreVentilateurs}{lieu}", t.NombreVentilateurs * m.Puissance / 1000, 0));
+        }
+        return liste;
     }
 
     /// <summary>Consommation des ventilateurs 24 V DC retenus, une ligne par enveloppe ventilée.</summary>
@@ -114,7 +147,8 @@ public static class CalculProjet
         IReadOnlyList<ReferenceCatalogue>? references, IReadOnlyList<ModeleVariateur>? variateurs,
         IReadOnlyList<ModeleEnveloppe>? enveloppes, IReadOnlyList<ModeleSecurite>? catalogueSecurite,
         IReadOnlyList<CarteEs>? cartes, IReadOnlyList<ModeleAlimentation>? alimentations, IReadOnlyList<ModeleIhm>? ihm,
-        IReadOnlyList<ModeleCapteurSecurite>? capteursSecurite, IReadOnlyList<ConsommationCommande> ventilation24V)
+        IReadOnlyList<ModeleCapteurSecurite>? capteursSecurite, IReadOnlyList<ConsommationCommande> ventilation24V,
+        IReadOnlyList<Auxiliaire> auxiliaires)
     {
         capteursSecurite ??= CatalogueCapteursSecurite.Charger();
         ihm ??= CatalogueIhm.Charger();
@@ -153,8 +187,11 @@ public static class CalculProjet
         var bilan = premierPassage.Where(r => !alimentesPar.ContainsKey(r.Depart.Id)).ToList();
 
         var note = new NoteDeCalcul("ARR", projet.ForcagesArrivee) { Groupe = "Protection générale" };
-        var p = bilan.Sum(r => r.PuissanceActive * r.Depart.CoefficientUtilisation);
-        var q = bilan.Sum(r => r.PuissanceReactive * r.Depart.CoefficientUtilisation);
+        var p = bilan.Sum(r => r.PuissanceActive * r.Depart.CoefficientUtilisation) + auxiliaires.Sum(a => a.P);
+        var q = bilan.Sum(r => r.PuissanceReactive * r.Depart.CoefficientUtilisation) + auxiliaires.Sum(a => a.Q);
+        if (auxiliaires.Count > 0)
+            note.Info("Auxiliaires de l'enveloppe", string.Join(" ; ", auxiliaires.Select(a => $"{a.Designation} : {N(a.P)} kW")) +
+                " : comptés dans le bilan de l'armoire.", RefBilan);
         note.Info("Puissances utilisées", $"Σ (P × ku) = {N(p)} kW ; Σ (Q × ku) = {N(q)} kvar", RefBilan);
         if (alimentesPar.Count > 0)
             note.Info("Départs derrière un transformateur", $"{alimentesPar.Count} départ(s) 230 V comptés au primaire de leur transformateur 400/230 V.",
@@ -197,6 +234,7 @@ public static class CalculProjet
         note.Info("Pouvoir de coupure", $"Pouvoir de coupure ≥ {N(reseau.IccKiloAmperes)} kA.", "NF EN 60947-2");
         note.Verifier("Sectionneur et disjoncteur général", qs >= qg,
             $"Interrupteur-sectionneur {A(qs)}, disjoncteur général {A(qg)}", siEchec: StatutCalcul.Alerte);
+        DemarrageSousGeneral(note, bilan, ib, qg);
 
         // Extension prévue : le câble est choisi pour la protection qu'il faudrait avec Ib × k ; le disjoncteur reste sur le besoin actuel.
         note.Groupe = "Câble d'arrivée";
@@ -311,7 +349,7 @@ public static class CalculProjet
             PuissanceActive = ks * p, PuissanceReactive = ks * q, PuissanceApparente = s, CosPhiGlobal = cosPhi,
             CoefficientSimultaneite = ks, CourantEmploi = ib, CalibreGeneral = qg,
             SectionArrivee = cable.Section, ChuteTensionArrivee = cable.ChuteTension, Arbre = arbre,
-            Consommateurs24V = consommateurs24V, SourcesManquantes = manquantes, Securite = securite, Automate = automate,
+            Consommateurs24V = consommateurs24V, SourcesManquantes = manquantes, Auxiliaires = auxiliaires, Securite = securite, Automate = automate,
             References = resultatReferences,
         };
         resultat.Selectivite = CalculSelectivite.Calculer(resultat);
@@ -330,6 +368,30 @@ public static class CalculProjet
                     e.Calibre = $"{t.Resistance:0} W, 230 V";
         }
         return resultat;
+    }
+
+    /// <summary>
+    /// Le général ne doit pas déclencher au démarrage du plus gros moteur en direct : courant de démarrage Id de ce moteur
+    /// (Id / 3 en étoile-triangle) plus le courant des autres départs, comparé au seuil magnétique bas du général
+    /// (courbe C : 5 × In jusqu'à 63 A ; boîtier moulé : ≈ 8 × In, valeur prudente).
+    /// </summary>
+    static void DemarrageSousGeneral(NoteDeCalcul note, IReadOnlyList<ResultatDepart> bilan, double ib, double qg)
+    {
+        var moteurs = bilan.Where(r => r.Depart is DepartMoteur { SurVariateur: false } m && m.Demarrage != ModeDemarrage.DemarreurProgressif).ToList();
+        if (moteurs.Count == 0 || qg <= 0) return;
+        double Appel(ResultatDepart r)
+        {
+            var m = (DepartMoteur)r.Depart;
+            return m.RapportId * r.CourantEmploi / (m.Demarrage == ModeDemarrage.EtoileTriangle ? 3 : 1);
+        }
+        var plusGros = moteurs.MaxBy(Appel)!;
+        var appel = Appel(plusGros) + Math.Max(0, ib - plusGros.CourantEmploi);
+        var seuil = qg <= 63 ? 5 * qg : 8 * qg;
+        note.Verifier("Démarrage sous le général", appel <= seuil,
+            $"Démarrage de {plusGros.Depart.Code} : Id ≈ {A(Appel(plusGros))} + autres départs {A(Math.Max(0, ib - plusGros.CourantEmploi))} = {A(appel)} ; " +
+            $"seuil magnétique bas du général ≈ {A(seuil)}" + (appel <= seuil ? "." :
+                " : risque de déclenchement au démarrage, prendre un général de calibre supérieur ou de courbe D (les tables du fabricant tranchent)."),
+            "NF EN 60947-2 ; NF EN 60898-1", StatutCalcul.Alerte);
     }
 
     static void Thermique(ResultatProjet resultat, Projet projet)

@@ -68,6 +68,8 @@ public static class Encombrements
         {
             "Disjoncteur" => Disjoncteur(i, poles),
             "Interrupteur-sectionneur" => InterrupteurSectionneur(i, poles),
+            // Interrupteur différentiel modulaire : 18 mm par pôle jusqu'à 125 A ; relais différentiel avec tore au-delà.
+            "Interrupteur différentiel" => i <= 125 ? new(18 * poles, 90, 75, poles * (0.3 + 0.0004 * i * i)) : new(45, 90, 75, 2),
             "Disjoncteur moteur" => DisjoncteurMoteur(e.PlageMax > 0 ? e.PlageMax : i),
             "Contacteur" => Contacteur(i),
             "Relais thermique" => new(45, 70, 95, 1 + 0.1 * i),

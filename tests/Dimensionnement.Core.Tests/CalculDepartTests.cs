@@ -85,9 +85,13 @@ public class CalculDepartTests
 
         var r = CalculDepart.Calculer(m, Reseau);
 
-        Assert.Equal(16, r.CalibreProtection);
+        // Disjoncteur amont choisi sur le courant d'entrée du variateur (≈ 22,8 A sans self de ligne), pas sur le courant moteur.
+        Assert.Equal(25, r.CalibreProtection);
         Assert.Contains(r.Note.Lignes, l => l.Message.StartsWith("300 mA type B"));
-        Assert.Equal("U1", r.Materiel.Enfants.Single().Repere);
+        // Interrupteur différentiel séparé inséré entre le disjoncteur et le variateur : implanté et chiffré.
+        var rcd = r.Materiel.Enfants.Single();
+        Assert.Equal(("Q1.D", "Interrupteur différentiel"), (rcd.Repere, rcd.Famille));
+        Assert.Equal("U1", rcd.Enfants.Single().Repere);
     }
 
     [Fact]

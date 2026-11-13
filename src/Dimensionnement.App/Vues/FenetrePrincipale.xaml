@@ -128,6 +128,12 @@
                     <ComboBox ItemsSource="{x:Static inf:Listes.Slt}" SelectedItem="{inf:Lien Reseau.Slt}"/>
                 </DockPanel>
                 <DockPanel Style="{StaticResource Ligne}">
+                    <TextBlock Text="Différentiel en amont" Style="{StaticResource Etiquette}"
+                               ToolTip="En TT : la protection différentielle est assurée par le tableau qui alimente l'armoire."/>
+                    <CheckBox IsChecked="{inf:Lien Reseau.DifferentielAmont}"
+                              ToolTip="Coché : en schéma TT, les départs sans différentiel ne sont plus signalés (le tableau amont protège). Vérifier R_A × IΔn ≤ 50 V."/>
+                </DockPanel>
+                <DockPanel Style="{StaticResource Ligne}">
                     <TextBlock Text="Origine de l'alimentation" Style="{StaticResource Etiquette}"/>
                     <ComboBox ItemsSource="{x:Static inf:Listes.Origines}" SelectedItem="{inf:Lien Reseau.Origine}"/>
                 </DockPanel>

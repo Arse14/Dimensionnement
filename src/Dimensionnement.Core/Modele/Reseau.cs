@@ -35,6 +35,12 @@ public class Reseau
     /// <summary>Parafoudre de type 2 en tête d'armoire, avec sa protection.</summary>
     public bool Parafoudre { get; set; }
 
+    /// <summary>
+    /// Protection différentielle assurée en amont de l'armoire (tableau qui l'alimente) : en TT, les départs sans différentiel
+    /// ne sont plus signalés.
+    /// </summary>
+    public bool DifferentielAmont { get; set; }
+
     /// <summary>Relais de contrôle de phases (ordre, absence, déséquilibre) en tête d'armoire.</summary>
     public bool ControlePhases { get; set; }
 

@@ -130,6 +130,16 @@ public static class Glossaire
             "Transformateur de commande : courbe D, car il appelle 10 à 25 fois son courant à la mise sous tension.",
             "NF EN 60898-1 et 60947-2", new[] { "courbe" }),
 
+        new("iccmin", Courants, "Icc mini et contacts indirects",
+            "En TN et IT, un défaut d'isolement doit faire déclencher la protection assez vite (0,4 s jusqu'à 32 A, 5 s au-delà). " +
+            "Le courant de défaut minimal en bout de câble doit donc dépasser le seuil magnétique haut Ia de la protection ; sinon on " +
+            "augmente la section, on ajoute un différentiel ou on prend une courbe plus basse. En TT, c'est le différentiel qui coupe.",
+            "I_{cc,min} = 0,8 × U_0 × S / (ρ × (1 + m) × L) ≥ Ia",
+            new[] { T("U_0", "tension simple, 230 V"), T("S", "section de phase, en mm²"), T("m", "S phase / S PE"),
+                T("ρ", "0,0225 Ω·mm²/m (cuivre, 1,25 × ρ à 20 °C)"), T("L", "longueur du câble, en m"),
+                T("Ia", "courbe B : 5 In ; C : 10 In ; D : 20 In ; disjoncteur moteur : 13 × maxi de plage + 20 %") },
+            "Disjoncteur moteur 6–10 A, 100 m : Ia = 156 A ; 1,5 mm² donne 61 A, 4 mm² donne 164 A : 4 mm² retenu.",
+            "NF C 15-100, 411.4 et 411.6 ; guide UTE C 15-105", new[] { "Contacts indirects", "Icc mini", "Longueur maximale" }),
         new("icc", Courants, "Icc et pouvoir de coupure",
             "Icc est le courant de court-circuit présumé à l'endroit de l'armoire. Chaque disjoncteur doit pouvoir couper au moins ce courant.",
             "Pouvoir de coupure (Icu ou Icn) ≥ Icc",

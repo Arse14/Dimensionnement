@@ -280,7 +280,7 @@ public class Version4Tests
         Assert.Equal(8, etapes.Count);
         Assert.Equal("Coefficient de simultanéité ks", etapes[2].Titre);
         Assert.All(etapes, e => Assert.False(string.IsNullOrWhiteSpace(e.Pourquoi)));
-        Assert.Equal(r.Departs.Count, ExplicationBilan.Lignes(r).Count);
+        Assert.Equal(r.Departs.Count + r.Auxiliaires.Count, ExplicationBilan.Lignes(r).Count);
         Assert.Equal(r.PuissanceActive / r.CoefficientSimultaneite, ExplicationBilan.Lignes(r).Sum(l => l.PUtilisee), 3);
     }
 }

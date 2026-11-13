@@ -218,8 +218,11 @@ public class Version3Tests
         Assert.Equal(NiveauSelectivite.Partielle, d02.Niveau);
         Assert.Equal(160, d02.Limite);
         // Seuils magnétiques qui se touchent : sélectivité partielle, sans alerte (cas courant entre modulaires).
-        Assert.Equal(NiveauSelectivite.Partielle, sel.Lignes.Single(l => l.Depart == "D01").Niveau);
-        Assert.DoesNotContain(sel.Note.Lignes, l => l.Statut == StatutCalcul.Alerte);
+        Assert.Equal(NiveauSelectivite.Partielle, sel.Lignes.Single(l => l.Depart == "D03").Niveau);
+        // D01 (variateur 7,5 kW) : son disjoncteur suit le courant d'entrée du variateur (25 A) ; avec ks = 0,6 le général de 32 A
+        // n'a plus le rapport 1,6 : c'est la seule alerte.
+        Assert.Equal(NiveauSelectivite.Absente, sel.Lignes.Single(l => l.Depart == "D01").Niveau);
+        Assert.Single(sel.Note.Lignes, l => l.Statut == StatutCalcul.Alerte);
     }
 
     [Theory]

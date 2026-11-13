@@ -17,19 +17,24 @@ public record EtapeBilan(int Numero, string Titre, string Pourquoi, string Formu
 /// <summary>Bilan de puissance expliqué pas à pas, de l'inventaire des départs au câble d'arrivée et aux sources de commande.</summary>
 public static class ExplicationBilan
 {
+    /// <summary>Type des lignes d'auxiliaires de l'enveloppe, qui ne comptent pas comme départs pour ks.</summary>
+    public const string TypeAuxiliaire = "Auxiliaire de l'enveloppe";
+
     public static IReadOnlyList<LigneBilan> Lignes(ResultatProjet r)
     {
         var alimentes = SourcesCommande.AlimentesPar(r.Projet);
         return r.Departs.Select(d => new LigneBilan($"{d.Depart.Code} {d.Depart.Designation}".Trim(), d.Depart.TypeLibelle,
                 d.PuissanceActive, d.PuissanceReactive, alimentes.ContainsKey(d.Depart.Id) ? 0 : d.Depart.CoefficientUtilisation,
                 alimentes.ContainsKey(d.Depart.Id) ? "derrière un transformateur 400/230 V : compté au primaire de celui-ci" : ""))
+            .Concat(r.Auxiliaires.Select(a => new LigneBilan(a.Designation, TypeAuxiliaire, a.P, a.Q, 1,
+                "chauffage, climatiseur ou ventilateurs de l'enveloppe, ajoutés par le bilan thermique")))
             .ToList();
     }
 
     public static IReadOnlyList<EtapeBilan> Etapes(ResultatProjet r)
     {
         var lignes = Lignes(r);
-        var comptees = lignes.Count(l => l.Ku > 0);
+        var comptees = lignes.Count(l => l.Ku > 0 && l.Type != TypeAuxiliaire);
         var p = lignes.Sum(l => l.PUtilisee);
         var q = lignes.Sum(l => l.QUtilisee);
         var reseau = r.Projet.Reseau;
