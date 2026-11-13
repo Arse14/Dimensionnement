@@ -161,7 +161,7 @@ public static class ChampMagnetique
             && appareils.All(a => p.X + 86 < a.X || p.X + 4 > a.X + a.Largeur || p.Y + 11 < a.Y || p.Y - 11 > a.Y + a.Hauteur);
         var point = segments.Select(g => (X: g.X1, Y: g.Y1))
             .Where(p => p.X > 20 && p.X < largeur - 90 && p.Y > 15 && p.Y < hauteur - 15 && Libre(p))
-            .OrderByDescending(p => p.X).Cast<(double X, double Y)?>().FirstOrDefault();
+            .OrderByDescending(p => p.X).Select(p => ((double X, double Y)?)p).FirstOrDefault();
         if (point is { } retenu) placees.Add(retenu);
         return point;
     }
