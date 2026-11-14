@@ -5,6 +5,8 @@ public enum TypeAlimentation
 {
     /// <summary>Monophasé 230 V, phase + neutre.</summary>
     Mono230,
+    /// <summary>Biphasé 400 V entre deux phases (2P) : transformateur ou alimentation de commande.</summary>
+    Bi400,
     /// <summary>Triphasé 400 V sans neutre (3P).</summary>
     Tri400,
     /// <summary>Triphasé 400 V avec neutre (3P+N).</summary>
@@ -23,7 +25,30 @@ public enum OrigineAlimentation
     PostePrive,
 }
 
-public enum ModeDemarrage { Direct, Inverseur, EtoileTriangle, Variateur, DemarreurProgressif }
+public enum ModeDemarrage { Direct, Inverseur, EtoileTriangle, Variateur, DemarreurProgressif, Servomoteur, DeuxVitesses }
+
+/// <summary>Moteur deux vitesses : couplage Dahlander (un enroulement) ou deux enroulements séparés.</summary>
+public enum TypeDeuxVitesses { Dahlander, DeuxEnroulements }
+
+/// <summary>Condensateur d'un moteur monophasé : dans la boîte à bornes du moteur, ou en armoire (permanent, avec ou sans condensateur de démarrage).</summary>
+public enum CondensateurMoteur { DansLeMoteur, Permanent, PermanentEtDemarrage }
+
+/// <summary>Alimentation du frein d'un moteur-frein.</summary>
+public enum AlimentationFrein
+{
+    /// <summary>Redresseur dans la boîte à bornes, alimenté par le moteur (démarrage direct seulement).</summary>
+    BoiteABornes,
+    /// <summary>Alimentation séparée, tension et nature à préciser (230 V AC par défaut), protégée et commandée par un contacteur.</summary>
+    Separee230,
+    /// <summary>Frein 24 V DC, commandé par un relais depuis l'alimentation de commande.</summary>
+    Continu24,
+}
+
+/// <summary>Source de la bobine du frein placée dans l'armoire quand le moteur n'a pas de redresseur ; Automatique = à demander.</summary>
+public enum SourceFrein { Automatique, Redresseur, Decoupage, Transformateur }
+
+/// <summary>Qui commande le frein : l'automate (contacteur ou relais) ou la logique de frein du variateur.</summary>
+public enum CommandeFrein { Automate, Variateur }
 
 /// <summary>Appareil de protection du départ contre les surintensités.</summary>
 public enum TypeProtection { Disjoncteur, Fusibles }
@@ -74,4 +99,12 @@ public enum StatutCalcul
     /// <summary>Point à surveiller sans être une non-conformité.</summary>
     Alerte,
     NonConforme,
+}
+
+/// <summary>Périphérique de machine alimenté en 24 V DC par l'armoire et monté sur la machine.</summary>
+public enum TypePeripherique
+{
+    IlotElectrovannes,
+    ColonneLumineuse,
+    Eclairage24V,
 }

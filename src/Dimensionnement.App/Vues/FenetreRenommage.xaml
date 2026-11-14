@@ -1,0 +1,28 @@
+<Window x:Class="Dimensionnement.App.Vues.FenetreRenommage"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Renommer un appareil" Width="480" SizeToContent="Height" ResizeMode="NoResize"
+        Icon="/Ressources/icone.ico"
+        WindowStartupLocation="CenterOwner" Background="{StaticResource Fond}" Foreground="{StaticResource Texte}"
+        FontFamily="Segoe UI" FontSize="13">
+    <StackPanel Margin="16">
+        <TextBlock x:Name="Origine" Style="{StaticResource Section}" Margin="0,0,0,4" TextWrapping="Wrap"/>
+        <TextBlock Foreground="{StaticResource TexteSecondaire}" TextWrapping="Wrap" Margin="0,0,0,12"
+                   Text="Le nouveau nom remplace le nom calculé partout : arbre, implantation, nomenclature, devis et rapport. Une case vide garde le nom calculé."/>
+        <DockPanel Style="{StaticResource Ligne}">
+            <TextBlock Text="Repère" Style="{StaticResource Etiquette}" Width="110"/>
+            <TextBox x:Name="SaisieRepere"/>
+        </DockPanel>
+        <DockPanel Style="{StaticResource Ligne}">
+            <TextBlock Text="Désignation" Style="{StaticResource Etiquette}" Width="110"/>
+            <TextBox x:Name="SaisieDesignation"/>
+        </DockPanel>
+        <DockPanel Margin="0,12,0,0">
+            <Button Content="Rétablir le nom calculé" Click="Retablir" DockPanel.Dock="Left"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Annuler" IsCancel="True"/>
+                <Button Content="Renommer" Style="{StaticResource BoutonAccent}" IsDefault="True" Margin="0" Click="Valider"/>
+            </StackPanel>
+        </DockPanel>
+    </StackPanel>
+</Window>
