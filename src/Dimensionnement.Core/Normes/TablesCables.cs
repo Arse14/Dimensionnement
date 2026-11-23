@@ -45,13 +45,20 @@ public static class TablesCables
 
     // Tableau B.52.14 : température ambiante de l'air, par pas de 5 °C de 10 à 60 °C.
     static readonly double[] TemperaturePvc = { 1.22, 1.17, 1.12, 1.06, 1.00, 0.94, 0.87, 0.79, 0.71, 0.61, 0.50 };
-    static readonly double[] TemperaturePr = { 1.15, 1.12, 1.08, 1.04, 1.00, 0.96, 0.91, 0.87, 0.82, 0.76, 0.71 };
+    // PR : le tableau continue jusqu'à 80 °C.
+    static readonly double[] TemperaturePr = { 1.15, 1.12, 1.08, 1.04, 1.00, 0.96, 0.91, 0.87, 0.82, 0.76, 0.71, 0.65, 0.58, 0.50, 0.41 };
 
-    /// <summary>Facteur de correction de température ambiante, interpolé linéairement entre 10 et 60 °C.</summary>
+    /// <summary>Température ambiante la plus haute du tableau B.52.14 pour l'isolant, en °C.</summary>
+    public static double TemperatureMaxTable(Isolant isolant) => isolant == Isolant.PVC ? 60 : 80;
+
+    /// <summary>
+    /// Facteur de correction de température ambiante, interpolé linéairement entre 10 °C et le haut du tableau (60 °C en PVC,
+    /// 80 °C en PR). Au-delà, la dernière valeur est gardée et le calcul du câble le signale.
+    /// </summary>
     public static double FacteurTemperature(Isolant isolant, double temperature)
     {
         var table = isolant == Isolant.PVC ? TemperaturePvc : TemperaturePr;
-        var t = Math.Clamp(temperature, 10, 60);
+        var t = Math.Clamp(temperature, 10, TemperatureMaxTable(isolant));
         var position = (t - 10) / 5;
         var bas = (int)Math.Floor(position);
         if (bas >= table.Length - 1) return table[^1];
@@ -92,6 +99,9 @@ public static class TablesCables
         <= 35 => 16,
         _ => Calibres.Superieur(Calibres.Sections, sectionPhase / 2) ?? sectionPhase,
     };
+
+    /// <summary>Chute de tension maximale d'un circuit de puissance de l'équipement de la machine, en % (NF EN 60204-1, 12.5).</summary>
+    public const double ChuteTensionMachine = 5;
 
     /// <summary>Chute de tension maximale admise, en %, pour un circuit autre que l'éclairage.</summary>
     public static double ChuteTensionMax(OrigineAlimentation origine) =>

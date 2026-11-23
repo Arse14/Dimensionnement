@@ -53,11 +53,44 @@ public class SecuriteTests
         var trois = CalculProjet.Calculer(ProjetAvecSecurite(NiveauPerformance.d, 3));
 
         Assert.Equal(2, deux.Securite!.Appareils.Count(a => a.Designation.StartsWith("Relais de sécurité")));
-        Assert.Equal("Automate de sécurité", trois.Securite!.Appareils.Single().Designation);
+        Assert.Equal("Automate de sécurité", trois.Securite!.Appareils[0].Designation);
         // Les appareils de sécurité sont rattachés à l'alimentation 24 V qui les alimente.
         var alimentation = trois.Arbre.Parcourir().Single(e => e.Famille == "Alimentation");
         Assert.Contains(alimentation.Enfants, e => e.Repere == "KA-SEC");
         Assert.True(trois.Consommation24V > 0);
+    }
+
+    [Fact]
+    public void Sorties_au_dela_du_relais_ajoutent_des_extensions_de_contacts()
+    {
+        var projet = ProjetAvecSecurite(NiveauPerformance.d);
+        projet.Securite.Fonctions[0].SortiesSupplementaires = 6;
+
+        var r = CalculProjet.Calculer(projet);
+
+        // 2 départs × 2 contacteurs + 6 = 10 sorties : le plus gros relais Pilz est complété d'extensions.
+        var capacite = r.Securite!.Capacites.Single();
+        Assert.Equal(10, capacite.SortiesUtilisees);
+        Assert.True(capacite.SortiesDisponibles >= 10);
+        Assert.False(capacite.Depassee);
+        Assert.Contains(r.Securite.Appareils, a => a.Designation.StartsWith("Extension de contacts"));
+        Assert.Contains(r.Securite.Note.Lignes, l => l.Libelle.StartsWith("Référence ajustée"));
+    }
+
+    [Fact]
+    public void Trop_de_capteurs_pour_un_relais_bascule_sur_l_automate_avec_modules()
+    {
+        var projet = ProjetAvecSecurite(NiveauPerformance.d);
+        projet.Securite.Fonctions[0].NombreCapteurs = 12;
+
+        var r = CalculProjet.Calculer(projet);
+
+        Assert.Equal("KA-SEC", r.Securite!.Appareils[0].Repere);
+        Assert.Contains(r.Securite.Note.Lignes, l => l.Libelle.StartsWith("Changement de logique"));
+        var capacite = r.Securite.Capacites.Single();
+        Assert.Equal(24, capacite.EntreesUtilisees);
+        Assert.True(capacite.EntreesDisponibles >= 24);
+        Assert.Contains(r.Securite.Appareils, a => a.Repere.StartsWith("KA-SEC."));
     }
 
     [Fact]

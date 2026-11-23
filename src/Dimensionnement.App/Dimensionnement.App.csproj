@@ -9,11 +9,23 @@
     <!-- Permet de compiler l'interface depuis Linux ou macOS (intégration continue) ; l'exécution reste sous Windows. -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <AssemblyTitle>Dimensionnement électrique</AssemblyTitle>
+    <Product>Dimensionnement électrique</Product>
+    <Company>ITP INTERPIPE</Company>
+    <Version>1.0.0</Version>
     <RootNamespace>Dimensionnement.App</RootNamespace>
+    <ApplicationIcon>Ressources\icone.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4129.50" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Ressources\icone.ico" />
+    <Resource Include="Ressources\logo-256.png" />
+    <None Include="Ressources\logo.svg" />
+    <Resource Include="Ressources\logo-itp-interpipe.png" />
+    <None Include="Ressources\logo-itp-interpipe.svg" />
   </ItemGroup>
 
   <ItemGroup>

@@ -3,7 +3,19 @@ name: Compilation et tests
 on:
   push:
     branches: [main]
+    # Une étiquette vX.Y.Z publie une release GitHub avec l'exécutable.
+    tags: ['v*']
   pull_request:
+  # Release lancée depuis l'onglet Actions (ou par Claude) sans pousser d'étiquette : l'étiquette vX.Y.Z est créée sur le commit.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Numéro de version sans le v (ex. 1.2.2)"
+        required: true
+
+env:
+  # Étiquette de la release : celle poussée, ou vX.Y.Z demandée au lancement manuel ; vide sinon.
+  ETIQUETTE: ${{ github.ref_type == 'tag' && github.ref_name || (inputs.version != '' && format('v{0}', inputs.version)) || '' }}
 
 jobs:
   windows:
@@ -22,9 +34,93 @@ jobs:
         run: dotnet test tests/Dimensionnement.Core.Tests -c Release --no-build --logger "console;verbosity=normal"
 
       - name: Publication de l'exécutable Windows
-        run: dotnet publish src/Dimensionnement.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publication
+        shell: bash
+        run: |
+          # Sur une étiquette vX.Y.Z, l'exécutable porte ce numéro ; sinon celui du projet.
+          version=()
+          if [ -n "$ETIQUETTE" ]; then version=("-p:Version=${ETIQUETTE#v}"); fi
+          dotnet publish src/Dimensionnement.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true "${version[@]}" -o publication
 
       - uses: actions/upload-artifact@v4
         with:
           name: Dimensionnement-windows-x64
           path: publication/
+
+      # Installateur Inno Setup (raccourcis, association .dimelec, désinstallation), compilé à chaque fois pour être vérifié,
+      # publié seulement sur une étiquette.
+      - name: Installateur Windows
+        shell: pwsh
+        run: |
+          $version = if ($env:ETIQUETTE) { $env:ETIQUETTE.TrimStart('v') } else { '0.0.0' }
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress; $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
+          & $iscc "/DVersion=$version" "/DSource=$PWD\publication" "/O$PWD\installation" installateur\Dimensionnement.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - uses: actions/upload-artifact@v4
+        if: env.ETIQUETTE != ''
+        with:
+          name: Dimensionnement-installation
+          path: installation/
+
+  # Release GitHub sur une étiquette vX.Y.Z : l'installateur et la version portable en pièces jointes.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    needs: windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: src/Dimensionnement.Core/Persistance/nouveautes.md
+          sparse-checkout-cone-mode: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: Dimensionnement-windows-x64
+          path: publication
+      - uses: actions/download-artifact@v4
+        with:
+          name: Dimensionnement-installation
+          path: installation
+      - name: Création de la release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Version portable : l'exécutable prêt à lancer, sans installation.
+          cd publication && zip -r "../Dimensionnement-$ETIQUETTE-portable-windows-x64.zip" . && cd ..
+          fichiers=(installation/*.exe "Dimensionnement-$ETIQUETTE-portable-windows-x64.zip")
+          # Texte de la release : la section de cette version dans nouveautes.md (la page « Nouveautés » de l'application).
+          awk -v v="## $ETIQUETTE " 'index($0, v) == 1 { garde = 1; next } /^## / { garde = 0 } garde' \
+            src/Dimensionnement.Core/Persistance/nouveautes.md > notes.md
+          [ -s notes.md ] || echo "Voir la page Nouveautés de l'application." > notes.md
+          # Release déjà créée à la main sur GitHub avec cette étiquette : on y joint les fichiers.
+          if gh release view "$ETIQUETTE" --repo "${{ github.repository }}" > /dev/null 2>&1; then
+            gh release upload "$ETIQUETTE" "${fichiers[@]}" --repo "${{ github.repository }}" --clobber
+            # Notes écrites à la main sur GitHub gardées ; sinon celles de nouveautes.md.
+            if [ -z "$(gh release view "$ETIQUETTE" --repo "${{ github.repository }}" --json body --jq .body)" ]; then
+              gh release edit "$ETIQUETTE" --repo "${{ github.repository }}" --notes-file notes.md
+            fi
+          else
+            gh release create "$ETIQUETTE" "${fichiers[@]}" --target "${{ github.sha }}" \
+              --repo "${{ github.repository }}" --title "Dimensionnement électrique $ETIQUETTE" --notes-file notes.md
+          fi
+
+  # Ne garde que les 3 derniers exécutables publiés, toutes branches confondues.
+  menage:
+    needs: windows
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Suppression des anciens exécutables
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --paginate "repos/${{ github.repository }}/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.name == "Dimensionnement-windows-x64" and (.expired | not)) | "\(.created_at) \(.id)"' \
+            | sort -r | tail -n +4 | while read -r date id; do
+              echo "Suppression de l'exécutable du $date ($id)"
+              gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id"
+            done

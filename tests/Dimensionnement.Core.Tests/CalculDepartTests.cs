@@ -85,9 +85,13 @@ public class CalculDepartTests
 
         var r = CalculDepart.Calculer(m, Reseau);
 
-        Assert.Equal(16, r.CalibreProtection);
+        // Disjoncteur amont choisi sur le courant d'entrée du variateur (≈ 22,8 A sans self de ligne), pas sur le courant moteur.
+        Assert.Equal(25, r.CalibreProtection);
         Assert.Contains(r.Note.Lignes, l => l.Message.StartsWith("300 mA type B"));
-        Assert.Equal("U1", r.Materiel.Enfants.Single().Repere);
+        // Interrupteur différentiel séparé inséré entre le disjoncteur et le variateur : implanté et chiffré.
+        var rcd = r.Materiel.Enfants.Single();
+        Assert.Equal(("Q1.D", "Interrupteur différentiel"), (rcd.Repere, rcd.Famille));
+        Assert.Equal("U1", rcd.Enfants.Single().Repere);
     }
 
     [Fact]
@@ -96,6 +100,24 @@ public class CalculDepartTests
         var r = CalculDepart.Calculer(new DepartResistif { Numero = 3, PuissanceKw = 9 }, Reseau);
 
         Assert.Equal(12.99, r.CourantEmploi, 2);
+        Assert.Equal(13, r.CalibreProtection);
+        Assert.Equal(1.5, r.Section);
+    }
+
+    [Fact]
+    public void Coefficient_de_securite_grossit_le_cable_sans_changer_la_protection()
+    {
+        var r = CalculDepart.Calculer(new DepartResistif { Numero = 3, PuissanceKw = 9, CoefficientSecurite = 1.5 }, Reseau);
+
+        Assert.Equal(13, r.CalibreProtection);
+        Assert.Equal(2.5, r.Section);
+    }
+
+    [Fact]
+    public void Coefficient_de_securite_sous_1_garde_la_preconisation()
+    {
+        var r = CalculDepart.Calculer(new DepartResistif { Numero = 3, PuissanceKw = 9, CoefficientSecurite = 0.5 }, Reseau);
+
         Assert.Equal(13, r.CalibreProtection);
         Assert.Equal(1.5, r.Section);
     }

@@ -62,8 +62,8 @@ public class Version2MaterielTests
         Assert.Equal(4, r.Consommation24V, 3);
         var alim = r.Departs.Single();
         Assert.Contains(alim.Note.Lignes, l => l.Code == CodesCalcul.CalibreAlimentation24V && l.ValeurRetenue == 5);
-        // 24 V × 5 A / 0,9 = 133 W ; 133 / (230 × 0,95) = 0,61 A
-        Assert.Equal(0.61, alim.CourantEmploi, 2);
+        // Alimentation 5 A du catalogue, η = 0,89 : 24 V × 5 A / 0,89 = 135 W ; 135 / (230 × 0,95) = 0,62 A
+        Assert.Equal(0.62, alim.CourantEmploi, 2);
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public class Version2MaterielTests
 
         var r = CalculProjet.Calculer(projet);
 
-        Assert.Contains(r.NoteArrivee.Lignes, l => l.Libelle == "Alimentation 24 V" && l.Statut == StatutCalcul.Alerte);
+        Assert.Contains(r.NoteArrivee.Lignes, l => l.Libelle == "Source 24 V DC" && l.Statut == StatutCalcul.Alerte);
     }
 
     [Theory]
