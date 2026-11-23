@@ -2,6 +2,11 @@
 # Une section par version, la plus récente en haut : « ## vX.Y – JJ/MM/AAAA », puis une ligne « - » par changement.
 # Cette page est affichée dans l'application (bouton « Nouveautés ») et sert de texte à la release GitHub.
 
+## v1.4 – 23/11/2026
+- Vue d'armoire : nouvelle case « Cotes ». Elle affiche les cotes de fabrication : enveloppe, plaque de montage, axes des rails et des goulottes horizontales depuis le haut de la plaque, position et encombrement des appareils fixés directement sur la plaque (variateurs…). Chaque ligne de cote se glisse à la souris là où elle gêne le moins ; clic droit pour la masquer ou la remettre à sa place. Ces réglages sont enregistrés avec le projet.
+- Nouveau : « Dossier de câblage » (PDF) pour l'atelier. Une page d'implantation cotée avec les zones propre, intermédiaire et sale, puis les rails (axe, longueur, appareils de gauche à droite), les goulottes, la liste des appareils à poser avec leur position, la filerie estimée et les règles de câblage CEM.
+- Marque des variateurs : changer la marque des variateurs du projet entraîne maintenant les départs qui portaient l'ancienne marque en propre (avant, ils restaient sur leur marque et rien ne bougeait). Les départs réglés sur une autre marque ou avec un variateur imposé gardent leur choix, et l'application les liste.
+
 ## v1.3 – 14/11/2026
 - Contacts indirects (NF C 15-100, 411.4 et 411.6) : en TN et IT, le courant de défaut minimal en bout de câble est calculé (méthode conventionnelle) et comparé au seuil magnétique de la protection ; la section monte si besoin, la longueur maximale protégée est donnée dans la note de calcul. Un différentiel sur le départ lève la limite ; avec des fusibles, contrôle à faire sur la courbe de fusion (orange).
 - Schéma TT : un départ sans différentiel est signalé (NF C 15-100, 411.5), sauf si la nouvelle case « Différentiel en amont » de « Projet et réseau » est cochée ; R_A maximal rappelé pour 30 et 300 mA.

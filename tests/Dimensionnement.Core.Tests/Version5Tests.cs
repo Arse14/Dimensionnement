@@ -112,4 +112,23 @@ public class MarquesParDefautTests
         Assert.StartsWith("Siemens", elements.Single(e => e.Repere == "KM1").Fabricant);
         Assert.StartsWith("Schneider", elements.Single(e => e.Repere == "U2").Fabricant);
     }
+
+    [Fact]
+    public void Changer_la_marque_des_variateurs_du_projet_entraine_les_departs_qui_portaient_l_ancienne()
+    {
+        var projet = new Projet();
+        var suit = new DepartMoteur { PuissanceKw = 2.2, Demarrage = ModeDemarrage.Variateur, MarqueVariateur = MarqueVariateur.Schneider };
+        var autre = new DepartMoteur { PuissanceKw = 4, Demarrage = ModeDemarrage.Variateur, MarqueVariateur = MarqueVariateur.ABB };
+        var impose = new DepartMoteur { PuissanceKw = 4, Demarrage = ModeDemarrage.Variateur, MarqueVariateur = MarqueVariateur.Schneider, ReferenceVariateur = "ATV320U40N4B" };
+        projet.Ajouter(suit); projet.Ajouter(autre); projet.Ajouter(impose);
+
+        projet.References.MarqueVariateurs = FabricantMateriel.Siemens;
+        var suivis = projet.SuivreMarqueVariateurs(FabricantMateriel.Schneider);
+
+        Assert.Equal(new[] { suit }, suivis);
+        Assert.Equal(MarqueVariateur.Projet, suit.MarqueVariateur);
+        Assert.Equal(MarqueVariateur.ABB, autre.MarqueVariateur);                  // autre marque choisie sur le départ : gardée
+        Assert.Equal(MarqueVariateur.Schneider, impose.MarqueVariateur);          // référence imposée : gardée
+        Assert.Empty(projet.SuivreMarqueVariateurs(FabricantMateriel.Siemens));    // rien à faire si la marque n'a pas changé
+    }
 }

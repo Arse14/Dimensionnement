@@ -25,6 +25,12 @@ public record DeportAppareil(string Cle, Guid? DepartId, Guid? Cible, bool ToutL
 /// </summary>
 public record ActionArmoire(Guid Id, string Action, double X = 0, double Y = 0);
 
+/// <summary>
+/// Action sur une cote de l'implantation : « Deplacer » (Decalage en mm, perpendiculaire à la ligne de cote), « Masquer »,
+/// « Replacer » (retour à sa place d'origine), « ToutAfficher » ou « ToutReplacer ».
+/// </summary>
+public record ActionCote(string Cle, string Action, double Decalage = 0);
+
 /// <summary>Rail ou goulotte ajouté : coin haut gauche dessiné, début et longueur le long de son axe, épaisseur dessinée.</summary>
 public record Troncon(Guid Id, bool Verticale, double X, double Y, double Debut, double Longueur, double Epaisseur);
 
@@ -38,7 +44,8 @@ public record PoigneeExtremite(Troncon Troncon, bool Debut);
 /// </summary>
 public class VueArmoire : Border
 {
-    const double Marge = 40;
+    /// <summary>Marge autour de l'enveloppe : élargie quand les cotes sont affichées, pour les cotes extérieures.</summary>
+    double Marge => Cotes is { Count: > 0 } ? CotesArmoire.Marge + 10 : 40;
     const double Pas = 5;
 
     public static readonly DependencyProperty ArmoireProperty = DependencyProperty.Register(nameof(Armoire),
@@ -59,6 +66,17 @@ public class VueArmoire : Border
         typeof(ICommand), typeof(VueArmoire));
     public static readonly DependencyProperty DestinationsProperty = DependencyProperty.Register(nameof(Destinations),
         typeof(IReadOnlyList<DestinationDeport>), typeof(VueArmoire));
+    public static readonly DependencyProperty CotesProperty = DependencyProperty.Register(nameof(Cotes),
+        typeof(IReadOnlyList<Cote>), typeof(VueArmoire), new PropertyMetadata(null, Redessiner));
+    public static readonly DependencyProperty CoteCommandeProperty = DependencyProperty.Register(nameof(CoteCommande),
+        typeof(ICommand), typeof(VueArmoire));
+
+    /// <summary>Cotes à tracer sur l'implantation ; null ou vide pour ne rien coter.</summary>
+    public IReadOnlyList<Cote>? Cotes { get => (IReadOnlyList<Cote>?)GetValue(CotesProperty); set => SetValue(CotesProperty, value); }
+
+    /// <summary>Reçoit les <see cref="ActionCote"/> : cote glissée à la souris, masquée ou remise à sa place.</summary>
+    public ICommand? CoteCommande { get => (ICommand?)GetValue(CoteCommandeProperty); set => SetValue(CoteCommandeProperty, value); }
+
     public ICommand? DeporterCommande { get => (ICommand?)GetValue(DeporterCommandeProperty); set => SetValue(DeporterCommandeProperty, value); }
     public IReadOnlyList<DestinationDeport>? Destinations
     {
@@ -375,6 +393,7 @@ public class VueArmoire : Border
                 Ventilation(x, marge, m, "Grille de sortie", false);
             }
         }
+        DessinerCotes();
     }
 
     void Ventilation(double x, double y, Core.Normes.ModeleVentilateur m, string texte, bool ventilateur, double? largeur = null, string? libelle = null)
@@ -608,6 +627,102 @@ public class VueArmoire : Border
         support.MouseLeave += (_, _) => Afficher();
     }
 
+    // ---------- Cotes ----------
+
+    static readonly Brush TraitCote = Pinceau("#1F6FEB");
+    Canvas? _coteGlissee;
+
+    /// <summary>
+    /// Trace les cotes par-dessus l'implantation. En vue interactive, chaque ligne de cote se glisse perpendiculairement à
+    /// elle-même (pas de 5 mm) et se masque par clic droit ; le dépôt est envoyé à <see cref="CoteCommande"/>.
+    /// </summary>
+    void DessinerCotes()
+    {
+        _coteGlissee = null;
+        if (Cotes is not { Count: > 0 } cotes) return;
+        const double depassement = 5, tique = 4, largeurTexte = 64, hauteurTexte = 17;
+        foreach (var c in cotes)
+        {
+            var groupe = new Canvas { Tag = c, ToolTip = $"{c.Libelle} : {c.Texte} mm" };
+            Line Trait(double x1, double y1, double x2, double y2, double epaisseur) => new()
+                { X1 = x1, Y1 = y1, X2 = x2, Y2 = y2, Stroke = TraitCote, StrokeThickness = epaisseur, IsHitTestVisible = false };
+            var sens = c.Position >= c.Attache ? 1 : -1;
+            var milieu = (c.De + c.A) / 2;
+            foreach (var v in new[] { c.De, c.A })
+            {
+                groupe.Children.Add(c.Horizontale ? Trait(v, c.Attache, v, c.Position + sens * depassement, 0.8)
+                                                  : Trait(c.Attache, v, c.Position + sens * depassement, v, 0.8));
+                groupe.Children.Add(c.Horizontale ? Trait(v - tique, c.Position + tique, v + tique, c.Position - tique, 2)
+                                                  : Trait(c.Position - tique, v + tique, c.Position + tique, v - tique, 2));
+            }
+            groupe.Children.Add(c.Horizontale ? Trait(c.De, c.Position, c.A, c.Position, 1.4) : Trait(c.Position, c.De, c.Position, c.A, 1.4));
+            // Valeur sur fond clair, lisible sur la plaque comme sur le fond sombre de la fenêtre.
+            var valeur = new Border
+            {
+                Width = largeurTexte, Height = hauteurTexte, IsHitTestVisible = false,
+                Child = new Border
+                {
+                    Background = Pinceau("#F2FFFFFF"), CornerRadius = new CornerRadius(3), Padding = new Thickness(4, 0, 4, 0),
+                    HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
+                    Child = new TextBlock { Text = c.Texte, FontSize = 13, FontWeight = FontWeights.Bold, Foreground = Pinceau("#0B4A9E") },
+                },
+            };
+            if (c.Horizontale)
+            {
+                Canvas.SetLeft(valeur, milieu - largeurTexte / 2);
+                Canvas.SetTop(valeur, c.Position - hauteurTexte - 2);
+            }
+            else
+            {
+                valeur.LayoutTransform = new RotateTransform(-90);
+                Canvas.SetLeft(valeur, c.Position - hauteurTexte - 2);
+                Canvas.SetTop(valeur, milieu - largeurTexte / 2);
+            }
+            groupe.Children.Add(valeur);
+            if (Interactif && CoteCommande is not null)
+            {
+                // Bande de saisie large et invisible le long de la ligne de cote.
+                var prise = c.Horizontale ? Trait(c.De, c.Position, c.A, c.Position, 14) : Trait(c.Position, c.De, c.Position, c.A, 14);
+                prise.Stroke = Brushes.Transparent;
+                prise.IsHitTestVisible = true;
+                prise.Cursor = c.Horizontale ? Cursors.SizeNS : Cursors.SizeWE;
+                prise.MouseLeftButtonDown += (_, e) =>
+                {
+                    _coteGlissee = groupe;
+                    _depart = e.GetPosition(_plan);
+                    groupe.RenderTransform = new TranslateTransform();
+                    groupe.Opacity = 0.7;
+                    _plan.CaptureMouse();
+                    e.Handled = true;
+                };
+                var menu = new ContextMenu();
+                void Item(string titre, string action)
+                {
+                    var item = new MenuItem { Header = titre };
+                    item.Click += (_, _) => Coter(new ActionCote(c.Cle, action));
+                    menu.Items.Add(item);
+                }
+                Item("Masquer cette cote", "Masquer");
+                Item("Remettre cette cote à sa place", "Replacer");
+                menu.Items.Add(new Separator());
+                Item("Réafficher toutes les cotes masquées", "ToutAfficher");
+                Item("Remettre toutes les cotes à leur place", "ToutReplacer");
+                prise.ContextMenu = menu;
+                groupe.Children.Add(prise);
+            }
+            Panel.SetZIndex(groupe, 60);
+            Placer(groupe, 0, 0);
+        }
+    }
+
+    void Coter(ActionCote action)
+    {
+        if (CoteCommande?.CanExecute(action) == true) CoteCommande.Execute(action);
+    }
+
+    /// <summary>Décalage en cours d'une cote glissée, perpendiculaire à sa ligne, au pas de 5 mm.</summary>
+    double DecalageCote(Point p) => _coteGlissee?.Tag is Cote c ? Arrondir(c.Horizontale ? p.Y - _depart.Y : p.X - _depart.X) : 0;
+
     void Saisir(object sender, MouseButtonEventArgs e)
     {
         _glisse = (FrameworkElement)sender;
@@ -621,6 +736,13 @@ public class VueArmoire : Border
 
     void Deplacer(object sender, MouseEventArgs e)
     {
+        if (_coteGlissee is { Tag: Cote cote, RenderTransform: TranslateTransform glissement })
+        {
+            var d = DecalageCote(e.GetPosition(_plan));
+            glissement.X = cote.Horizontale ? 0 : d;
+            glissement.Y = cote.Horizontale ? d : 0;
+            return;
+        }
         if (_glisse is null) return;
         var p = e.GetPosition(_plan);
         // Une poignée d'extrémité ne glisse que le long de son rail ou de sa goulotte.
@@ -639,6 +761,16 @@ public class VueArmoire : Border
 
     void Deposer(object sender, MouseButtonEventArgs e)
     {
+        if (_coteGlissee is { Tag: Cote cote })
+        {
+            var d = DecalageCote(e.GetPosition(_plan));
+            _plan.ReleaseMouseCapture();
+            _coteGlissee = null;
+            // Le redessin replace les lignes d'attache à la nouvelle position.
+            if (Math.Abs(d) >= 1) Coter(new ActionCote(cote.Cle, "Deplacer", d));
+            else Dessiner();
+            return;
+        }
         if (_glisse is not { } bloc) return;
         _plan.ReleaseMouseCapture();
         _glisse = null;

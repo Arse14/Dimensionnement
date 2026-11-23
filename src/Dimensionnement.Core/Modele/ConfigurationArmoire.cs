@@ -50,6 +50,17 @@ public class PositionManuelle
     public double Y { get; set; }
 }
 
+/// <summary>
+/// Cotes de l'implantation : l'utilisateur les affiche, glisse chaque ligne de cote où il veut (décalage en mm par rapport à sa
+/// place d'origine) et masque celles dont il n'a pas besoin.
+/// </summary>
+public class ReglagesCotes
+{
+    public bool Afficher { get; set; }
+    public Dictionary<string, double> Decalages { get; set; } = new();
+    public HashSet<string> Masquees { get; set; } = new();
+}
+
 /// <summary>Rail DIN ajouté à la main : extrémité gauche et axe, en mm dans l'enveloppe.</summary>
 public class RailManuel
 {
@@ -138,6 +149,9 @@ public class ConfigurationArmoire
     /// <summary>Rails DIN et goulottes ajoutés par l'utilisateur, en plus de l'implantation automatique.</summary>
     public List<RailManuel> Rails { get; set; } = new();
     public List<GoulotteManuelle> Goulottes { get; set; } = new();
+
+    /// <summary>Cotes de l'implantation : affichées ou non, déplacées et masquées par l'utilisateur.</summary>
+    public ReglagesCotes Cotes { get; set; } = new();
 
     /// <summary>Coffrets supplémentaires où l'on déporte du matériel qui n'entre pas dans l'armoire principale.</summary>
     public List<CoffretDeporte> Coffrets { get; set; } = new();

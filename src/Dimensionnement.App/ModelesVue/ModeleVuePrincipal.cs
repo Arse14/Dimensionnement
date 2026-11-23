@@ -607,10 +607,35 @@ public partial class ModeleVuePrincipal : Observable
     public string Chemin => _chemin ?? "Projet non enregistré";
     public bool Modifie => _modifie;
 
+    /// <summary>Marque des variateurs du projet au dernier calcul, pour repérer son changement.</summary>
+    (Projet Projet, FabricantMateriel Marque)? _marqueVariateurs;
+
+    /// <summary>
+    /// Marque des variateurs changée dans « Références du matériel » : les départs qui portaient l'ancienne marque en propre la suivent.
+    /// Sans cela, un départ réglé sur « Schneider » restait en Schneider et rien ne bougeait à l'écran.
+    /// </summary>
+    void SuivreMarqueVariateurs()
+    {
+        var marque = _projet.References.MarqueVariateurs;
+        if (_marqueVariateurs is { } vue && ReferenceEquals(vue.Projet, _projet) && vue.Marque != marque)
+        {
+            var suivis = _projet.SuivreMarqueVariateurs(vue.Marque);
+            var restants = _projet.Departs.OfType<DepartMoteur>()
+                .Where(m => m.Demarrage == ModeDemarrage.Variateur && (m.MarqueVariateur != MarqueVariateur.Projet || m.ReferenceVariateur.Length > 0)).ToList();
+            if (restants.Count > 0)
+                MessageBox.Show($"Les variateurs passent en {marque}, sauf {restants.Count} départ(s) qui gardent leur propre choix (marque ou référence imposée sur le départ) :\n\n"
+                    + string.Join("\n", restants.Select(m => $"• {m.Code} {m.Repere}"))
+                    + "\n\nPour qu'ils suivent le projet : sur le départ, « Marque du variateur » = « Marque des variateurs du projet » et pas de variateur imposé.",
+                    "Marque des variateurs", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        _marqueVariateurs = (_projet, marque);
+    }
+
     /// <summary>Recalcule tout le projet après une modification.</summary>
     public void Recalculer()
     {
         _modifie = true;
+        SuivreMarqueVariateurs();
         Resultat = CalculerProjet();
         if (_projet.AjoutAutomatiqueSources && Resultat.SourcesManquantes.Count > 0)
         {
@@ -844,6 +869,7 @@ public partial class ModeleVuePrincipal : Observable
     void Charger(Projet projet, string? chemin)
     {
         _projet = projet;
+        _marqueVariateurs = (projet, projet.References.MarqueVariateurs);
         _chemin = chemin;
         _sourcesIgnorees.Clear();
         _selection = projet;
@@ -885,6 +911,36 @@ public partial class ModeleVuePrincipal : Observable
         Recents.Clear();
         foreach (var r in _recents.Lire()) Recents.Add(r);
     }
+
+    Commande? _dossierCablage;
+    /// <summary>
+    /// Dossier de câblage pour l'atelier : implantation cotée avec les zones CEM, rails, goulottes, appareils à poser et filerie.
+    /// </summary>
+    public Commande DossierCablage => _dossierCablage ??= new Commande(async () =>
+    {
+        var chemin = DemanderChemin("Dossier de câblage PDF (*.pdf)|*.pdf", $"{NomFichier(_projet.Nom)}-cablage-{NomFichier(_projet.Indice)}.pdf");
+        if (chemin is null) return;
+        var html = RapportCablageHtml.Generer(Resultat);
+        try
+        {
+            await GenerateurPdf.Generer(html, chemin);
+            AfficherFichier(chemin);
+        }
+        catch (Exception ex)
+        {
+            // Sans moteur WebView2, le dossier reste disponible en HTML, imprimable en PDF depuis le navigateur.
+            var cheminHtml = Path.ChangeExtension(chemin, ".html");
+            try
+            {
+                File.WriteAllText(cheminHtml, html);
+                AfficherFichier(cheminHtml);
+            }
+            catch (Exception ex2) when (ex2 is IOException or UnauthorizedAccessException)
+            {
+                MessageBox.Show($"Le dossier de câblage n'a pas pu être généré :\n{ex.Message}", "Dossier de câblage", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+    }, () => Resultat.Armoire is not null);
 
     public async void GenererRapport()
     {

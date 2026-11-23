@@ -34,9 +34,10 @@ public static class SchemaArmoire
     /// <summary>Maille de la carte de champ, en mm.</summary>
     public const double PasChamp = 10;
 
-    public static string Svg(ResultatArmoire a, bool champs = true)
+    /// <param name="cotes">Cotes à tracer (voir <see cref="CotesArmoire"/>) ; la marge autour de l'enveloppe s'élargit pour elles.</param>
+    public static string Svg(ResultatArmoire a, bool champs = true, IReadOnlyList<Cote>? cotes = null)
     {
-        const double marge = 40;
+        var marge = cotes is { Count: > 0 } ? CotesArmoire.Marge + 10 : 40;
         var largeur = a.LargeurTotale + 2 * marge;
         var hauteur = a.Hauteur + 2 * marge + (champs && a.Sources.Count > 0 ? 340 : 190);
         var s = new StringBuilder();
@@ -100,6 +101,7 @@ public static class SchemaArmoire
         }
 
         s.Append(etiquettes);
+        if (cotes is not null) foreach (var c in cotes) Coter(s, c);
         var y = a.Hauteur + 36;
         const double x = 0;
         s.Append($"<text x=\"{F(x)}\" y=\"{F(y)}\" font-size=\"22\" font-weight=\"bold\" dominant-baseline=\"middle\" fill=\"#1d232a\">" +
@@ -132,6 +134,39 @@ public static class SchemaArmoire
         }
         s.Append("</g></svg>");
         return s.ToString();
+    }
+
+    /// <summary>Couleur des cotes, lisible sur la plaque claire comme sur le fond du rapport.</summary>
+    public const string CouleurCote = "#0b5cad";
+
+    /// <summary>Une cote : deux lignes d'attache, la ligne de cote terminée par deux traits obliques, la valeur au milieu.</summary>
+    static void Coter(StringBuilder s, Cote c)
+    {
+        const double depassement = 5, tique = 4;
+        var sens = Math.Sign(c.Position - c.Attache) is var g && g == 0 ? 1 : g;
+        var milieu = (c.De + c.A) / 2;
+        s.Append($"<g stroke=\"{CouleurCote}\" stroke-width=\"1.2\" fill=\"none\"><title>{SecurityElement.Escape(c.Libelle)} : {c.Texte} mm</title>");
+        if (c.Horizontale)
+        {
+            foreach (var x in new[] { c.De, c.A })
+            {
+                s.Append($"<line x1=\"{F(x)}\" y1=\"{F(c.Attache)}\" x2=\"{F(x)}\" y2=\"{F(c.Position + sens * depassement)}\" stroke-width=\"0.7\"/>");
+                s.Append($"<line x1=\"{F(x - tique)}\" y1=\"{F(c.Position + tique)}\" x2=\"{F(x + tique)}\" y2=\"{F(c.Position - tique)}\" stroke-width=\"1.8\"/>");
+            }
+            s.Append($"<line x1=\"{F(c.De)}\" y1=\"{F(c.Position)}\" x2=\"{F(c.A)}\" y2=\"{F(c.Position)}\"/>");
+            s.Append($"<text x=\"{F(milieu)}\" y=\"{F(c.Position - 4)}\" font-size=\"13\" text-anchor=\"middle\" fill=\"{CouleurCote}\" stroke=\"#ffffff\" stroke-width=\"3\" paint-order=\"stroke\" font-weight=\"bold\">{c.Texte}</text>");
+        }
+        else
+        {
+            foreach (var y in new[] { c.De, c.A })
+            {
+                s.Append($"<line x1=\"{F(c.Attache)}\" y1=\"{F(y)}\" x2=\"{F(c.Position + sens * depassement)}\" y2=\"{F(y)}\" stroke-width=\"0.7\"/>");
+                s.Append($"<line x1=\"{F(c.Position - tique)}\" y1=\"{F(y + tique)}\" x2=\"{F(c.Position + tique)}\" y2=\"{F(y - tique)}\" stroke-width=\"1.8\"/>");
+            }
+            s.Append($"<line x1=\"{F(c.Position)}\" y1=\"{F(c.De)}\" x2=\"{F(c.Position)}\" y2=\"{F(c.A)}\"/>");
+            s.Append($"<text x=\"{F(c.Position - 4)}\" y=\"{F(milieu)}\" transform=\"rotate(-90 {F(c.Position - 4)} {F(milieu)})\" font-size=\"13\" text-anchor=\"middle\" fill=\"{CouleurCote}\" stroke=\"#ffffff\" stroke-width=\"3\" paint-order=\"stroke\" font-weight=\"bold\">{c.Texte}</text>");
+        }
+        s.Append("</g>");
     }
 
     /// <summary>Isolignes du champ magnétique, tracées par-dessus les zones sans les masquer.</summary>

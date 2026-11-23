@@ -36,6 +36,8 @@
                 <CheckBox x:Name="CaseChamps" Content="Champ magnétique" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"/>
                 <CheckBox x:Name="CaseIhm" Content="Équipements de porte" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"
                           ToolTip="Affiche ou masque les IHM et les ventilateurs encastrés dans la porte ; ils restent comptés (découpe, profondeur, débit)"/>
+                <CheckBox Content="Cotes" IsChecked="{Binding AfficherCotes}" VerticalAlignment="Center" Margin="0,0,16,0"
+                          ToolTip="Affiche les cotes de fabrication (enveloppe, plaque, axes des rails et des goulottes, appareils fixés sur la plaque). Glissez une ligne de cote pour la déplacer ; clic droit pour la masquer ou la remettre à sa place."/>
                 <Button Content="Ajouter un rail DIN" Command="{Binding AjouterRail}" Margin="0,0,6,0"/>
                 <Button Content="Ajouter une goulotte horizontale" Command="{Binding AjouterGoulotte}" CommandParameter="H" Margin="0,0,6,0"/>
                 <Button Content="Ajouter une goulotte verticale" Command="{Binding AjouterGoulotte}" CommandParameter="V" Margin="0,0,16,0"/>
@@ -117,7 +119,9 @@
                             DeplacerCommande="{Binding DeplacerAppareil}"
                             ActionCommande="{Binding ModifierArmoire}"
                             RenommerCommande="{Binding RenommerElement}"
-                            LibreCommande="{Binding ImplantationLibre}"/>
+                            LibreCommande="{Binding ImplantationLibre}"
+                            Cotes="{Binding CotesAffichees}"
+                            CoteCommande="{Binding ModifierCote}"/>
         </Border>
     </DockPanel>
 </Window>

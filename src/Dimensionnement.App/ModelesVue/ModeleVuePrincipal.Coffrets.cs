@@ -21,6 +21,44 @@ public partial class ModeleVuePrincipal
 
     string NomCourant => (ConfigCourante as CoffretDeporte)?.Nom ?? "armoire principale";
 
+    /// <summary>Cotes de l'implantation affichées dans la vue d'armoire (réglage gardé dans le projet).</summary>
+    public bool AfficherCotes
+    {
+        get => _projet.Armoire.Cotes.Afficher;
+        set { _projet.Armoire.Cotes.Afficher = value; MarquerCotes(); }
+    }
+
+    /// <summary>Cotes de l'enveloppe affichée, avec les déplacements et les masquages de l'utilisateur ; null si elles sont coupées.</summary>
+    public IReadOnlyList<Cote>? CotesAffichees =>
+        AfficherCotes && ArmoireAffichee is { } a ? CotesArmoire.Calculer(a, _projet.Armoire.Cotes) : null;
+
+    Commande? _modifierCote;
+    /// <summary>Cote glissée, masquée ou remise à sa place dans la vue d'armoire.</summary>
+    public Commande ModifierCote => _modifierCote ??= new Commande(p =>
+    {
+        if (p is not ActionCote action) return;
+        var r = _projet.Armoire.Cotes;
+        switch (action.Action)
+        {
+            case "Deplacer": r.Decalages[action.Cle] = r.Decalages.GetValueOrDefault(action.Cle) + action.Decalage; break;
+            case "Masquer": r.Masquees.Add(action.Cle); break;
+            case "Replacer": r.Decalages.Remove(action.Cle); break;
+            case "ToutAfficher": r.Masquees.Clear(); break;
+            case "ToutReplacer": r.Decalages.Clear(); break;
+        }
+        MarquerCotes();
+    }, p => p is ActionCote);
+
+    /// <summary>Les cotes ne changent aucun calcul : le projet est seulement marqué modifié et la vue redessinée.</summary>
+    void MarquerCotes()
+    {
+        _modifie = true;
+        Signaler(nameof(AfficherCotes));
+        Signaler(nameof(CotesAffichees));
+        Signaler(nameof(Titre));
+        Signaler(nameof(Modifie));
+    }
+
     public ResultatArmoire? ArmoireAffichee =>
         Resultat.Armoire?.Enveloppes.FirstOrDefault(e => e.Id == _affichee) ?? Resultat.Armoire;
 

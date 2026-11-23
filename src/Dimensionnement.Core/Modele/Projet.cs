@@ -23,6 +23,25 @@ public class Projet
 
     public Reseau Reseau { get; set; } = new();
     public List<Depart> Departs { get; set; } = new();
+
+    /// <summary>
+    /// La marque des variateurs du projet vient de changer : les départs qui portaient l'ancienne marque en propre la suivent
+    /// (ils repassent sur « marque du projet »). Un départ réglé sur une autre marque, ou dont la référence de variateur est imposée,
+    /// n'est pas touché. Rend les départs modifiés.
+    /// </summary>
+    public List<DepartMoteur> SuivreMarqueVariateurs(FabricantMateriel ancienne)
+    {
+        var suivis = new List<DepartMoteur>();
+        if (ancienne == References.MarqueVariateurs) return suivis;
+        foreach (var m in Departs.OfType<DepartMoteur>())
+            if (m.MarqueVariateur != MarqueVariateur.Projet && m.ReferenceVariateur.Length == 0
+                && string.Equals(m.MarqueVariateur.ToString(), ancienne.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                m.MarqueVariateur = MarqueVariateur.Projet;
+                suivis.Add(m);
+            }
+        return suivis;
+    }
     public ConfigurationSecurite Securite { get; set; } = new();
     public ConfigurationAutomate Automate { get; set; } = new();
     public ConfigurationArmoire Armoire { get; set; } = new();

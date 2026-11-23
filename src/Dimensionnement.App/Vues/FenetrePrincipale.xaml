@@ -1897,6 +1897,9 @@
                     <Button Command="{Binding OuvrirVueArmoire}" ToolTip="Vue de face de l'armoire, zones CEM et champs ; déplacement des appareils à la souris">
                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE80F;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Armoire"/></StackPanel>
                     </Button>
+<Button Command="{Binding DossierCablage}" ToolTip="Dossier de câblage pour l'atelier (PDF) : implantation cotée avec les zones propre et sale, rails, goulottes, appareils à poser et filerie">
+                        <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE90F;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Dossier de câblage"/></StackPanel>
+                    </Button>
                     <Button Command="{Binding ApercuDevis}" ToolTip="Aperçu de la liste exhaustive du matériel à envoyer au fournisseur, puis export Excel">
                         <StackPanel Orientation="Horizontal"><TextBlock FontFamily="{StaticResource Icones}" Text="&#xE719;" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Demande de devis"/></StackPanel>
                     </Button>
